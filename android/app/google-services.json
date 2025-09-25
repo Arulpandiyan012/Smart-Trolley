@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "305302552801",
+    "project_id": "st-pro-38d90",
+    "storage_bucket": "st-pro-38d90.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:305302552801:android:388d7721e5bc1af8f9f7a0",
+        "android_client_info": {
+          "package_name": "ecom.thesmartedgetech.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "305302552801-7qlrmmg32is8g186o374n4gju9lstnbj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ecom.thesmartedgetech.com",
+            "certificate_hash": "7f53bb2d409570f6ccdc0b78b1d1ae6e89b85859"
+          }
+        },
+        {
+          "client_id": "305302552801-ncojnm3j451h13j1eft5sfo872j8is72.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpvVb-0QiYlrAzgaMwn-H2iIRWOS_U_MU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "305302552801-ncojnm3j451h13j1eft5sfo872j8is72.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
