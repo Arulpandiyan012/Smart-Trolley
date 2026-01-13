@@ -58,17 +58,21 @@ class FetchSubCategoryState extends CategoriesBaseState {
   List<Object> get props => [if (categoriesData !=null) categoriesData! else ""];
 }
 
-class AddToCompareSubCategoryState extends CategoriesBaseState{
+class AddToCompareSubCategoryState extends CategoriesBaseState {
   CategoriesStatus? status;
   String? error;
   String? successMsg;
   BaseModel? baseModel;
-  AddToCompareSubCategoryState.success({ this.successMsg,this.baseModel}):status=CategoriesStatus.success;
-  AddToCompareSubCategoryState.fail({this.error}):status=CategoriesStatus.fail;
 
+  AddToCompareSubCategoryState.success({this.successMsg, this.baseModel})
+      : status = CategoriesStatus.success;
+      
+  AddToCompareSubCategoryState.fail({this.error})
+      : status = CategoriesStatus.fail;
+
+  // 🟢 FIX: Remove '!' to prevent crashes
   @override
-  List<Object> get props => [successMsg??"",error??"",baseModel!];
-
+  List<Object?> get props => [successMsg, error, baseModel]; 
 }
 
 class AddToCartSubCategoriesState extends CategoriesBaseState{

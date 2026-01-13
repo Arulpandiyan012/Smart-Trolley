@@ -273,17 +273,19 @@ Route<dynamic> generateRoute(RouteSettings settings) {
                 child: const CheckOutSaveOrder(),
               ));
 
-    case checkoutScreen:
-      CartNavigationData cartNavigationData =
-          settings.arguments as CartNavigationData;
-      return MaterialPageRoute(
-        builder: (_) => CheckoutScreen(
-            total: cartNavigationData.total,
-            cartScreenBloc: cartNavigationData.cartScreenBloc,
-            cartDetailsModel: cartNavigationData.cartDetailsModel,
-            isDownloadable: cartNavigationData.isDownloadable),
-      );
+case checkoutScreen:
+        // DEFINE ARGS HERE
+        CartNavigationData? args;
+        if (settings.arguments is CartNavigationData) {
+          args = settings.arguments as CartNavigationData;
+        }
 
+        return MaterialPageRoute(
+            builder: (_) => CheckoutScreenFinal( // USE FINAL CLASS NAME
+                  cartScreenBloc: args?.cartScreenBloc,
+                  total: args?.total,
+                  cartDetailsModel: args?.cartDetailsModel,
+                ));
     case orderListScreen:
       return MaterialPageRoute(
           builder: (_) => BlocProvider(

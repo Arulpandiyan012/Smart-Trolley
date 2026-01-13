@@ -1,14 +1,14 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
+import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
+import 'package:bagisto_app_demo/screens/home_page/widget/delivery_location_page.dart';
+import 'package:bagisto_app_demo/screens/home_page/widget/address_details_sheet.dart';
+import 'package:bagisto_app_demo/utils/current_location_manager.dart';
 
 // ignore: must_be_immutable
 class GuestAddAddressForm extends StatefulWidget {
@@ -42,298 +42,117 @@ class GuestAddAddressForm extends StatefulWidget {
   State<GuestAddAddressForm> createState() => _GuestAddAddressFormState();
 }
 
-class _GuestAddAddressFormState extends State<GuestAddAddressForm>
-    with PhoneNumberValidator, EmailValidator {
-  AddressData? billingAddress;
-  AddressData? shippingAddress;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
-
-  bool showAlert = false;
-  int exceptionCode = 200;
-  String exceptionMessage = "";
-  final _formKey = GlobalKey<FormState>();
-  final bool _autoValidate = false;
-  Data? selectedCountry;
-  final firstNameController = TextEditingController();
-  final lastNameController = TextEditingController();
-  final companyController = TextEditingController();
-  final street1Controller = TextEditingController();
-  final countryController = TextEditingController();
-  final cityController = TextEditingController();
-  final zipCodeController = TextEditingController();
-  final stateNameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final emailController = TextEditingController();
-  CountriesData? countryData;
-  List<Data>? countryList = [];
-  String? countryName;
-  String? countryCode;
-  String? state;
-  States? selectedState;
+class _GuestAddAddressFormState extends State<GuestAddAddressForm> {
+  String? _displayAddress;
+  final _nameController = TextEditingController(); // Replaces Email Controller
+  
+  // Internal controllers to hold data
+  final _street1Controller = TextEditingController();
+  final _cityController = TextEditingController();
+  final _zipCodeController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _stateController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _displayAddress = CurrentLocationManager.address;
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldMessenger(
-      key: scaffoldMessengerKey,
-      child: Scaffold(body: _guestAddressBloc(context)),
-    );
-  }
-
-  ///BLOC CONTAINER///
-  _guestAddressBloc(BuildContext context) {
-    return BlocConsumer<GuestAddressBloc, GuestAddressBaseState>(
-      listener: (BuildContext context, GuestAddressBaseState state) {},
-      builder: (BuildContext context, GuestAddressBaseState state) {
-        return buildUI(context, state);
-      },
-    );
-  }
-
-  ///buildUI UI METHODS///
-  Widget buildUI(BuildContext context, GuestAddressBaseState state) {
-    if (state is GuestAddressCountryState) {
-      if (state.status == GuestStatus.success) {
-        countryData = state.countryData;
-        countryList = state.countryData!.data;
-        if (selectedCountry == null) {
-          selectedCountry = countryData?.data?.first;
-          if ((selectedCountry?.states?.length ?? 0) > 0) {
-            selectedState = selectedCountry?.states?.first;
-          }
-        }
-        return _getAddressForm();
-      }
-      if (state.status == GuestStatus.fail) {
-        return ErrorMessage.errorMsg(
-            StringConstants.somethingWrong.localized());
-      }
-    }
-    if (state is GuestAddressInitialState) {
-      GuestAddressBloc guestAddressBloc = context.read<GuestAddressBloc>();
-      guestAddressBloc.add(GuestAddressCountryEvent());
-      return _getAddressForm();
-    }
-    return const SizedBox();
-  }
-
-  _getAddressForm() {
-    return RefreshIndicator(
-      color: Theme.of(context).colorScheme.onPrimary,
-      onRefresh: () {
-        return Future.delayed(const Duration(seconds: 1), () {
-          _getAddressForm();
-        });
-      },
-      child: SingleChildScrollView(
-        child: Stack(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F8), // Blinkit Grey
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              "Guest Details",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Enter your name and delivery location",
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 20),
+
+            // 1. NAME INPUT (Replaces Email)
             Container(
-              padding: const EdgeInsets.symmetric(
-                  vertical: AppSizes.spacingNormal,
-                  horizontal: AppSizes.spacingMedium),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: _autoValidate
-                    ? AutovalidateMode.onUserInteraction
-                    : AutovalidateMode.disabled,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(context, firstNameController,
-                        StringConstants.firstNameHint.localized(),
-                        label: StringConstants.firstNameLabel.localized(),
-                        validLabel:
-                            StringConstants.pleaseFillLabel.localized() +
-                                StringConstants.firstNameLabel.localized(),
-                        isRequired: true, validator: (name) {
-                      if ((name ?? "").isEmpty) {
-                        return StringConstants.pleaseFillLabel.localized() +
-                            StringConstants.firstNameLabel.localized();
-                      }
-                      return null;
-                    }, emailValue: billingAddress?.firstName),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(context, lastNameController,
-                        StringConstants.lastNameHint.localized(),
-                        label: StringConstants.lastNameLabel.localized(),
-                        validLabel:
-                            StringConstants.pleaseFillLabel.localized() +
-                                StringConstants.lastNameLabel.localized(),
-                        isRequired: true, validator: (lastName) {
-                      if ((lastName ?? "").isEmpty) {
-                        return StringConstants.pleaseFillLabel.localized() +
-                            StringConstants.lastNameLabel.localized();
-                      }
-                      return null;
-                    }, emailValue: billingAddress?.lastName),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(context, emailController,
-                        StringConstants.signInEmailHint.localized(),
-                        label: StringConstants.signInEmailLabel.localized(),
-                        validLabel:
-                            StringConstants.pleaseFillLabel.localized() +
-                                StringConstants.signInEmailLabel.localized(),
-                        isRequired: true, validator: (email) {
-                      if (email!.isEmpty) {
-                        return StringConstants.pleaseFillLabel.localized() +
-                            StringConstants.signInEmailLabel.localized();
-                      } else if (!isValidEmail(email)) {
-                        return StringConstants.signInEmailLabel.localized();
-                      }
-                      return null;
-                    }),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(context, companyController,
-                        StringConstants.companyNameHint.localized(),
-                        label: StringConstants.companyNameLabel.localized(),
-                        validLabel:
-                            StringConstants.pleaseFillLabel.localized() +
-                                StringConstants.companyNameLabel.localized(),
-                        isRequired: true, validator: (companyName) {
-                      if (companyName!.isEmpty) {
-                        return StringConstants.pleaseFillLabel.localized() +
-                            StringConstants.companyNameLabel.localized();
-                      }
-                      return null;
-                    }, emailValue: billingAddress?.companyName),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(context, phoneController,
-                        StringConstants.contactUsPhoneHint.localized(),
-                        label: StringConstants.contactUsPhoneLabel.localized(),
-                        validLabel:
-                            StringConstants.pleaseFillLabel.localized() +
-                                StringConstants.contactUsPhoneLabel.localized(),
-                        isRequired: true,
-                        keyboardType: TextInputType.phone, validator: (phone) {
-                      if ((phone ?? "").isEmpty) {
-                        return StringConstants.pleaseFillLabel.localized() +
-                            StringConstants.contactUsPhoneLabel.localized();
-                      } else if (!isValidPhone(phone)) {
-                        return StringConstants.phoneWarning.localized();
-                      }
-                      return null;
-                    }, emailValue: billingAddress?.phone),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(
-                      context,
-                      street1Controller,
-                      StringConstants.streetHint.localized(),
-                      label: StringConstants.streetLabel.localized(),
-                      isRequired: true,
-                      validLabel: StringConstants.pleaseFillLabel.localized() +
-                          StringConstants.streetLabel.localized(),
-                      validator: (street1) {
-                        if ((street1 ?? "").isEmpty) {
-                          return StringConstants.pleaseFillLabel.localized() +
-                              StringConstants.streetLabel.localized();
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(context, zipCodeController,
-                        StringConstants.zipHint.localized(),
-                        label: StringConstants.zipLabel.localized(),
-                        validLabel:
-                            StringConstants.pleaseFillLabel.localized() +
-                                StringConstants.zipLabel.localized(),
-                        keyboardType: TextInputType.number,
-                        isRequired: true, validator: (zipCode) {
-                      if (zipCode!.isEmpty) {
-                        return StringConstants.pleaseFillLabel.localized() +
-                            StringConstants.zipLabel.localized();
-                      }
-                      return null;
-                    }, emailValue: billingAddress?.address1.toString()),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonDropDownField(
-                      value: countryName,
-                      itemList: getCountryStrings(),
-                      hintText: StringConstants.countryHint.localized(),
-                      labelText: StringConstants.countryLabel.localized(),
-                      key: const Key('country'),
-                      callBack: dropdownUpdate,
-                    ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    (selectedCountry != null &&
-                            (selectedCountry!.states?.length ?? 0) > 0)
-                        ? CommonDropDownField(
-                            value: selectedState?.defaultName ?? '',
-                            itemList: selectedCountry?.states
-                                    ?.map((e) => e.defaultName ?? '')
-                                    .toList() ??
-                                [],
-                            hintText: StringConstants.stateHint.localized(),
-                            labelText: StringConstants.stateLabel.localized(),
-                            key: const Key('States'),
-                            callBack: dropdownUpdate,
-                          )
-                        : CommonWidgets().getTextField(
-                            context,
-                            stateNameController,
-                            StringConstants.stateHint.localized(),
-                            label: StringConstants.stateLabel.localized(),
-                            validLabel:
-                                StringConstants.pleaseFillLabel.localized() +
-                                    StringConstants.stateLabel.localized(),
-                            isRequired: true,
-                            validator: (cityName) {
-                              if ((cityName ?? "").isEmpty) {
-                                return StringConstants.pleaseFillLabel
-                                        .localized() +
-                                    StringConstants.stateLabel.localized();
-                              }
-                              return null;
-                            },
-                          ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(
-                      context,
-                      cityController,
-                      StringConstants.cityHint.localized(),
-                      label: StringConstants.cityLabel.localized(),
-                      validLabel: StringConstants.pleaseFillLabel.localized() +
-                          StringConstants.cityLabel.localized(),
-                      isRequired: true,
-                      validator: (cityName) {
-                        if ((cityName ?? "").isEmpty) {
-                          return StringConstants.pleaseFillLabel.localized() +
-                              StringConstants.cityLabel.localized();
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    MaterialButton(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                      ),
-                      elevation: 0.0,
-                      height: AppSizes.buttonHeight,
-                      minWidth: MediaQuery.of(context).size.width,
-                      color: Theme.of(context).colorScheme.onBackground,
-                      onPressed: () {
-                        _onPressSaveButton();
-                      },
-                      child: Text(
-                        StringConstants.saveAddress.localized().toUpperCase(),
-                        style: TextStyle(
-                            fontSize: AppSizes.spacingLarge,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer),
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.spacingMedium),
-                  ],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  labelText: "Your Name",
+                  prefixIcon: Icon(Icons.person_outline, color: Colors.grey),
                 ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 2. LOCATION CARD
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7FFF9), // Light Green
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF0C831F).withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.my_location, color: Color(0xFF0C831F), size: 24),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          "Deliver to Current Location",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0C831F)),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: _openMap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                          child: const Text("CHANGE", style: TextStyle(color: Color(0xFF0C831F), fontWeight: FontWeight.bold, fontSize: 10)),
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _displayAddress ?? "Tap button below to select address",
+                    style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.4),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: _openAddressDetailsSheet,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0C831F),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text("USE THIS ADDRESS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
               ),
             ),
           ],
@@ -342,117 +161,91 @@ class _GuestAddAddressFormState extends State<GuestAddAddressForm>
     );
   }
 
-  List<String> getCountryStrings() {
-    List<String> country = [];
-    if (countryList != null) {
-      for (Data item in countryList ?? []) {
-        if (item.name == null) {
-          country.add("Select Country...");
-        } else {
-          country.add(item.name ?? '');
-        }
-      }
-    }
-    return country;
-  }
-
-  void dropdownUpdate(String item, Key? key) {
-    if (key == const Key('country')) {
-      var country = countryList?.firstWhereOrNull((e) => e.name == item);
-      selectedCountry = country;
-      countryCode = selectedCountry?.code;
-      countryName = selectedCountry?.name ?? '';
-      if ((country?.states?.length ?? 0) > 0) {
-        selectedState = country?.states?.first;
-      }
-      countryController.text = selectedCountry?.name ?? "";
-    } else if (key == const Key('States')) {
-      if (selectedCountry != null) {
-        var state = selectedCountry?.states
-            ?.firstWhereOrNull((element) => element.defaultName == item);
-        if (state != null) {
-          selectedState = state;
-        }
-      }
-      stateNameController.text = selectedState?.code ?? "";
-    }
-    setState(() {});
-  }
-
-  _saveAddress() {
-    var address1 = [street1Controller.text];
-    Map<String, dynamic> newAddress = <String, dynamic>{}; //keys as String
-    address1.asMap().forEach((key, value) {
-      newAddress[key.toString()] = value;
-    });
-    widget.callBack!(
-      companyController.text,
-      firstNameController.text,
-      lastNameController.text,
-      street1Controller.text,
-      emailController.text,
-      countryCode,
-      selectedState?.code ?? stateNameController.text,
-      cityController.text,
-      zipCodeController.text,
-      phoneController.text,
-      emailController.text,
-      emailController.text,
-      companyController.text,
-      firstNameController.text,
-      lastNameController.text,
-      street1Controller.text,
-      emailController.text,
-      countryCode,
-      selectedState?.code ?? stateNameController.text,
-      cityController.text,
-      zipCodeController.text,
-      phoneController.text,
+  void _openMap() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DeliveryLocationPage()),
     );
-  }
-
-  _onPressSaveButton() {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return Dialog(
-              child: Container(
-                color: Theme.of(context).colorScheme.background,
-                padding: const EdgeInsets.all(AppSizes.spacingWide),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(
-                      height: AppSizes.spacingNormal,
-                    ),
-                    const Loader(),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 2.5,
-                      child: Center(
-                        child: Text(
-                          StringConstants.processWaitingMsg.localized(),
-                          softWrap: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.spacingNormal),
-                  ],
-                ),
-              ),
-            );
-          });
-      _saveAddress();
-      Future.delayed(const Duration(seconds: 1)).then((value) {
-        Navigator.pop(context, true);
-        ShowMessage.showNotification(
-            StringConstants.success.localized(),
-            StringConstants.addressAdded.localized(),
-            Colors.green.shade400,
-            const Icon(Icons.check_circle_outline));
+    if (result != null && result is Map) {
+      setState(() {
+        _displayAddress = result['address'];
       });
     }
+  }
+
+  void _openAddressDetailsSheet() {
+    if (_nameController.text.trim().isEmpty) {
+      ShowMessage.errorNotification("Please enter your name", context);
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.85,
+        child: AddressDetailsSheet(initialArea: _displayAddress),
+      ),
+    ).then((value) {
+      if (value != null && value is Map) {
+        
+        // --- 1. HANDLE NAME SPLITTING (Single Field -> First/Last) ---
+        String fullName = _nameController.text.trim();
+        String fName = fullName;
+        String lName = "";
+        if (fullName.contains(" ")) {
+          int idx = fullName.lastIndexOf(" ");
+          fName = fullName.substring(0, idx);
+          lName = fullName.substring(idx + 1);
+        }
+
+        // --- 2. HANDLE "SOMEONE ELSE" NAME ---
+        // If user selected "Someone else", use that name for Shipping
+        String shipFName = fName;
+        String shipLName = lName;
+        if (value['firstName'] != null) {
+          shipFName = value['firstName'];
+          shipLName = value['lastName'] ?? "";
+        }
+
+        // --- 3. GENERATE DUMMY EMAIL ---
+        // Backend needs email, so we create one using phone
+        String phone = value['phone'] ?? "0000000000";
+        String generatedEmail = "$phone@mobile.com";
+
+        _street1Controller.text = "${value['flatHouseBuilding']}, ${value['landmark'] ?? ''}";
+        _cityController.text = value['area'] ?? "";
+        _phoneController.text = phone;
+        _zipCodeController.text = CurrentLocationManager.pincode ?? "000000"; 
+        _stateController.text = CurrentLocationManager.state ?? "State";
+        
+        // --- 4. TRIGGER CALLBACK ---
+        widget.callBack!(
+          "", // Company
+          fName, // Billing First Name
+          lName, // Billing Last Name
+          _street1Controller.text, 
+          value['area'], 
+          "IN", // Country
+          _stateController.text,
+          _cityController.text,
+          _zipCodeController.text,
+          _phoneController.text,
+          generatedEmail, // Billing Email (Generated)
+          generatedEmail, // Shipping Email (Generated)
+          "", // Ship Company
+          shipFName, // Shipping First Name
+          shipLName, // Shipping Last Name
+          _street1Controller.text,
+          value['area'],
+          "IN",
+          _stateController.text,
+          _cityController.text,
+          _zipCodeController.text,
+          _phoneController.text,
+        );
+      }
+    });
   }
 }

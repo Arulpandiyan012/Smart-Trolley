@@ -1,11 +1,11 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/data_model/account_models/account_info_details.dart';
@@ -64,6 +64,7 @@ class _DrawerListViewState extends State<DrawerListView> {
 
     drawerList.add(const SizedBox(height: AppSizes.spacingWide));
 
+    // --- USER PROFILE HEADER ---
     drawerList.add(
       GestureDetector(
         onTap: () {
@@ -161,10 +162,10 @@ class _DrawerListViewState extends State<DrawerListView> {
       ),
     );
 
-    GlobalData.categoriesDrawerData?.data?.forEach((element) {
-      drawerList.add(DrawerCategoryItem(element));
-    });
+    // 🔴 REMOVED: The category loop (Grocery Details) was here.
+    // It is now gone, so the Drawer will only show menu items.
 
+    // --- DRAWER MENU ITEMS ---
 
     if(widget.isLoggedIn) {
       drawerList.add(DrawerAddItemList(

@@ -16,8 +16,8 @@ class BadgeIcon extends StatelessWidget {
   const BadgeIcon(
       {Key? key,
         this.icon,
-        this.height=15,
-        this.width=15,
+        this.height=12,
+        this.width=12,
         this.badgeCount = 0,
         this.showIfZero = false,
         this.badgeColor = Colors.red,
@@ -45,8 +45,8 @@ class BadgeIcon extends StatelessWidget {
   }
 
   Widget badge(int count) => Positioned(
-    right: 10,
-    top: 6,
+    right: 0,
+    top: -1,
     child: new Container(
       padding: const EdgeInsets.all(1),
       decoration: new BoxDecoration(

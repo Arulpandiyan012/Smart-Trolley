@@ -1,11 +1,11 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/screens/compare/utils/index.dart';
@@ -20,268 +20,203 @@ class CompareList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fixed width for columns
+    double cardWidth = MediaQuery.of(context).size.width / 2.2;
+
     return SizedBox(
-      height: MediaQuery.of(context).size.height / 1.6,
-      width: (compareScreenModel.data?.length ?? 0) *
-          MediaQuery.of(context).size.width /
-          2.0,
+      // 🟢 FIX: Increased height to 420 to prevent "Bottom Overflow" error
+      height: 420, 
+      width: (compareScreenModel.data?.length ?? 0) * cardWidth,
       child: ListView.builder(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           scrollDirection: Axis.horizontal,
           itemCount: compareScreenModel.data?.length ?? 0,
           itemBuilder: (context, index) {
-            int ? rating;
-            if (compareScreenModel.data?[index].product?.averageRating != null) {
-               rating = (double.parse(compareScreenModel
-                          .data?[index].product?.averageRating
-                          .toString() ??
-                      "")
-                  .toInt());
+            var product = compareScreenModel.data?[index].product;
+            int? rating;
+            if (product?.averageRating != null) {
+              rating = (double.parse(product?.averageRating.toString() ?? "0").toInt());
             }
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, productScreen,
-                    arguments: PassProductData(
-                        title:
-                            compareScreenModel.data?[index].product?.name ?? "",
-                        urlKey:
-                            compareScreenModel.data?[index].product?.urlKey ??
-                                "",
-                        productId: int.parse(
-                            compareScreenModel.data?[index].product?.id ??
-                                "")));
-              },
-              child: Container(
-                width: MediaQuery.of(context).size.width / 2,
-                decoration: const BoxDecoration(
-                    border: Border(
-                  right: BorderSide(
-                    color: Colors.grey,
-                    width: 1.5,
+            return Container(
+              width: cardWidth,
+              margin: const EdgeInsets.only(right: 12), // Better spacing
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
-                )),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Stack(
-                      children: [
-                        compareScreenModel
-                                    .data?[index].product?.images?.isNotEmpty ==
-                                true
-                            ? ImageView(
-                                url: compareScreenModel
-                                        .data?[index].product?.images?[0].url ??
-                                    "",
-                                width: MediaQuery.of(context).size.width / 2,
-                                height: MediaQuery.of(context).size.height / 4,
-                              )
-                            : ImageView(
-                                url: "",
-                                width: MediaQuery.of(context).size.width / 2,
-                                height: MediaQuery.of(context).size.height / 4,
-                              ),
-                        Positioned(
-                          right: AppSizes.spacingNormal,
-                          top: AppSizes.spacingNormal,
-                          child: InkWell(
-                            onTap: () {
-                              compareScreenBloc?.add(OnClickCompareLoaderEvent(
-                                  isReqToShowLoader: true));
-                              compareScreenBloc?.add(RemoveFromCompareListEvent(
-                                  compareScreenModel.data?[index].productId ??
-                                      "",
-                                  ""));
-                            },
-                            child: Container(
-                                padding: const EdgeInsets.all(1),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onBackground,
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(AppSizes.spacingWide)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.4),
-                                      spreadRadius: 1,
-                                      blurRadius: 7,
-                                      offset: const Offset(
-                                          0, 1), // changes position of shadow
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  Icons.close,
-                                  size: 30,
-                                  color: Colors.grey[500],
-                                )),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: AppSizes.spacingNormal,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(AppSizes.spacingNormal),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          PriceWidgetHtml(
-                              priceHtml: compareScreenModel.data?[index].product
-                                      ?.priceHtml?.priceHtml ??
-                                  ""),
-                          InkWell(
-                              onTap: () {
-                                if (compareScreenModel
-                                        .data![index].product?.isInWishlist ??
-                                    false) {
-                                  compareScreenBloc?.add(
-                                      FetchDeleteWishlistItemEvent(
-                                          int.parse(compareScreenModel
-                                                  .data![index].product?.id ??
-                                              ""),
-                                          compareScreenModel.data?[index]));
-                                  compareScreenBloc?.add(
-                                      OnClickCompareLoaderEvent(
-                                          isReqToShowLoader: true));
-                                } else {
-                                  compareScreenBloc?.add(
-                                      AddToWishlistCompareEvent(
-                                          compareScreenModel
-                                              .data![index].product?.id,
-                                          compareScreenModel.data?[index]));
-                                  compareScreenBloc?.add(
-                                      OnClickCompareLoaderEvent(
-                                          isReqToShowLoader: true));
-                                }
-                              },
-                              child: (compareScreenModel
-                                          .data?[index].product?.isInWishlist ??
-                                      false)
-                                  ? Icon(
-                                      Icons.favorite,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary,
-                                    )
-                                  : const Icon(
-                                      Icons.favorite_outline_rounded,
-                                      color: Colors.grey,
-                                    )),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      width: 150,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                            AppSizes.spacingNormal, 0, 0, 0),
-                        child: Text(
-                          compareScreenModel.data?[index].product?.name ?? "",
-                          maxLines: 1,
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              const TextStyle(fontSize: AppSizes.spacingLarge),
+                ],
+                border: Border.all(color: Colors.grey.withOpacity(0.1)),
+              ),
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- 1. PRODUCT IMAGE ---
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                        child: Container(
+                          height: 140, // Reduced slightly to save space
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(8),
+                          color: Colors.white,
+                          child: (product?.images?.isNotEmpty == true)
+                              ? ImageView(
+                                  url: product?.images?[0].url ?? "",
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.contain, 
+                                )
+                              : Icon(Icons.image_not_supported, color: Colors.grey[300], size: 40),
                         ),
                       ),
-                    ),
-                    compareScreenModel
-                        .data?[index].product?.averageRating != null ?
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSizes.spacingNormal, AppSizes.spacingNormal, 0, 0),
-                      child: Container(
-                        width: 60,
-                        padding: const EdgeInsets.fromLTRB(
-                            AppSizes.spacingNormal,
-                            AppSizes.spacingSmall,
-                            AppSizes.spacingNormal,
-                            AppSizes.spacingSmall),
-                        color: ReviewColorHelper.getColor(double.parse(
-                            compareScreenModel
-                                    .data?[index].product?.averageRating
-                                    .toString() ??
-                                "")),
-                        child: Row(
+                      
+                      const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+
+                      // --- 2. DETAILS SECTION ---
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              rating.toString(),
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 12),
+                            // Price
+                            PriceWidgetHtml(
+                              priceHtml: product?.priceHtml?.priceHtml ?? "",
                             ),
-                            const SizedBox(
-                              width: AppSizes.spacingSmall,
+                            const SizedBox(height: 6),
+                            
+                            // Name (Limited lines to prevent overflow)
+                            SizedBox(
+                              height: 40, // Fixed height for text alignment
+                              child: Text(
+                                product?.name ?? "",
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  height: 1.2
+                                ),
+                              ),
                             ),
-                            const Icon(
-                              Icons.star,
-                              size: AppSizes.spacingLarge,
-                              color: Colors.white,
-                            )
+                            const SizedBox(height: 8),
+
+                            // Rating & Wishlist Row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Rating Pill
+                                if (product?.averageRating != null && product?.averageRating != "0")
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: ReviewColorHelper.getColor(double.parse(product?.averageRating.toString() ?? "0")),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "$rating",
+                                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        const Icon(Icons.star, size: 10, color: Colors.white),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  const SizedBox(height: 20), // Placeholder to keep alignment
+
+                                // Wishlist Icon
+                                InkWell(
+                                  onTap: () {
+                                    if (product?.isInWishlist ?? false) {
+                                      compareScreenBloc?.add(FetchDeleteWishlistItemEvent(
+                                          int.parse(product?.id ?? ""), compareScreenModel.data?[index]));
+                                      compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: true));
+                                    } else {
+                                      compareScreenBloc?.add(AddToWishlistCompareEvent(
+                                          product?.id, compareScreenModel.data?[index]));
+                                      compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: true));
+                                    }
+                                  },
+                                  child: Icon(
+                                    (product?.isInWishlist ?? false) ? Icons.favorite : Icons.favorite_border,
+                                    color: (product?.isInWishlist ?? false) ? Colors.red : Colors.grey[400],
+                                    size: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                    ):Container(),
-                    Opacity(
-                      opacity: (compareScreenModel
-                                  .data?[index].product?.isSaleable ??
-                              false)
-                          ? 1
-                          : 0.4,
-                      child: Container(
-                        key: index == 0 ? key : null,
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSizes.spacingNormal),
-                          child: CommonWidgets().appButton(
-                            context,
-                            StringConstants.addToCart.localized(),
-                            MediaQuery.of(context).size.width / 2.5,
-                            (compareScreenModel
-                                        .data?[index].product?.isSaleable ??
-                                    false)
+
+                      const Spacer(),
+
+                      // --- 3. ADD TO CART BUTTON ---
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 36, // Compact height
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              elevation: 0,
+                              padding: EdgeInsets.zero, // Remove internal padding
+                            ),
+                            onPressed: (product?.isSaleable ?? false)
                                 ? () {
-                                    debugPrint(compareScreenModel
-                                            .data?[index].product?.type ??
-                                        "");
-                                    compareScreenBloc?.add(
-                                        OnClickCompareLoaderEvent(
-                                            isReqToShowLoader: true));
-                                    if (compareScreenModel
-                                                .data?[index].product?.type ==
-                                            StringConstants.simple ||
-                                        compareScreenModel
-                                                .data?[index].product?.type ==
-                                            StringConstants.virtual) {
-                                      compareScreenBloc?.add(
-                                          AddToCartCompareEvent(
-                                              (compareScreenModel.data?[index]
-                                                      .product?.id ??
-                                                  ""),
-                                              1,
-                                              ""));
+                                    compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: true));
+                                    if (product?.type == StringConstants.simple || product?.type == StringConstants.virtual) {
+                                      compareScreenBloc?.add(AddToCartCompareEvent((product?.id ?? ""), 1, ""));
                                     } else {
-                                      ShowMessage.showNotification(
-                                          StringConstants.addOptions
-                                              .localized(),
-                                          "",
-                                          Colors.yellow,
-                                          const Icon(Icons.warning_amber));
-                                      compareScreenBloc?.add(
-                                          OnClickCompareLoaderEvent(
-                                              isReqToShowLoader: false));
+                                      ShowMessage.showNotification(StringConstants.addOptions.localized(), "", Colors.yellow, const Icon(Icons.warning_amber));
+                                      compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: false));
                                     }
                                   }
-                                : () {},
+                                : null,
+                            child: Text(
+                              StringConstants.addToCart.localized().toUpperCase(),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
                           ),
                         ),
                       ),
+                    ],
+                  ),
+
+                  // --- 4. FLOATING DELETE BUTTON ---
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: InkWell(
+                      onTap: () {
+                        compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: true));
+                        compareScreenBloc?.add(RemoveFromCompareListEvent(compareScreenModel.data?[index].productId ?? "", ""));
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.05),
+                          borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                        ),
+                        child: const Icon(Icons.close, size: 16, color: Colors.red),
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           }),

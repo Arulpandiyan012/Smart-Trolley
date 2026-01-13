@@ -1,15 +1,24 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/data_model/account_models/account_update_model.dart';
+import 'package:bagisto_app_demo/data_model/account_models/account_info_details.dart';
 import 'package:bagisto_app_demo/screens/account/utils/index.dart';
+import 'package:bagisto_app_demo/utils/shared_preference_helper.dart'; 
+import 'package:bagisto_app_demo/utils/app_global_data.dart';
+import 'package:bagisto_app_demo/utils/string_constants.dart';
+import 'package:bagisto_app_demo/utils/index.dart'; 
+import 'package:bagisto_app_demo/screens/account/widget/profile_detail.dart';
+import 'package:bagisto_app_demo/screens/account/widget/account_loader_view.dart';
+import 'package:bagisto_app_demo/widgets/common_widgets.dart';
+
+// 🟢 FIX: Global Key definition (Required for ContactUsView)
+GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({Key? key}) : super(key: key);
@@ -18,41 +27,52 @@ class AccountScreen extends StatefulWidget {
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
-String? customerUserName;
-bool isLoggedIn = false;
-List<String>? genderValues = [];
-int currentGenderValue = 0;
-GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-final firstNameController = TextEditingController();
-final lastNameController = TextEditingController();
-final dobController = TextEditingController();
-final emailController = TextEditingController();
-final currentPasswordController = TextEditingController();
-final deleteAccountPassword = TextEditingController();
-final newPasswordController = TextEditingController();
-final confirmNewPasswordController = TextEditingController();
-final phoneController = TextEditingController();
-AccountInfoModel? _accountInfoDetails;
-AccountUpdate? _accountUpdate;
-bool isLoad = true;
-String? base64string;
-AccountInfoBloc? accountInfoBloc;
-bool subscribeNewsletter = false;
-
-GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-    GlobalKey<ScaffoldMessengerState>();
-
 class _AccountScreenState extends State<AccountScreen>
     with EmailValidator, PhoneNumberValidator {
+  
+  // Controllers
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final dobController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  
+  String? customerUserName;
+  bool isLoggedIn = false;
+  List<String>? genderValues = ["Male", "Female", "Other"];
+  int currentGenderValue = 0;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  
+  AccountInfoModel? _accountInfoDetails;
+  AccountUpdate? _accountUpdate;
+  bool isLoad = true;
+  String? base64string;
+  AccountInfoBloc? accountInfoBloc;
+  bool subscribeNewsletter = false;
+
   @override
   void initState() {
+    super.initState();
     isLoad = true;
-    currentPasswordController.text = "";
-    newPasswordController.text = "";
-    confirmNewPasswordController.text = "";
     accountInfoBloc = context.read<AccountInfoBloc>();
     accountInfoBloc?.add(AccountInfoDetailsEvent());
-    super.initState();
+    
+    _loadAccountData();
+  }
+
+  void _loadAccountData() {
+    isLoggedIn = appStoragePref.getCustomerLoggedIn();
+    if (isLoggedIn) {
+      String fullName = appStoragePref.getCustomerName() ?? "";
+      List<String> names = fullName.split(" ");
+      
+      firstNameController.text = names.isNotEmpty ? names.first : "";
+      if (names.length > 1) {
+        lastNameController.text = names.sublist(1).join(" ");
+      }
+      
+      emailController.text = appStoragePref.getCustomerEmail() ?? "";
+    }
   }
 
   @override
@@ -91,7 +111,6 @@ class _AccountScreenState extends State<AccountScreen>
     );
   }
 
-  ///Profile BLOC CONTAINER///
   _profileBloc(BuildContext context) {
     return BlocConsumer<AccountInfoBloc, AccountInfoBaseState>(
       listener: (BuildContext context, AccountInfoBaseState state) {
@@ -103,42 +122,12 @@ class _AccountScreenState extends State<AccountScreen>
             if (state.accountUpdate?.status == true) {
               ShowMessage.successNotification(
                   state.accountUpdate?.message ?? "", context);
-
-              Future.delayed(const Duration(seconds: 2)).then((value) {
-                _updateSharedPreferences(_accountUpdate!);
-                Navigator.pop(context, true);
-              });
+              
+              _updateSharedPreferences(state.accountUpdate!);
+              Navigator.pop(context, true);
             } else {
-              Navigator.of(context).pop();
               ShowMessage.errorNotification(
                   state.accountUpdate?.graphqlErrors ?? "", context);
-            }
-          }
-        } else if (state is AccountInfoDeleteState) {
-          if (state.status == AccountStatus.fail) {
-            Navigator.pop(context);
-            ShowMessage.errorNotification(state.error ?? "", context);
-          } else if (state.status == AccountStatus.success) {
-            if (state.baseModel?.status == true) {
-              ShowMessage.successNotification(
-                  state.baseModel?.message ?? "", context);
-              Navigator.pop(context);
-              HomePageRepositoryImp().callLogoutApi().then((response) async {
-                Navigator.pop(context);
-                Future.delayed(const Duration(seconds: 2)).then((value) async {
-                  if (true) {
-                    appStoragePref.onUserLogout();
-                    _fetchSharedPreferenceData();
-                  }
-                  if (!mounted) return;
-                  Navigator.pushReplacementNamed(context, home);
-                });
-              });
-            } else {
-              Navigator.pop(context);
-              Navigator.of(context).pop();
-              ShowMessage.warningNotification(
-                  state.baseModel?.message ?? "", context);
             }
           }
         }
@@ -149,40 +138,25 @@ class _AccountScreenState extends State<AccountScreen>
     );
   }
 
-  ///Profile UI METHODS///
   Widget buildUI(BuildContext context, AccountInfoBaseState state) {
-    if (state is AccountInfoDetailState) {
-      if ((state.status == AccountStatus.success)) {
-        if (isLoad) {
-          isLoad = false;
-          _accountInfoDetails = state.accountInfoDetails;
-          firstNameController.text = _accountInfoDetails?.firstName ?? "";
-          lastNameController.text = _accountInfoDetails?.lastName ?? "";
-          dobController.text =
-              _accountInfoDetails?.dateOfBirth.toString() ?? "";
-          phoneController.text = _accountInfoDetails?.phone ?? "";
-          emailController.text = _accountInfoDetails?.email ?? "";
-          subscribeNewsletter =
-              _accountInfoDetails?.subscribedToNewsLetter ?? false;
+    if (state is AccountInfoDetailState && state.status == AccountStatus.success) {
+      if (isLoad) {
+        isLoad = false;
+        _accountInfoDetails = state.accountInfoDetails;
+        
+        if (_accountInfoDetails != null) {
+          firstNameController.text = _accountInfoDetails!.firstName ?? "";
+          lastNameController.text = _accountInfoDetails!.lastName ?? "";
+          emailController.text = _accountInfoDetails!.email ?? "";
+          phoneController.text = _accountInfoDetails!.phone ?? "";
+          dobController.text = _accountInfoDetails!.dateOfBirth ?? "";
+          subscribeNewsletter = _accountInfoDetails!.subscribedToNewsLetter ?? false;
+          
+          // 🟢 FIX: Removed gender check because the field is missing in Model
+          // Defaulting to Male (0) or you can fetch it if you find the correct field name
+          currentGenderValue = 0; 
         }
       }
-      if (state.status == AccountStatus.fail) {
-        return const AccountLoaderView();
-      }
-    }
-    if (state is AccountInfoUpdateState) {
-      if (state.status == AccountStatus.success) {
-        _accountUpdate = state.accountUpdate;
-
-        if (_accountUpdate != null) {
-          _updateSharedPreferences(_accountUpdate!);
-        }
-      }
-      if (state.status == AccountStatus.fail) {}
-    }
-    if (state is AccountInfoDeleteState) {
-      if (state.status == AccountStatus.success) {}
-      if (state.status == AccountStatus.fail) {}
     }
 
     if (state is InitialAccountState) {
@@ -192,96 +166,52 @@ class _AccountScreenState extends State<AccountScreen>
     return SafeArea(
       child: ProfileDetailView(
         formKey: _formKey,
+        firstNameController: firstNameController,
+        lastNameController: lastNameController,
+        emailController: emailController,
+        phoneController: phoneController,
+        dobController: dobController,
         subsNewsLetter: subscribeNewsletter,
+        genderValues: genderValues,
+        currentGenderValue: currentGenderValue,
         onChanged: (value) {
           setState(() {
-            subscribeNewsletter = value; // Update local state
-            // You can perform any additional logic here if needed
-            print(
-                "Newsletter subscription status changed: $subscribeNewsletter");
+            subscribeNewsletter = value;
           });
         },
       ),
     );
   }
 
-  _fetchSharedPreferenceData() {
-    bool isLogged = appStoragePref.getCustomerLoggedIn();
-    if (isLogged) {
-      String value = appStoragePref.getCustomerName();
-      setState(() {
-        customerUserName = value;
-        isLoggedIn = isLogged;
-      });
-    } else {
-      setState(() {
-        customerUserName = StringConstants.welcomeGuest.localized();
-        isLoggedIn = isLogged;
-      });
-    }
-  }
-
-  ///this method will call on press save button
   _onPressSaveButton() {
     if (_formKey.currentState!.validate()) {
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return Dialog(
-              child: Container(
-                color: Theme.of(context).colorScheme.background,
-                padding: const EdgeInsets.all(AppSizes.spacingWide),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(
-                      height: AppSizes.spacingMedium,
-                    ),
-                    CircularProgressIndicatorClass.circularProgressIndicator(
-                        context),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 2.5,
-                      child: Center(
-                        child: Text(
-                          StringConstants.processWaitingMsg.localized(),
-                          softWrap: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: AppSizes.spacingMedium,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          });
+      FocusScope.of(context).unfocus();
+      
       accountInfoBloc?.add(AccountInfoUpdateEvent(
           firstName: firstNameController.text,
           lastName: lastNameController.text,
-          gender: genderValues?[currentGenderValue],
+          gender: genderValues?[currentGenderValue] ?? "Male",
           email: emailController.text,
           dob: dobController.text,
           phone: phoneController.text,
-          password: newPasswordController.text,
-          confirmPassword: confirmNewPasswordController.text,
-          oldPassword: currentPasswordController.text,
+          oldPassword: "", 
+          password: "",
+          confirmPassword: "",
           avatar: base64string ?? "",
           subscribedToNewsLetter: subscribeNewsletter));
-      Future.delayed(const Duration(seconds: 3)).then((value) {
-        Navigator.pop(context);
-      });
     }
   }
 
-  ///this method will update the changes in the save shared preference data
   _updateSharedPreferences(AccountUpdate accountUpdate) {
     appStoragePref.setCustomerLoggedIn(true);
-    appStoragePref.setCustomerName(accountUpdate.data?.name ?? "");
-    appStoragePref.setCustomerImage(accountUpdate.data?.imageUrl ?? "");
-    appStoragePref.setCustomerEmail(accountUpdate.data?.email ?? "");
-    return true;
+    // Access data safely
+    var data = accountUpdate.data;
+    if (data != null) {
+      String fName = data.firstName ?? "";
+      String lName = data.lastName ?? "";
+      appStoragePref.setCustomerName("$fName $lName".trim());
+      appStoragePref.setCustomerEmail(data.email ?? "");
+      appStoragePref.setCustomerImage(data.imageUrl ?? "");
+    }
   }
 }

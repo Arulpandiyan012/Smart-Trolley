@@ -1,137 +1,128 @@
-
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
-
 import '../utils/cart_index.dart';
 
 class ApplyCouponView extends StatefulWidget {
   final CartModel? cartDetailsModel;
   final CartScreenBloc? cartScreenBloc;
-  final TextEditingController  discountController;
+  final TextEditingController discountController;
 
-
-
-  const ApplyCouponView({Key? key, this.cartDetailsModel, this.cartScreenBloc,required this.discountController}) : super(key: key);
+  const ApplyCouponView({
+    Key? key,
+    this.cartDetailsModel,
+    this.cartScreenBloc,
+    required this.discountController
+  }) : super(key: key);
 
   @override
   State<ApplyCouponView> createState() => _ApplyCouponViewState();
 }
 
 class _ApplyCouponViewState extends State<ApplyCouponView> {
-  bool  showButton=false;
-  final _discountCouponFormKey = GlobalKey<FormState>();
-  final bool _autoValidate = false;
-
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Theme(
-        data:Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          initiallyExpanded: true,
-          iconColor: Colors.grey,
-          title: Text(
-            StringConstants.applyCode.localized(),
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.bold,
+    // Check if a coupon is currently applied
+    bool isCouponApplied = widget.cartDetailsModel?.couponCode != null && 
+                           (widget.cartDetailsModel?.couponCode?.isNotEmpty ?? false);
+
+    // If applied, show the code in the box. If not, show hint text.
+    String hintText = isCouponApplied 
+        ? (widget.cartDetailsModel?.couponCode ?? "") 
+        : "Have a coupon code?";
+
+    return Container(
+      height: 54, // Fixed clean height
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300), // Subtle modern border
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02), 
+            blurRadius: 2, 
+            offset: const Offset(0, 1)
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          // 1. COUPON ICON
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9), // Light Green bg for icon
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.local_offer, // Ticket Icon
+              color: Color(0xFF0C831F), // Blinkit Green
+              size: 18,
             ),
           ),
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.spacingNormal,
-                  vertical: AppSizes.spacingLarge
+          
+          const SizedBox(width: 12),
+
+          // 2. INPUT FIELD
+          Expanded(
+            child: TextField(
+              controller: widget.discountController,
+              enabled: !isCouponApplied, // Lock input if code is applied
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: TextStyle(
+                  color: isCouponApplied ? Colors.black87 : Colors.grey,
+                  fontWeight: isCouponApplied ? FontWeight.bold : FontWeight.normal,
+                ),
+                border: InputBorder.none, // Removes the default underline
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Form(
-                      key: _discountCouponFormKey,
-                      autovalidateMode: _autoValidate
-                          ? AutovalidateMode.onUserInteraction
-                          : AutovalidateMode.disabled,
-                      child: CommonWidgets().getTextField(
-                          context,
-                          widget.discountController,
-                        StringConstants.cartPageEnterDiscountCodeLabel
-                              .localized(),
-                          label: StringConstants.couponCode
-                              .localized(),
-                        validator: (discountCode) {
-                        if ((discountCode?.trim() ?? "").isEmpty) {
-                          setState(() {
-                            showButton = true;
-                          });
-                          return StringConstants.couponEmpty.localized();
-                        }
-                        return null;
-                      },
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: AppSizes.spacingNormal,bottom: showButton? AppSizes.spacingWide:0,right: 3),
-                      child: MaterialButton(
-                        height: AppSizes.buttonHeight+5,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onBackground,
-                        textColor: Theme.of(context)
-                            .colorScheme.background,
-                        elevation: 0.0,
-                        shape:  RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.spacingSmall),
-                        ),
-                        onPressed: () {
-                          if (_discountCouponFormKey.currentState!.validate()) {
-                            setState(() {
-                              showButton=false;
-                            });
-                            if (widget.cartDetailsModel?.couponCode ==
-                                null) {
-                              widget.cartScreenBloc?.add(
-                                  AddCouponCartEvent(
-                                      widget.discountController.text));
-                            } else {
-                              widget.cartScreenBloc?.add(
-                                  RemoveCouponCartEvent(
-                                      widget.cartDetailsModel));
-                              widget.discountController.text = "";
-                            }
-                          }
-                        },
-                        child: widget.cartDetailsModel?.couponCode ==
-                            null ||
-                            widget.cartDetailsModel?.couponCode ==
-                                ''
-                            ? Text(
-                          StringConstants.apply.localized().toUpperCase(),
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.background
-                          ),
-                        )
-                            : Text(StringConstants.remove.localized()),
-                      ),
-                    ),
-                  )
-                ],
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
-            )
-          ],
-        ),
+              // Update state to remove error styling if user types
+              onChanged: (val) {
+                if (mounted) setState(() {});
+              },
+            ),
+          ),
+
+          // 3. APPLY / REMOVE BUTTON
+          InkWell(
+            onTap: () {
+              if (isCouponApplied) {
+                // --- REMOVE LOGIC ---
+                widget.cartScreenBloc?.add(RemoveCouponCartEvent(widget.cartDetailsModel));
+                widget.discountController.clear();
+              } else {
+                // --- APPLY LOGIC ---
+                if (widget.discountController.text.trim().isNotEmpty) {
+                  widget.cartScreenBloc?.add(AddCouponCartEvent(widget.discountController.text));
+                } else {
+                  ShowMessage.warningNotification(StringConstants.couponEmpty.localized(), context);
+                }
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Text(
+                isCouponApplied 
+                    ? StringConstants.remove.localized().toUpperCase() 
+                    : StringConstants.apply.localized().toUpperCase(),
+                style: TextStyle(
+                  color: isCouponApplied ? Colors.red : const Color(0xFF0C831F),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -85,3 +85,13 @@ class FilterFetchEvent extends CategoryBaseEvent {
   @override
   List<Object> get props => [];
 }
+
+class AddToCartSubCategoryEvent extends CategoryBaseEvent {
+  final int? productId;
+  final int? quantity;
+
+  AddToCartSubCategoryEvent(this.productId, this.quantity);
+
+  @override
+  List<Object> get props => [productId ?? 0, quantity ?? 1];
+}

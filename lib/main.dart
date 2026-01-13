@@ -1,17 +1,14 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
-// must_be_immutable, void_checks
-
 import 'dart:io';
-
 import 'package:bagisto_app_demo/screens/home_page/data_model/get_categories_drawer_data_model.dart';
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 import 'package:bagisto_app_demo/utils/app_navigation.dart';
@@ -28,6 +25,14 @@ import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
 import 'package:bagisto_app_demo/screens/root/bottom_nav_scaffold.dart';
 import 'data_model/product_model/product_screen_model.dart';
+import 'package:flutter/services.dart'; 
+import 'package:google_fonts/google_fonts.dart';
+
+// 🟢 IMPORTS FOR BLOC
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_bloc.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_repository.dart';
+import 'package:bagisto_app_demo/widgets/internet_monitor.dart';
 
 String? token;
 
@@ -36,12 +41,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 AndroidNotificationChannel channel = const AndroidNotificationChannel(
-  'high_importance_channel', // id
-  'High Importance Notifications', // title// description
+  'high_importance_channel', 
+  'High Importance Notifications', 
   importance: Importance.high,
 );
+
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
 Future<void> main() async {
   await GetStorage.init("configurationStorage");
   HttpOverrides.global = MyHttpOverrides();
@@ -83,13 +90,11 @@ Future<void> hiveRegisterAdapter() async {
   Hive.registerAdapter(GetDrawerCategoriesDataAdapter());
 }
 
-// restarts the widget by taking a child widget to draw and assign unique key to be associated with it
 class RestartWidget extends StatefulWidget {
   const RestartWidget({Key? key, required this.child}) : super(key: key);
   final Widget child;
 
   static restartApp(BuildContext context) {
-    //find the current this state object and calls the [restartApp] function to restart the whole app
     context.findAncestorStateOfType<_RestartWidgetState>()?.restartApp();
   }
 
@@ -116,8 +121,6 @@ class _RestartWidgetState extends State<RestartWidget> {
   }
 }
 
-/// BagistoApp class is the main class of the application. It is responsible for
-/// initializing the app,setting up the theme, routes, and localization settings.
 class BagistoApp extends StatefulWidget {
   const BagistoApp(
     this.selectedLanguage, {
@@ -133,7 +136,6 @@ class _BagistoAppState extends State<BagistoApp> {
   Locale? _locale;
   String appRoot = splash;
 
-  /// Initialize the app with default values like language, currency, currency symbol
   @override
   void initState() {
     GlobalData.locale = appStoragePref.getCustomerLanguage();
@@ -145,7 +147,6 @@ class _BagistoAppState extends State<BagistoApp> {
     super.initState();
   }
 
-  // Permission for notification
   Future<void> notification() async {
     await Permission.notification.isDenied.then((value) {
       if (value) {
@@ -154,57 +155,93 @@ class _BagistoAppState extends State<BagistoApp> {
     });
   }
 
-  /// Builds the MaterialApp widget with the specified theme, routes, and localization settings.
-  /// Returns a ChangeNotifierProvider that provides a ThemeProvider to the widget tree. The
-  /// ThemeProvider is used to manage the theme of the app. The MaterialApp widget is wrapped
-  /// in an OverlaySupport widget to enable overlay notifications. The supportedLocales property
-  /// specifies the locales that the app supports. The localeResolutionCallback property is used
-  /// to resolve the locale based on the user's preferred locale. The locale property specifies the current locale of the app.
   @override
   Widget build(BuildContext context) {
     return OverlaySupport.global(
-        child: ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: Consumer<ThemeProvider>(
+      child: ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+        child: Consumer<ThemeProvider>(
           builder: (context, ThemeProvider themeNotifier, child) {
-        return MaterialApp(
-          theme: MobiKulTheme.lightTheme,
-          themeMode: ThemeMode.system,
-          darkTheme: MobiKulTheme.darkTheme,
-          initialRoute: appRoot,
-          onGenerateRoute: generateRoute,
-  //         routes: {
-  //   home: (_) => const BottomNavScaffold(), // 👈 add this
-  // },
-          title: defaultAppTitle,
-          debugShowCheckedModeBanner: false,
-          supportedLocales: supportedLocale.map((e) => Locale(e)),
-          localizationsDelegates: const [
-            ApplicationLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          localeResolutionCallback: (locale, supportedLocales) {
-            for (var supportedLocaleLanguage in supportedLocales) {
-              if (supportedLocaleLanguage.languageCode ==
-                      locale?.languageCode &&
-                  supportedLocaleLanguage.countryCode == locale?.countryCode) {
-                return supportedLocaleLanguage;
-              }
-            }
-            return supportedLocales.first;
+            
+            // 🟢 MULTI BLOC PROVIDER WRAPPER
+            return MultiBlocProvider(
+              providers: [
+                // Global Cart Provider
+                BlocProvider<CartScreenBloc>(
+                  create: (context) => CartScreenBloc(CartScreenRepositoryImp()),
+                ),
+              ],
+              child: MaterialApp(
+                theme: ThemeData(
+                  useMaterial3: true,
+                  scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+                  primaryColor: const Color(0xFF0C831F),
+                  colorScheme: ColorScheme.fromSwatch().copyWith(
+                    primary: const Color(0xFF0C831F),
+                    secondary: const Color(0xFF0C831F),
+                  ),
+                  textTheme: GoogleFonts.poppinsTextTheme(
+                    Theme.of(context).textTheme,
+                  ),
+                  appBarTheme: const AppBarTheme(
+                    elevation: 0,
+                    backgroundColor: Colors.white,
+                    iconTheme: IconThemeData(color: Colors.black),
+                    titleTextStyle: TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+                darkTheme: MobiKulTheme.darkTheme,
+                themeMode: ThemeMode.light,
+                initialRoute: appRoot,
+                onGenerateRoute: generateRoute,
+                title: defaultAppTitle,
+                debugShowCheckedModeBanner: false,
+                supportedLocales: supportedLocale.map((e) => Locale(e)),
+                localizationsDelegates: const [
+                  ApplicationLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                localeResolutionCallback: (locale, supportedLocales) {
+                  for (var supportedLocaleLanguage in supportedLocales) {
+                    if (supportedLocaleLanguage.languageCode ==
+                            locale?.languageCode &&
+                        supportedLocaleLanguage.countryCode ==
+                            locale?.countryCode) {
+                      return supportedLocaleLanguage;
+                    }
+                  }
+                  return supportedLocales.first;
+                },
+                locale: _locale,
+                builder: (context, child) {
+                  return MediaQuery(
+                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                    child: child ?? const SizedBox(),
+                  );
+                  return InternetMonitor(
+    // 2. Keep your existing MediaQuery logic inside
+    child: MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+      child: child ?? const SizedBox(),
+    ),
+  );
+                },
+                       ),
+            );
           },
-          locale: _locale,
-        );
-      }
+        ),
       ),
-    )
     );
   }
 }
 
-/// HttpOverrides class to bypass SSL certificate verification for HTTPS requests to localhost. This is useful for testing purposes when using a local server.
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {

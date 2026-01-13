@@ -48,16 +48,18 @@ class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
       }
     } else if (event is AddToCartWishlistEvent) {
       try {
+        // 🟢 REMOVE 'int.parse()' -> Just use .toString()
         AddToCartModel? addToCartModel = await repository!
-            .callAddToCartAPi(int.parse(event.productId), event.quantity);
-        if (addToCartModel?.status == true) {
+            .callAddToCartAPi(event.productId.toString(), event.quantity);
+
+        if (addToCartModel?.status == true || addToCartModel?.success == true) {
           emit(AddToCartWishlistState.success(
               response: addToCartModel,
               cartProductId: event.productId,
               successMsg: StringConstants.addedToCart.localized()));
         } else {
           emit(AddToCartWishlistState.fail(
-              error: addToCartModel?.graphqlErrors));
+              error: addToCartModel?.graphqlErrors ?? addToCartModel?.message));
         }
       } catch (e) {
         emit(AddToCartWishlistState.fail(

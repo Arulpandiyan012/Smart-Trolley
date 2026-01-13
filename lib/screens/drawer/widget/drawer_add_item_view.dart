@@ -1,15 +1,14 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
-
-
+import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/screens/drawer/utils/index.dart';
 
 class DrawerAddItemList extends StatelessWidget {
@@ -29,11 +28,11 @@ class DrawerAddItemList extends StatelessWidget {
             height: 40,
             child: ListTile(
                 title: Text(
-             " headingTitle?.localized().toUpperCase() "?? "",
+              headingTitle?.localized().toUpperCase() ?? "",
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: Colors.grey[500],
+                color: Colors.grey[600], // 🟢 FIX: Visible Grey Color
               ),
             )),
           )
@@ -44,13 +43,22 @@ class DrawerAddItemList extends StatelessWidget {
               leading: Icon(
                 icon,
                 size: AppSizes.spacingWide,
-                color: Theme.of(context).colorScheme.onPrimary,
+                // 🟢 FIX: Changed from 'onPrimary' (White) to Grey[700]
+                color: Colors.grey[700], 
               ),
-              title: CommonWidgets()
-                  .getDrawerTileText(subTitle?.localized() ?? "", context),
+              title: Text(
+                subTitle?.localized() ?? "",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87, // 🟢 FIX: Enforce Black Text
+                ),
+              ),
               trailing: Icon(
                 Icons.chevron_right,
-                color: Theme.of(context).colorScheme.onPrimary,
+                size: 20,
+                // 🟢 FIX: Changed from 'onPrimary' (White) to Grey[400]
+                color: Colors.grey[400], 
               ),
             ),
           );

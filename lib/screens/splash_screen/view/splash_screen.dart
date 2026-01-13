@@ -29,34 +29,25 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child:
-        LottieBuilder.asset(AssetConstants.splashLottie),
-        // Stack(
-        //   children: [
-        //     SizedBox(
-        //       width: AppSizes.screenWidth.toDouble(),
-        //       height: AppSizes.screenHeight.toDouble(),
-        //       child: Image.asset(AssetConstants.splashImage,
-        //         fit: BoxFit.fill,
-        //       ),
-        //     ),
-        //     Positioned(
-        //       bottom: AppSizes.screenHeight * 0.1,
-        //       left: 0,
-        //       right: 0,
-        //       child: const Loader(),
-        //     )
-        //   ],
-        // ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: SizedBox(
+      height: MediaQuery.of(context).size.height,
+      width: MediaQuery.of(context).size.width,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: LottieBuilder.asset(
+            AssetConstants.splashLottie,
+            fit: BoxFit.contain, // Ensures the shrunk logo fits perfectly
+          ),
+        ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   _navigateHomepage() async {
     Directory appDocDir = await getApplicationDocumentsDirectory();
     appDocPath = appDocDir.path;

@@ -1,676 +1,370 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
-import 'package:bagisto_app_demo/screens/order_detail/widgets/shipping_payment_info.dart';
-
-import '../../../utils/extension.dart';
+import 'package:bagisto_app_demo/utils/index.dart'; 
 
 class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
   final OrderDetail? orderDetailModel;
   final int? orderId;
   final OrderDetailBloc? orderDetailBloc;
   final bool? isLoading;
+  final VoidCallback? onCancelOrder;
 
-  OrderDetailTile(
-      {this.orderDetailModel,
-      this.orderId,
-      this.orderDetailBloc,
-      this.isLoading,
-      Key? key})
-      : super(key: key);
+  OrderDetailTile({
+    Key? key,
+    this.orderDetailModel,
+    this.orderId,
+    this.orderDetailBloc,
+    this.isLoading,
+    this.onCancelOrder, 
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: _getOrderDetail(context),
-    );
-  }
-
-  _getOrderDetail(BuildContext context) {
     if (orderDetailModel == null) {
-      return const NoDataFound();
-    } else {
-      return Stack(children: [
-        RefreshIndicator(
-          color: Theme.of(context).colorScheme.onPrimary,
-          onRefresh: () {
-            return Future.delayed(const Duration(seconds: 1), () {
-              OrderDetailBloc orderDetailBloc = context.read<OrderDetailBloc>();
-              orderDetailBloc.add(OrderDetailFetchDataEvent(orderId));
-            });
-          },
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppSizes.spacingMedium),
-                        topRight: Radius.circular(AppSizes.spacingMedium)),
-                  ),
-                  padding: const EdgeInsets.all(AppSizes.spacingNormal),
-                  margin: const EdgeInsets.all(AppSizes.spacingNormal),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                              StringConstants.orderWithHash.localized() +
-                                  (orderDetailModel?.incrementId ?? ""),
-                              style: Theme.of(context).textTheme.headlineSmall),
-                          orderDetailModel?.status?.toLowerCase() ==
-                                  StringConstants.pending
-                                      .localized()
-                                      .toLowerCase()
-                              ? ElevatedButton(
-                                  style: ButtonStyle(
-                                    minimumSize: MaterialStateProperty.all(
-                                        const Size(80, 30)),
-                                    maximumSize: MaterialStateProperty.all(
-                                        const Size(140, 100)),
-                                    foregroundColor:
-                                        MaterialStateProperty.all<Color>(
-                                            MobiKulTheme.primaryColor),
-                                    backgroundColor:
-                                        MaterialStateProperty.all<Color>(
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .onBackground,
-                                    ),
-                                    shape: MaterialStateProperty.all<
-                                        RoundedRectangleBorder>(
-                                      const RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.zero,
-                                      ),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext ctx) {
-                                          return AlertDialog(
-                                            title: Text(StringConstants
-                                                .pleaseConfirm
-                                                .localized()),
-                                            content: Text(
-                                              StringConstants.confirmOrder
-                                                  .localized(),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium,
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                  style: TextButton.styleFrom(
-                                                      shape: RoundedRectangleBorder(
-                                                          side: BorderSide(
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .colorScheme
-                                                                  .onPrimary,
-                                                              width: 1),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      4))),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: Text(
-                                                    StringConstants.cancelLbl
-                                                        .localized(),
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onPrimary),
-                                                  )),
-                                              TextButton(
-                                                  style: TextButton.styleFrom(
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          4)),
-                                                      backgroundColor:
-                                                          MobiKulTheme
-                                                              .accentColor),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                    orderDetailBloc?.add(
-                                                        OnClickOrderLoadingEvent(
-                                                            isReqToShowLoader:
-                                                                true));
-                                                    orderDetailBloc?.add(
-                                                        CancelOrderEvent(
-                                                            orderDetailModel
-                                                                    ?.id ??
-                                                                0,
-                                                            ""));
-                                                  },
-                                                  child: Text(
-                                                      StringConstants.ok
-                                                          .localized(),
-                                                      style: const TextStyle(
-                                                          color: MobiKulTheme
-                                                              .primaryColor))),
-                                            ],
-                                          );
-                                        });
-                                  },
-                                  child: Text(
-                                    StringConstants.cancel.localized(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .background),
-                                  ),
-                                )
-                              : const SizedBox(),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      const Divider(),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(orderDetailModel?.createdAt ?? ""),
-                          Container(
-                            padding:
-                                const EdgeInsets.all(AppSizes.spacingNormal),
-                            color:
-                                getOrderBgColor(orderDetailModel?.status ?? ""),
-                            child: Text(
-                              orderDetailModel?.status ?? "".toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
+      return const Center(child: CircularProgressIndicator(color: Colors.green));
+    }
+
+    bool isPending = (orderDetailModel?.status?.toLowerCase() ?? "") == "pending";
+
+    return Container(
+      color: Colors.grey[100], 
+      child: Stack(
+        children: [
+          RefreshIndicator(
+            color: Colors.black,
+            onRefresh: () {
+              return Future.delayed(const Duration(seconds: 1), () {
+                context.read<OrderDetailBloc>().add(OrderDetailFetchDataEvent(orderId));
+              });
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                children: [
+                  // --- THE SINGLE TILE (All Details in One Card) ---
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. HEADER: Order ID & Status
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "ORDER #${orderDetailModel?.id ?? ''}",
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  orderDetailModel?.createdAt ?? "",
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(AppSizes.spacingNormal, 0,
-                      AppSizes.spacingNormal, AppSizes.spacingNormal),
-                  margin: const EdgeInsets.fromLTRB(AppSizes.spacingNormal, 0,
-                      AppSizes.spacingNormal, AppSizes.spacingNormal),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(orderDetailModel?.items?.length.toString() ?? "",
-                              style: Theme.of(context).textTheme.labelLarge),
-                          const SizedBox(height: AppSizes.spacingSmall),
-                          Text(
-                              StringConstants.itemOrdered
-                                  .localized()
-                                  .toUpperCase(),
-                              style: Theme.of(context).textTheme.labelLarge),
-                          const Spacer(),
-                          if (orderDetailModel?.items
-                                  ?.any((item) => item.type == 'bundle') !=
-                              true)
-                            GestureDetector(
-                              onTap: () {
-                                orderDetailBloc?.add(ReOrderEvent(
-                                    orderDetailModel?.id.toString()));
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onPrimary)),
-                                padding: const EdgeInsets.all(
-                                    AppSizes.spacingWide / 2),
-                                child: Text(
-                                  StringConstants.reOrder.localized(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: getOrderBgColor(orderDetailModel?.status ?? "").withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                (orderDetailModel?.status ?? "").toUpperCase(),
+                                style: TextStyle(
+                                  color: getOrderBgColor(orderDetailModel?.status ?? ""),
+                                  fontSize: 11, fontWeight: FontWeight.bold
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      const Divider(),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      ListView.separated(
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+                        const Divider(thickness: 1, height: 1),
+                        const SizedBox(height: 16),
+
+                        // 2. ITEMS ORDERED (Moved to Top)
+                        const Text("Items Ordered", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        const SizedBox(height: 12),
+                        ListView.separated(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
-                          itemBuilder: (BuildContext context, int itemIndex) {
-                            return Container(
-                              padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: (orderDetailModel?.items![itemIndex]
-                                                    .product?.images ??
-                                                [])
-                                            .isNotEmpty
-                                        ? ImageView(
-                                            url: orderDetailModel
-                                                    ?.items![itemIndex]
-                                                    .product
-                                                    ?.images?[0]
-                                                    .url ??
-                                                "",
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                            height: 210,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : ImageView(
-                                            url: "",
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height /
-                                                3.3,
-                                          ),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: AppSizes.spacingNormal),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            orderDetailModel
-                                                    ?.items![itemIndex].name ??
-                                                "",
-                                            style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                          const SizedBox(
-                                              height: AppSizes.spacingNormal),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  StringConstants.qty
-                                                      .localized(),
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 2,
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                        "${StringConstants.ordered.localized()}     ${orderDetailModel?.items?[itemIndex].qtyOrdered.toString() ?? ""}",
-                                                        style: const TextStyle(
-                                                            letterSpacing:
-                                                                0.2)),
-                                                    const SizedBox(
-                                                        height: AppSizes
-                                                            .spacingNormal),
-                                                    Text(
-                                                      "${StringConstants.shipped.localized()}      ${orderDetailModel?.items![itemIndex].qtyShipped.toString() ?? ""}",
-                                                    ),
-                                                    const SizedBox(
-                                                        height: AppSizes
-                                                            .spacingNormal),
-                                                    Text(
-                                                      "${StringConstants.cancelled.localized()}  ${orderDetailModel?.items![itemIndex].qtyCanceled.toString() ?? ""}",
-                                                      style: const TextStyle(
-                                                          letterSpacing: 0.2),
-                                                    ),
-                                                    const SizedBox(
-                                                        height: AppSizes
-                                                            .spacingNormal),
-                                                    Text(
-                                                        "${StringConstants.refunded.localized()}   ${orderDetailModel?.items![itemIndex].qtyRefunded.toString() ?? ""}",
-                                                        style: const TextStyle(
-                                                            letterSpacing:
-                                                                0.1)),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(
-                                              height: AppSizes.spacingMedium),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  StringConstants.price
-                                                      .localized(),
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 2,
-                                                child: Text(
-                                                  orderDetailModel
-                                                          ?.items![itemIndex]
-                                                          .formattedPrice
-                                                          ?.price ??
-                                                      "",
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(
-                                              height: AppSizes.spacingMedium),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  StringConstants.subTotal
-                                                      .localized(),
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 2,
-                                                child: Text(
-                                                  orderDetailModel
-                                                          ?.items![itemIndex]
-                                                          .formattedPrice
-                                                          ?.total ??
-                                                      "",
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(
-                                              height: AppSizes.spacingMedium),
-                                          ...?getAttributesValueFromAdditional(
-                                                  orderDetailModel
-                                                      ?.items![itemIndex]
-                                                      .additional)
-                                              ?.map((item) => Column(
-                                                    children: [
-                                                      Row(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Expanded(
-                                                            flex: 1,
-                                                            child: Text(
-                                                              item['attribute_name'] ??
-                                                                  "",
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          Expanded(
-                                                            flex: 2,
-                                                            child: Text(
-                                                              item["option_label"] ??
-                                                                  "",
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(
-                                                          height: AppSizes
-                                                              .spacingMedium),
-                                                    ],
-                                                  ))
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                ],
+                          itemCount: orderDetailModel?.items?.length ?? 0,
+                          separatorBuilder: (context, index) => const Divider(height: 20),
+                          itemBuilder: (context, index) {
+                            return _buildProductItem(orderDetailModel?.items?[index]);
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+                        const Divider(thickness: 1, height: 1),
+                        const SizedBox(height: 16),
+
+                        // 3. MY ADDRESS (Moved Below Items)
+                        const Text("Delivery Details", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        const SizedBox(height: 16),
+                        
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // LEFT: BILLING ADDRESS
+                            Expanded(
+                              flex: 4,
+                              child: _buildAddressNode(
+                                icon: Icons.receipt_long, 
+                                title: "Billing Address",
+                                address: orderDetailModel?.billingAddress,
+                                alignLeft: true
                               ),
-                            );
-                          },
-                          separatorBuilder: (context, index) {
-                            return const Divider();
-                          },
-                          itemCount: orderDetailModel?.items!.length ?? 0)
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(AppSizes.spacingNormal, 0,
-                      AppSizes.spacingNormal, AppSizes.spacingNormal),
-                  margin: const EdgeInsets.fromLTRB(AppSizes.spacingNormal, 0,
-                      AppSizes.spacingNormal, AppSizes.spacingNormal),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                              StringConstants.priceDetails
-                                  .localized()
-                                  .toUpperCase(),
-                              style: Theme.of(context).textTheme.labelLarge)
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      const Divider(),
-                      const SizedBox(height: AppSizes.spacingNormal),
-                      Column(children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.spacingSmall),
-                          // color: Colors.white,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CommonWidgets().getDrawerTileText(
-                                  StringConstants.subTotal.localized(),
-                                  context),
-                              CommonWidgets().getDrawerTileText(
-                                  orderDetailModel?.formattedPrice?.subTotal ??
-                                      "",
-                                  context),
-                            ],
-                          ),
+                            ),
+                            
+                            // CENTER: LINE
+                            Expanded(
+                              flex: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 14),
+                                child: _buildDottedLine(),
+                              ),
+                            ),
+
+                            // RIGHT: SHIPPING ADDRESS
+                            Expanded(
+                              flex: 4,
+                              child: _buildAddressNode(
+                                icon: Icons.local_shipping_outlined, 
+                                title: "Shipping Address",
+                                address: orderDetailModel?.shippingAddress,
+                                alignLeft: false // Align to right
+                              ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.spacingSmall),
-                          // color: Colors.white,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CommonWidgets().getDrawerTileText(
-                                  StringConstants.shippingHandling.localized(),
-                                  context),
-                              CommonWidgets().getDrawerTileText(
-                                  orderDetailModel
-                                          ?.formattedPrice?.shippingAmount ??
-                                      "",
-                                  context),
-                            ],
-                          ),
+
+                        const SizedBox(height: 24),
+                        const Divider(thickness: 1, height: 1),
+                        const SizedBox(height: 16),
+
+                        // 4. TOTAL & PAYMENT
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("Total Amount", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text(
+                              orderDetailModel?.formattedPrice?.grandTotal ?? "0.00",
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
+                            ),
+                          ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.spacingSmall),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CommonWidgets().getDrawerTileText(
-                                  StringConstants.tax.localized(), context),
-                              CommonWidgets().getDrawerTileText(
-                                  orderDetailModel?.formattedPrice?.taxAmount ??
-                                      "",
-                                  context),
-                            ],
-                          ),
+                        
+                        const SizedBox(height: 4),
+                        Text(
+                          "Payment: ${orderDetailModel?.payment?.methodTitle ?? 'N/A'}", 
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600])
                         ),
-                        orderDetailModel?.formattedPrice?.discountAmount !=
-                                "\$0.00"
-                            ? Container(
-                                padding:
-                                    const EdgeInsets.all(AppSizes.spacingSmall),
-                                // color: Colors.white,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    CommonWidgets().getDrawerTileText(
-                                        StringConstants.discount.localized(),
-                                        context),
-                                    CommonWidgets().getDrawerTileText(
-                                        orderDetailModel?.formattedPrice
-                                                ?.discountAmount ??
-                                            "",
-                                        context),
-                                  ],
+
+                        // 5. CANCEL BUTTON
+                        if (isPending) ...[
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 45,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red[50],
+                                foregroundColor: Colors.red,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(color: Colors.red, width: 1)
                                 ),
-                              )
-                            : const SizedBox.shrink(),
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.spacingSmall),
-                          // color: Colors.white,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CommonWidgets().getDrawerTileText(
-                                  StringConstants.grandTotal.localized(),
-                                  context),
-                              CommonWidgets().getDrawerTileText(
-                                  orderDetailModel
-                                          ?.formattedPrice?.grandTotal ??
-                                      "",
-                                  context),
-                            ],
+                              ),
+                              onPressed: onCancelOrder,
+                              child: const Text("Cancel Order", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            ),
                           ),
-                        )
-                      ]),
-                    ],
+                        ]
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSizes.spacingNormal),
-                if ((orderDetailModel?.items ?? []).isNotEmpty &&
-                    orderDetailModel?.items?[0].qtyInvoiced != 0)
-                  shipmentInvoiceDetails(StringConstants.invoiceDetails,
-                      invoiceDetails, orderDetailModel, context),
-                if ((orderDetailModel?.items ?? []).isNotEmpty &&
-                    orderDetailModel?.items?[0].qtyShipped != 0)
-                  const SizedBox(height: AppSizes.spacingNormal),
-                if ((orderDetailModel?.items ?? []).isNotEmpty &&
-                    orderDetailModel?.items?[0].qtyShipped != 0)
-                  shipmentInvoiceDetails(StringConstants.shipmentDetails,
-                      shipmentDetails, orderDetailModel, context),
-                if ((orderDetailModel?.items ?? []).isNotEmpty &&
-                    orderDetailModel?.items?[0].qtyRefunded != 0)
-                  const SizedBox(height: AppSizes.spacingNormal),
-                if ((orderDetailModel?.items ?? []).isNotEmpty &&
-                    orderDetailModel?.items?[0].qtyRefunded != 0)
-                  shipmentInvoiceDetails(StringConstants.refundDetails,
-                      refundDetails, orderDetailModel, context),
-                const SizedBox(height: AppSizes.spacingNormal),
-                Padding(
-                  padding: const EdgeInsets.all(AppSizes.spacingNormal),
-                  child: ShippingAndPaymentInfo(
-                    orderDetailModel: orderDetailModel,
-                  ),
-                ),
-              ],
+                  
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
-        ),
-        if (isLoading ?? false)
-          Align(
-            alignment: Alignment.center,
-            child: SizedBox(
-              child: CircularProgressIndicatorClass.circularProgressIndicator(
-                  context),
-            ),
-          )
-      ]);
-    }
+
+          if (isLoading ?? false)
+            Container(
+              color: Colors.white.withOpacity(0.6),
+              child: const Center(child: CircularProgressIndicator()),
+            )
+        ],
+      ),
+    );
   }
 
-  shipmentInvoiceDetails(
-      String title, String route, OrderDetail? argument, BuildContext context) {
-    return InkWell(
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-            horizontal: AppSizes.spacingNormal, vertical: 5.0),
-        alignment: Alignment.center,
-        height: AppSizes.buttonHeight,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.spacingNormal,
+  // --- HELPER WIDGETS ---
+
+  Widget _buildAddressNode({required IconData icon, required String title, required dynamic address, required bool alignLeft}) {
+    CrossAxisAlignment align = alignLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end;
+    TextAlign textAlign = alignLeft ? TextAlign.left : TextAlign.right;
+
+    return Column(
+      crossAxisAlignment: align,
+      children: [
+        // Icon Circle
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey[200]!)
+          ),
+          child: Icon(icon, size: 20, color: Colors.black87),
         ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.onBackground,
-          borderRadius: BorderRadius.circular(4),
+        const SizedBox(height: 8),
+        
+        // Title
+        Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+        const SizedBox(height: 4),
+
+        // Name
+        Text(
+          "${address?.firstName ?? ''} ${address?.lastName ?? ''}", 
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          textAlign: textAlign,
         ),
-        child: Text(
-          title.localized().toUpperCase(),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.normal,
-              color: Theme.of(context).colorScheme.background),
+        
+        const SizedBox(height: 2),
+
+        // FULL ADDRESS (Multiline)
+        Text(
+          _getFullAddress(address), 
+          style: TextStyle(fontSize: 12, color: Colors.grey[700], height: 1.4),
+          maxLines: 5,
+          overflow: TextOverflow.ellipsis,
+          textAlign: textAlign,
+        ),
+        
+        const SizedBox(height: 4),
+
+        // Phone
+        if (address?.phone != null)
+          Text(
+            "Phone: ${address?.phone}",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black87),
+            textAlign: textAlign,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildProductItem(var item) {
+    if (item == null) return const SizedBox();
+    String imageUrl = "";
+    if ((item.product?.images ?? []).isNotEmpty) {
+        imageUrl = item.product?.images?[0].url ?? "";
+    }
+
+    return Row(
+      children: [
+        // Image
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[200]!),
+            image: imageUrl.isNotEmpty 
+              ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
+              : null
+          ),
+          child: imageUrl.isEmpty ? const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.grey) : null,
+        ),
+        const SizedBox(width: 12),
+        
+        // Name & Qty
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.name ?? "", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), maxLines: 2),
+              const SizedBox(height: 2),
+              Text("x${item.qtyOrdered}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+            ],
+          ),
+        ),
+        
+        // Price
+        Text(
+          item.formattedPrice?.price ?? "", 
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDottedLine() {
+    return SizedBox(
+      height: 1,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 8,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) => Container(
+          width: 4, height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          color: Colors.grey[300],
         ),
       ),
-      onTap: () {
-        Navigator.pushNamed(context, route, arguments: argument);
-      },
     );
+  }
+
+  // Helper: Concatenates all address fields nicely
+  String _getFullAddress(dynamic address) {
+    if (address == null) return "";
+    
+    // Parse Street (Address 1)
+    String street = "";
+    var addr1 = address.address1;
+    if (addr1 is List && addr1.isNotEmpty) {
+       street = addr1[0].toString();
+    } else if (addr1 is String) {
+       street = addr1;
+    }
+    street = street.replaceAll("[", "").replaceAll("]", "").replaceAll("\"", "");
+
+    String city = address.city ?? "";
+    String state = address.state ?? "";
+    String country = address.country ?? "";
+    String postcode = address.postcode ?? "";
+
+    // Build the string with commas
+    List<String> parts = [];
+    if (street.isNotEmpty) parts.add(street);
+    if (city.isNotEmpty) parts.add(city);
+    if (state.isNotEmpty) parts.add(state);
+    if (country.isNotEmpty) parts.add(country);
+    if (postcode.isNotEmpty) parts.add(postcode);
+
+    return parts.join(", ");
   }
 }

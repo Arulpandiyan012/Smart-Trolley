@@ -1,11 +1,11 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
@@ -45,11 +45,13 @@ class CancelOrderState extends OrderDetailBaseState{
   String? error;
   String? successMsg;
   BaseModel? baseModel;
+  
   CancelOrderState.success({ this.successMsg,this.baseModel}):status=OrderDetailStatus.success;
   CancelOrderState.fail({this.error}):status=OrderDetailStatus.fail;
 
   @override
-  List<Object> get props => [successMsg??"",error??"",baseModel!];
+  // 🟢 FIX: Changed 'baseModel!' to 'baseModel ?? ""' to prevent crash on error
+  List<Object> get props => [successMsg ?? "", error ?? "", baseModel ?? ""];
 
 }
 
@@ -60,7 +62,7 @@ class OnClickLoadingState extends OrderDetailBaseState {
   OnClickLoadingState({this.isReqToShowLoader});
 
   @override
-  List<Object> get props => [isReqToShowLoader!];
+  List<Object> get props => [isReqToShowLoader ?? false]; // 🟢 Added safety check here too
 }
 
 class ReOrderState extends OrderDetailBaseState {
@@ -72,6 +74,6 @@ class ReOrderState extends OrderDetailBaseState {
   ReOrderState.fail({this.message}): status=OrderDetailStatus.fail;
 
   @override
-  List<Object> get props => [message ??"",model!];
+  List<Object> get props => [message ?? "", model ?? ""]; // 🟢 Added safety check here too
 
 }

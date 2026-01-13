@@ -28,7 +28,7 @@ class AddCouponCartEvent extends CartScreenBaseEvent{
 class FetchCartDataEvent extends CartScreenBaseEvent{
 }
 class MoveToCartEvent extends CartScreenBaseEvent{
-  int ?id;
+  final dynamic id;
   MoveToCartEvent(this.id);
 }
 class UpdateCartEvent extends CartScreenBaseEvent{
