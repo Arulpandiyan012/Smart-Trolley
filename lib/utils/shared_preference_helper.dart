@@ -1,11 +1,7 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
 import 'package:bagisto_app_demo/utils/server_configuration.dart';
@@ -16,16 +12,11 @@ import 'package:get_storage/get_storage.dart';
 import '../data_model/account_models/account_info_details.dart';
 import '../screens/home_page/data_model/get_categories_drawer_data_model.dart';
 
-///this is file is for shared preference helper class which will help to store and retrieve data
-///from flutter shared preference using get_storage package and shared preference keys are defined
-/// in shared_preference_keys.dart file
-
 final appStoragePref = SharedPreferenceHelper();
 
 class SharedPreferenceHelper {
   //named storage box for storing user app configuration data
-  var configurationStorage = GetStorage(
-      "configurationStorage"); //-----Use only for user app configuration data
+  var configurationStorage = GetStorage("configurationStorage"); 
 
   String getDate() {
     return configurationStorage.read(date) ?? "";
@@ -56,8 +47,7 @@ class SharedPreferenceHelper {
   }
 
   String getCurrencyLabel() {
-    return configurationStorage.read(configCurrencyLabel) ??
-        defaultCurrencyName;
+    return configurationStorage.read(configCurrencyLabel) ?? defaultCurrencyName;
   }
 
   onUserLogout() {
@@ -65,6 +55,10 @@ class SharedPreferenceHelper {
     configurationStorage.write(customerCartCount, 0);
     configurationStorage.write(customerName, StringConstants.welcomeGuest);
     configurationStorage.write(customerEmail, '');
+    
+    // 🟢 ADDED: Clear Phone on Logout
+    configurationStorage.write("customerPhone", ''); 
+    
     configurationStorage.write(customerProfilePicUrl, '');
     configurationStorage.write(customerBannerPicUrl, '');
     configurationStorage.write(customerToken, '0');
@@ -109,6 +103,16 @@ class SharedPreferenceHelper {
 
   String getCustomerEmail() {
     return configurationStorage.read(customerEmail) ?? "";
+  }
+  
+  // 🟢 NEW: Set Customer Phone
+  setCustomerPhone(String phone) {
+    configurationStorage.write("customerPhone", phone);
+  }
+
+  // 🟢 NEW: Get Customer Phone
+  String getCustomerPhone() {
+    return configurationStorage.read("customerPhone") ?? "";
   }
 
   setCustomerImage(String customerImageValue) {
@@ -211,5 +215,13 @@ class SharedPreferenceHelper {
     GetDrawerCategoriesData? drawerData =
         GetDrawerCategoriesData.fromJson(data ?? {});
     return drawerData;
+  }
+
+  setCartId(String id) {
+    configurationStorage.write("cartId", id);
+  }
+
+  String getCartId() {
+    return configurationStorage.read("cartId") ?? "";
   }
 }

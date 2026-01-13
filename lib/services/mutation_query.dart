@@ -281,9 +281,8 @@ message
     }""";
   }
 
-  String cartDetails() {
+String cartDetails() {
     return """
-   
       query cartDetail {
         cartDetail {
             id
@@ -295,6 +294,30 @@ message
                 taxName
                 totalAmount
             }
+            
+            # 🟢 FIX: FETCH FULL ADDRESS & NAMES
+            shippingAddress {
+                firstName
+                lastName
+                address1: address
+                city
+                state
+                country
+                postcode
+                phone
+            }
+            billingAddress {
+                firstName
+                lastName
+                address1: address
+                city
+                state
+                country
+                postcode
+                phone
+            }
+            # 🟢 END FIX
+
             items {
                 id
                 quantity
@@ -1167,13 +1190,68 @@ message
 } """;
   }
 
+//   String getOrderList(
+//       {String id = '',
+//       String startDate = '',
+//       String endDate = '',
+//       String? status = '',
+//       double? total,
+//       int? page,
+//       bool? isFilterApply}) {
+//     final inputString = """
+//   ${id.isNotEmpty ? 'id: $id,' : ''}
+//         ${startDate.isNotEmpty ? 'orderDateFrom: "$startDate",' : ''}
+//          ${endDate.isNotEmpty ? 'orderDateTo: "$endDate",' : ''}
+//       ${status!.isNotEmpty ? 'status: "$status"' : ''}
+      
+//   """;
+//     return """
+   
+//    query ordersList {
+//     ordersList (
+//         page: 1
+//         first: 10
+//         input: {
+//          $inputString
+//         }
+//     ) {
+//         paginatorInfo {
+//             count
+//             currentPage
+//             lastPage
+//             total
+//         }
+//         data {
+//             id
+//             status
+//             totalQtyOrdered
+//             createdAt
+//             formattedPrice {
+//                 grandTotal
+//                 subTotal
+//                 discountAmount
+//                 taxAmount
+//                 shippingAmount
+//             }
+//         }
+//     }
+// }
+   
+   
+//    """;
+//   }
+
+// OLD CODE (Buggy)
+// page: 1
+
+// NEW CODE (Fixed)
   String getOrderList(
       {String id = '',
       String startDate = '',
       String endDate = '',
       String? status = '',
       double? total,
-      int? page,
+      int? page = 1, // Ensure default is 1
       bool? isFilterApply}) {
     final inputString = """
   ${id.isNotEmpty ? 'id: $id,' : ''}
@@ -1186,7 +1264,7 @@ message
    
    query ordersList {
     ordersList (
-        page: 1
+        page: $page
         first: 10
         input: {
          $inputString
@@ -1213,8 +1291,6 @@ message
         }
     }
 }
-   
-   
    """;
   }
 
@@ -1461,7 +1537,9 @@ message
             }
             shippingAddress {
                 id
-                address
+                firstName   # 🟢 Added
+                lastName    # 🟢 Added
+                address1: address
                 postcode
                 city
                 state
@@ -1469,8 +1547,10 @@ message
                 phone
             }
             billingAddress {
-                  id
-                address
+                id
+                firstName   # 🟢 Added
+                lastName    # 🟢 Added
+                address1: address
                 postcode
                 city
                 state

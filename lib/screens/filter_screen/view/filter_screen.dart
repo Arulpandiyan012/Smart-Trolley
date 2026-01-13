@@ -1,5 +1,6 @@
 import 'package:bagisto_app_demo/screens/filter_screen/utils/index.dart';
 import 'package:bagisto_app_demo/utils/extension.dart';
+import 'package:flutter/material.dart';
 
 class SubCategoriesFilterScreen extends StatefulWidget {
   const SubCategoriesFilterScreen(
@@ -20,8 +21,7 @@ class SubCategoriesFilterScreen extends StatefulWidget {
   final List? superAttributes;
 
   @override
-  State<SubCategoriesFilterScreen> createState() =>
-      _SubCategoriesFilterScreenState();
+  State<SubCategoriesFilterScreen> createState() => _SubCategoriesFilterScreenState();
 }
 
 class _SubCategoriesFilterScreenState extends State<SubCategoriesFilterScreen> {
@@ -29,17 +29,14 @@ class _SubCategoriesFilterScreenState extends State<SubCategoriesFilterScreen> {
   Map<String, List> showTemp = {};
   List showItems = [];
   List superAttributes = [];
-  String? item;
   double startPriceValue = 0, endPriceValue = 1;
 
   @override
   void initState() {
     if ((widget.superAttributes ?? []).isNotEmpty) {
       if (widget.superAttributes?[0]["key"] == "\"price\"") {
-        startPriceValue = double.parse(
-            widget.superAttributes?[0]["value"][0].replaceAll('"', ''));
-        endPriceValue = double.parse(
-            widget.superAttributes?[0]["value"][1].replaceAll('"', ''));
+        startPriceValue = double.parse(widget.superAttributes?[0]["value"][0].replaceAll('"', ''));
+        endPriceValue = double.parse(widget.superAttributes?[0]["value"][1].replaceAll('"', ''));
       } else {
         startPriceValue = widget.data?.minPrice ?? 0;
         endPriceValue = widget.data?.maxPrice ?? 1;
@@ -51,7 +48,6 @@ class _SubCategoriesFilterScreenState extends State<SubCategoriesFilterScreen> {
     fetchFilterData();
     super.initState();
   }
-
 
   void fetchFilterData() {
     temp.clear();
@@ -72,8 +68,7 @@ class _SubCategoriesFilterScreenState extends State<SubCategoriesFilterScreen> {
       );
 
       if (matchedFilter.isNotEmpty) {
-        final values =
-            matchedFilter["value"].toString().replaceAll('"', "").split(',');
+        final values = matchedFilter["value"].toString().replaceAll('"', "").split(',');
 
         if (code == "price" && values.length == 2) {
           startPriceValue = double.tryParse(values[0]) ?? startPriceValue;
@@ -95,111 +90,99 @@ class _SubCategoriesFilterScreenState extends State<SubCategoriesFilterScreen> {
         superAttributes.add({"key": '"$key"', "value": value});
       }
     });
-
-    debugPrint("superAttributes---->${widget.superAttributes}");
-    debugPrint("showTemp---->$showTemp");
-    debugPrint("temp---->$temp");
-    debugPrint("showItems---->$showItems");
-
     setState(() {});
+  }
+
+  void _applyFilters() {
+    if (superAttributes.isNotEmpty) {
+      Navigator.pop(context, superAttributes);
+    } else {
+      Navigator.pop(context, widget.superAttributes);
+    }
+    widget.subCategoryBloc?.add(OnClickSubCategoriesLoaderEvent(isReqToShowLoader: true));
+    widget.subCategoryBloc?.add(FetchSubCategoryEvent(widget.filters, widget.page));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            if (superAttributes.isNotEmpty) {
-              debugPrint("superAttributes---->$superAttributes");
-              Navigator.pop(context, superAttributes);
-            } else {
-              debugPrint("superAttributes---->${widget.superAttributes}");
-              Navigator.pop(context, widget.superAttributes);
-            }
-            widget.subCategoryBloc
-                ?.add(OnClickSubCategoriesLoaderEvent(isReqToShowLoader: true));
-            widget.subCategoryBloc
-                ?.add(FetchSubCategoryEvent(widget.filters, widget.page));
-          },
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              StringConstants.filterBy.localized(),
-            ),
-            GestureDetector(
-                onTap: () {
-                  setState(() {
-                    superAttributes = [];
-                    widget.filters.removeWhere((element) =>
-                        element["key"] != '"category_id"' ||
-                        element["key"] == '"sort"');
-
-                    widget.subCategoryBloc?.add(FetchSubCategoryEvent(
-                      widget.filters,
-                      widget.page,
-                    ));
-                    Navigator.pop(context);
-                    widget.subCategoryBloc?.add(OnClickSubCategoriesLoaderEvent(
-                        isReqToShowLoader: true));
-                  });
-                },
-                child: Text(
-                  StringConstants.clear.localized().toUpperCase(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: MobiKulTheme.appbarTextColor),
-                ))
-          ],
-        ),
-        automaticallyImplyLeading: false,
+        title: const Text("Filters", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                superAttributes = [];
+                widget.filters.removeWhere((element) =>
+                    element["key"] != '"category_id"' && element["key"] != '"sort"');
+                
+                widget.subCategoryBloc?.add(FetchSubCategoryEvent(widget.filters, widget.page));
+                Navigator.pop(context);
+                widget.subCategoryBloc?.add(OnClickSubCategoriesLoaderEvent(isReqToShowLoader: true));
+              });
+            },
+            child: const Text("CLEAR", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          )
+        ],
       ),
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(AppSizes.spacingNormal, 0, 0, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (ctx, idx) {
-                        if (!(temp.containsKey(getValueFromDynamic(
-                            widget.data?.filterAttributes?[idx], "code")))) {
-                          temp["${getValueFromDynamic(widget.data?.filterAttributes?[idx], "code")}"] =
-                              [];
-                        }
-                        return _listElement(
-                          "${getValueFromDynamic(widget.data?.filterAttributes?[idx], "adminName")}",
-                          "${getValueFromDynamic(widget.data?.filterAttributes?[idx], "code")}",
-                          getValueFromDynamic(
-                              widget.data?.filterAttributes?[idx], "options"),
-                          context,
-                        );
-                      },
-                      itemCount: (widget.data?.filterAttributes ?? []).length,
-                      separatorBuilder: (BuildContext context, int index) {
-                        return Container(
-                          height: 12.0,
-                          color:
-                              Theme.of(context).brightness == Brightness.light
-                                  ? Colors.grey.shade200
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .secondaryContainer,
-                        );
-                      },
-                    ),
-                  ],
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: (widget.data?.filterAttributes ?? []).length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (ctx, idx) {
+                      final attr = widget.data?.filterAttributes?[idx];
+                      final code = getValueFromDynamic(attr, "code");
+                      
+                      if (!temp.containsKey(code)) {
+                        temp["$code"] = [];
+                      }
+                      
+                      return _buildSection(
+                        "${getValueFromDynamic(attr, "adminName")}",
+                        "$code",
+                        getValueFromDynamic(attr, "options"),
+                        context,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Bottom Action Bar
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _applyFilters,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A), // Green
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                child: const Text("Apply Filters", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -208,171 +191,161 @@ class _SubCategoriesFilterScreenState extends State<SubCategoriesFilterScreen> {
     );
   }
 
-  Widget _listElement(
-    String title,
-    String code,
-    List<dynamic>? options,
-    BuildContext context,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSizes.spacingNormal,
-          AppSizes.spacingNormal, AppSizes.spacingNormal, 0),
+  Widget _buildSection(String title, String code, List<dynamic>? options, BuildContext context) {
+    if ((options == null || options.isEmpty) && code != "price") return const SizedBox();
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          if (options?.isNotEmpty == true || code == "price")
-            Text(
-              title,
-              style: Theme.of(context).textTheme.labelLarge,
+          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          
+          if (title == "Price") ...[
+            // Modern Price Slider
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _priceBox("Min", startPriceValue),
+                _priceBox("Max", endPriceValue),
+              ],
             ),
-          const Divider(),
-          title == "Price"
-              ? SliderTheme(
-                  data: const SliderThemeData(
-                      showValueIndicator: ShowValueIndicator.always),
-                  child: RangeSlider(
-                    min: widget.data?.minPrice ?? 0,
-                    max: widget.data?.maxPrice ?? 500,
-                    activeColor: Theme.of(context).colorScheme.onBackground,
-                    inactiveColor: Colors.grey.shade300,
-                    labels: RangeLabels(
-                      startPriceValue.toString(),
-                      endPriceValue.toString(),
-                    ),
-                    values: RangeValues(startPriceValue, endPriceValue),
-                    onChanged: (RangeValues value) {
-                      setState(() {
-                        widget.filters.removeWhere(
-                            (element) => element["key"] == '"$code"');
+            const SizedBox(height: 8),
+            RangeSlider(
+              min: widget.data?.minPrice ?? 0,
+              max: widget.data?.maxPrice ?? 500,
+              activeColor: const Color(0xFF16A34A),
+              inactiveColor: Colors.grey.shade200,
+              values: RangeValues(startPriceValue, endPriceValue),
+              onChanged: (RangeValues value) {
+                setState(() {
+                  widget.filters.removeWhere((element) => element["key"] == '"$code"');
+                  widget.filters.add({"key": '"$code"', "value": '"${value.start}, ${value.end}"'});
 
-                        widget.filters.add({
-                          "key": '"$code"',
-                          "value": '"${value.start}, ${value.end}"'
-                        });
-
-                        temp[code]?.clear();
-                        superAttributes.clear();
-                        startPriceValue = value.start.floorToDouble();
-                        endPriceValue = value.end.floorToDouble();
-                        temp[code]?.add('"$startPriceValue"');
-                        temp[code]?.add('"$endPriceValue"');
-                        temp.addAll(showTemp);
-                        temp.forEach((key, value) {
-                          if (value.isNotEmpty) {
-                            Map<String, dynamic> colorMap = {
-                              "key": '"$key"',
-                              "value": value
-                            };
-                            superAttributes.add(colorMap);
-                          }
-                        });
-                      });
-                    },
-                  ),
-                )
-              : const SizedBox(),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: (options ?? []).length,
-            itemBuilder: (ctx, index) {
-              Map<String, dynamic>? option = options?[index];
-              return CheckboxListTile(
-                  dense: true,
-                  contentPadding: const EdgeInsets.all(0),
-                  value: showItems
-                      .contains(('"${getValueFromDynamic(option, "id")}"')),
-                  title: Text(
-                    getValueFromDynamic(option, "adminName") ?? "",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  onChanged: (isChecked) {
-                    if (isChecked == true) {
-                      int index = widget.filters
-                          .indexWhere((element) => element["key"] == '"$code"');
-                      if (index >= 0) {
-                        Map<String, dynamic> item = widget.filters[index];
-                        List<String> currentValues = item['value']
-                            .toString()
-                            .replaceAll('"', "")
-                            .split(',');
-                        if (!currentValues
-                            .contains('${getValueFromDynamic(option, "id")}')) {
-                          currentValues
-                              .add('${getValueFromDynamic(option, "id")}');
-                        }
-                        widget.filters[index] = {
-                          "key": '"$code"',
-                          "value": '"${currentValues.join(',')}"'
-                        };
-                      } else {
-                        widget.filters.add({
-                          "key": '"$code"',
-                          "value": '"${getValueFromDynamic(option, "id")}"'
-                        });
-                      }
-                    } else {
-                      int index = widget.filters
-                          .indexWhere((element) => element["key"] == '"$code"');
-
-                      if (index >= 0) {
-                        Map<String, dynamic> item = widget.filters[index];
-                        List<String> currentValues = item['value']
-                            .toString()
-                            .replaceAll('"', "")
-                            .split(',');
-                        currentValues
-                            .remove('${getValueFromDynamic(option, "id")}');
-
-                        if (currentValues.isEmpty) {
-                          widget.filters.removeAt(index);
-                        } else {
-                          widget.filters[index] = {
-                            "key": '"$code"',
-                            "value": '"${currentValues.join(',')}"'
-                          };
-                        }
-                      }
-                    }
-
-                    setState(() {
-                      temp.addAll(showTemp);
-                      if (temp[code]?.contains(
-                              '"${getValueFromDynamic(option, "id")}"') ??
-                          false) {
-                        temp[code]
-                            ?.remove('"${getValueFromDynamic(option, "id")}"');
-                      } else {
-                        temp[code]
-                            ?.add('"${getValueFromDynamic(option, "id")}"');
-                      }
-
-                      showItems.clear();
-                      temp.forEach((key, value) {
-                        showItems.addAll(value);
-                      });
-
-                      superAttributes.clear();
-                      showTemp.addAll(temp);
-                      showTemp.forEach((key, value) {
-                        if (value.isNotEmpty) {
-                          Map<String, dynamic> colorMap = {
-                            "key": '"$key"',
-                            "value": value
-                          };
-                          superAttributes.add(colorMap);
-                        }
-                      });
-                    });
+                  temp[code]?.clear();
+                  superAttributes.clear();
+                  startPriceValue = value.start.floorToDouble();
+                  endPriceValue = value.end.floorToDouble();
+                  temp[code]?.add('"$startPriceValue"');
+                  temp[code]?.add('"$endPriceValue"');
+                  
+                  // Rebuild Attributes
+                  temp.addAll(showTemp);
+                  temp.forEach((key, val) {
+                    if (val.isNotEmpty) superAttributes.add({"key": '"$key"', "value": val});
                   });
-            },
-            separatorBuilder: (BuildContext context, int index) {
-              return const Divider();
-            },
-          ),
+                });
+              },
+            ),
+          ] else ...[
+            // Modern Filter Options (List)
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: options!.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (ctx, index) {
+                Map<String, dynamic>? option = options[index];
+                String optId = getValueFromDynamic(option, "id");
+                bool isSelected = showItems.contains('"$optId"');
+
+                return InkWell(
+                  onTap: () {
+                    _toggleFilter(code, optId);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFFF0FDF4) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isSelected ? const Color(0xFF16A34A) : Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          getValueFromDynamic(option, "adminName") ?? "",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            color: isSelected ? const Color(0xFF16A34A) : Colors.black87
+                          ),
+                        ),
+                        Icon(
+                          isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                          color: isSelected ? const Color(0xFF16A34A) : Colors.grey,
+                          size: 22,
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              },
+            )
+          ]
         ],
       ),
     );
+  }
+
+  Widget _priceBox(String label, double val) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          Text("₹${val.toInt()}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  void _toggleFilter(String code, String id) {
+    bool isSelected = showItems.contains('"$id"');
+    
+    // Update UI List
+    setState(() {
+      if (isSelected) {
+        showItems.remove('"$id"');
+        temp[code]?.remove('"$id"');
+      } else {
+        showItems.add('"$id"');
+        temp[code]?.add('"$id"');
+      }
+      
+      // Rebuild Attributes
+      superAttributes.clear();
+      showTemp.addAll(temp);
+      showTemp.forEach((key, val) {
+        if (val.isNotEmpty) superAttributes.add({"key": '"$key"', "value": val});
+      });
+    });
+
+    // Update Actual Filters for API
+    int idx = widget.filters.indexWhere((e) => e["key"] == '"$code"');
+    if (idx >= 0) {
+      List<String> values = widget.filters[idx]['value'].toString().replaceAll('"', "").split(',');
+      if (isSelected) {
+        values.remove(id);
+      } else {
+        values.add(id);
+      }
+      
+      if (values.isEmpty) {
+        widget.filters.removeAt(idx);
+      } else {
+        widget.filters[idx] = {"key": '"$code"', "value": '"${values.join(',')}"'};
+      }
+    } else {
+      widget.filters.add({"key": '"$code"', "value": '"$id"'});
+    }
   }
 }

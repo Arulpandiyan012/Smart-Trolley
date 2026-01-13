@@ -1,14 +1,15 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'dart:async';
+import 'package:rxdart/rxdart.dart'; // 🟢 1. ADD THIS IMPORT
 
 import '../data_model/currency_language_model.dart';
 import '../screens/cms_screen/data_model/cms_model.dart';
@@ -28,8 +29,10 @@ class GlobalData {
   static CmsData? cmsData;
   static GetDrawerCategoriesData? categoriesDrawerData;
 
-  static final StreamController cartCountController =
-      StreamController<int>.broadcast();
+  // 🟢 2. CHANGE TO BehaviorSubject (Remembers the last value)
+  // This ensures the Bottom Bar gets the count immediately when navigating back.
+  static final BehaviorSubject<int> cartCountController =
+      BehaviorSubject<int>.seeded(0);
 
   static StreamController<NewProductsModel?> productsStream =
       StreamController<NewProductsModel?>.broadcast();

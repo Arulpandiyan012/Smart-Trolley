@@ -1,16 +1,12 @@
-
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
-
-
-
 
 import 'package:bagisto_app_demo/screens/compare/utils/index.dart';
 
@@ -24,171 +20,144 @@ class CompareView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    // 🟢 Must match width in CompareList (screen / 2.2)
+    double cardWidth = MediaQuery.of(context).size.width / 2.2;
+    double cardMargin = 12.0; 
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          // --- 1. PRODUCT CARDS ROW ---
+          CompareList(
+              compareScreenModel: compareScreenModel,
+              compareScreenBloc: compareScreenBloc),
+
+          const SizedBox(height: 16),
+
+          // --- 2. ATTRIBUTE: SKU ---
+          _buildAttributeRow(
+            context,
+            title: StringConstants.sku.localized(),
+            cardWidth: cardWidth,
+            cardMargin: cardMargin,
+            isAlternate: false, // White background
+            itemBuilder: (index) {
+              return Text(
+                compareScreenModel.data?[index].product?.sku ?? "-",
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              );
+            },
+          ),
+
+          // --- 3. ATTRIBUTE: DESCRIPTION ---
+          _buildAttributeRow(
+            context,
+            title: StringConstants.description.localized(),
+            cardWidth: cardWidth,
+            cardMargin: cardMargin,
+            isAlternate: true, // Gray background
+            itemBuilder: (index) {
+              return SingleChildScrollView(
+                child: HtmlWidget(
+                  compareScreenModel.data?[index].product?.description ?? "",
+                  textStyle: TextStyle(
+                    color: Colors.grey[700], 
+                    fontSize: 12, 
+                    height: 1.4
+                  ),
+                ),
+              );
+            },
+            height: 150, // Fixed height for description
+          ),
+
+          // --- 4. ATTRIBUTE: PRICE ---
+          _buildAttributeRow(
+             context,
+             title: StringConstants.price.localized(),
+             cardWidth: cardWidth,
+             cardMargin: cardMargin,
+             isAlternate: false, // White background
+             itemBuilder: (index) {
+                return PriceWidgetHtml(
+                   priceHtml: compareScreenModel.data?[index].product?.priceHtml?.priceHtml ?? "-",
+                );
+             }
+          ),
+
+          const SizedBox(height: 40), 
+        ],
+      ),
+    );
+  }
+
+  /// 🟢 Custom Widget to build consistent table rows
+  Widget _buildAttributeRow(
+      BuildContext context, {
+      required String title,
+      required double cardWidth,
+      required double cardMargin,
+      required bool isAlternate,
+      required Widget Function(int index) itemBuilder,
+      double height = 50.0,
+      }) {
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              CompareList(
-                  compareScreenModel: compareScreenModel,
-                  compareScreenBloc: compareScreenBloc),
-              SizedBox(
-                height: 30,
-                width: (compareScreenModel.data?.length ?? 0) *
-                      MediaQuery.of(context).size.width / 2.0,
-                child: Container(
-                  decoration:
-                      BoxDecoration(border: Border.all(color: Colors.grey,width: 1.5)),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(left:AppSizes.spacingMedium, top: AppSizes.spacingNormal, bottom: AppSizes.spacingSmall),
-                    child: Text(
-                      StringConstants.sku,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.grey[500]),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: AppSizes.spacingLarge*2,
-                child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: compareScreenModel.data?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, productScreen,
-                              arguments: PassProductData(
-                                  title: compareScreenModel
-                                          .data?[index].product?.name ??
-                                      "",
-                                  urlKey: compareScreenModel
-                                      .data?[index].product?.urlKey,
-                                  productId: int.parse(compareScreenModel
-                                          .data?[index].product
-                                          ?.id ??
-                                      "")));
-                        },
-                        child: Container(
-                          width: MediaQuery.of(context).size.width / 2,
-                          decoration: const BoxDecoration(
-                              border: Border(
-                            right: BorderSide(
-                              color: Colors.grey,
-                              width: 1.5,
-                            ),
-                          )),
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                                left: AppSizes.spacingNormal, top: AppSizes.spacingNormal, right: AppSizes.spacingNormal),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width / 2,
-                              child: Text(
-                                compareScreenModel
-                                        .data?[index].product?.sku ??
-                                    "",
-                                maxLines: 1,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-              ),
-              SizedBox(
-                height: 30,
-                width: (compareScreenModel.data?.length ?? 0) *
-                    MediaQuery.of(context).size.width /
-                    2.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                      // color: Colors.white,
-                      border: Border.all(color: Colors.grey)),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(left: 12.0, top: 6, bottom: 2),
-                    child: Text(
-                      StringConstants.description,
-                      style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height / 2 + 60,
-                child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: compareScreenModel.data?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, productScreen,
-                              arguments: PassProductData(
-                                  title: compareScreenModel
-                                          .data?[index].product?.name ??
-                                      "",
-                                  urlKey: compareScreenModel
-                                      .data?[index].product?.urlKey,
-                                  productId: int.parse(compareScreenModel
-                                          .data?[index]
-                                          .product
-                                          ?.id ??
-                                      "")));
-                        },
-                        child: Container(
-                          width: MediaQuery.of(context).size.width / 2.0,
-                          height: MediaQuery.of(context).size.height / 2 + 10,
-                          decoration: const BoxDecoration(
-                              border: Border(
-                            right: BorderSide(
-                              color: Colors.grey,
-                              width: 1.5,
-                            ),
-                            bottom: BorderSide(
-                              color: Colors.grey,
-                              width: 1.5,
-                            ),
-                          )),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 8.0, top: 8, right: 8),
-                                  child: ColorFiltered(
-                                    colorFilter: ColorFilter.mode(
-                                      Theme.of(context).colorScheme.onPrimary,
-                                      BlendMode.srcIn,
-                                    ),
-                                    child: HtmlWidget(
-                                      compareScreenModel.data?[index].product
-                                              ?.description ??
-                                          "",
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-              ),
-            ],
+        // Section Header Label
+        Container(
+          width: (compareScreenModel.data?.length ?? 0) * cardWidth,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: isAlternate ? Colors.grey[50] : Colors.white,
+          child: Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+              letterSpacing: 1.0,
+            ),
           ),
         ),
+        
+        // Horizontal List of Attributes
+        Container(
+          height: height,
+          width: (compareScreenModel.data?.length ?? 0) * cardWidth,
+          color: isAlternate ? Colors.grey[50] : Colors.white, // Row Background
+          child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              scrollDirection: Axis.horizontal,
+              itemCount: compareScreenModel.data?.length ?? 0,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: cardWidth,
+                  margin: EdgeInsets.only(right: cardMargin),
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    // Optional: Vertical divider line
+                    border: Border(right: BorderSide(color: Colors.grey.withOpacity(0.05)))
+                  ),
+                  child: itemBuilder(index),
+                );
+              }),
+        ),
+        
+        // Separator Line
+        if (!isAlternate) const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
       ],
     );
   }

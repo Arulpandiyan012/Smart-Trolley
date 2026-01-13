@@ -63,7 +63,7 @@ dependencies:
   flutter_inappwebview: ^6.0.0
   location: ^8.0.0
   geocoding: ^4.0.0
-  share_plus: ^11.0.0
+  share_plus: ^12.0.1
   google_maps_flutter: ^2.6.0
   geolocator: ^11.0.0 
   dio: ^5.3.3
@@ -72,8 +72,9 @@ dependencies:
   provider: ^6.0.1
   internet_connection_checker: ^3.0.1
   flutter_google_places_sdk: ^0.3.1
-
-
+  url_launcher: ^6.3.0
+  http: ^1.1.0
+  connectivity_plus: ^6.1.5
 
 dependency_overrides:
   intl: ^0.19.0

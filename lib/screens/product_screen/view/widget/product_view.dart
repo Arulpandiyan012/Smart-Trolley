@@ -1,16 +1,16 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
-
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
-
+// 🟢 1. IMPORT GLOBAL UTILS (Critical for Real-Time Login Check)
+import 'package:bagisto_app_demo/utils/index.dart'; 
 
 //ignore: must_be_immutable
 class ProductView extends StatefulWidget {
@@ -104,32 +104,56 @@ class _ProductViewState extends State<ProductView> {
                     callBack: (type) {
                       ProductScreenBLoc productScreenBLoc =
                           context.read<ProductScreenBLoc>();
+                      
+                      // 🟢 2. CHECK REAL-TIME LOGIN STATUS
+                      // We ignore 'widget.isLoggedIn' because it might be old.
+                      bool isUserActuallyLoggedIn = appStoragePref.getCustomerLoggedIn();
+                      
+                      // 🟢 3. SAFE PRODUCT ID
+                      String safeProductId = (widget.productData?.id ?? widget.productId ?? "").toString();
+
                       if (type == StringConstants.compare) {
-                        if (widget.isLoggedIn == true) {
-                          productScreenBLoc.add(OnClickProductLoaderEvent(
-                              isReqToShowLoader: true));
-                          productScreenBLoc.add(AddToCompareListEvent(
-                              widget.productData?.id ?? "", ""));
+                        if (isUserActuallyLoggedIn) {
+                          if (safeProductId.isNotEmpty) {
+                             productScreenBLoc.add(OnClickProductLoaderEvent(
+                                isReqToShowLoader: true));
+                             productScreenBLoc.add(AddToCompareListEvent(
+                                safeProductId, ""));
+                          } else {
+                             ShowMessage.errorNotification("Invalid Product ID", context);
+                          }
                         } else {
                           ShowMessage.warningNotification(
                               StringConstants.pleaseLogin.localized(),context);
                         }
                       } else if (type == StringConstants.wishlist) {
-                        if (widget.isLoggedIn == true) {
+                        if (isUserActuallyLoggedIn) {
+                          
+                          // 🟢 4. OPTIMISTIC UPDATE (Forces Icon Color Change)
+                          bool currentStatus = widget.productData?.isInWishlist ?? false;
+                          setState(() {
+                             widget.productData?.isInWishlist = !currentStatus;
+                          });
+
                           productScreenBLoc.add(OnClickProductLoaderEvent(
                               isReqToShowLoader: true));
-                          if (widget.productData?.isInWishlist ?? false) {
+                          
+                          if (currentStatus) {
+                            // Was true, now removing
                             productScreenBLoc.add(RemoveFromWishlistEvent(
-                                widget.productData?.id ?? "",
-                                widget.productData));
-                            productScreenBLoc.add(OnClickProductLoaderEvent(
-                                isReqToShowLoader: true));
+                                safeProductId,
+                                null)); // Pass null to avoid double-toggle
                           } else {
+                            // Was false, now adding
                             productScreenBLoc.add(AddToWishListProductEvent(
-                                widget.productData?.id ?? "", widget.productData));
-                            productScreenBLoc.add(OnClickProductLoaderEvent(
-                                isReqToShowLoader: true));
+                                safeProductId, null)); // Pass null
                           }
+                          
+                          // Hide loader quickly since UI is already updated
+                          Future.delayed(const Duration(milliseconds: 500), (){
+                             productScreenBLoc.add(OnClickProductLoaderEvent(isReqToShowLoader: false));
+                          });
+
                         } else {
                           ShowMessage.warningNotification(
                               StringConstants.pleaseLogin.localized(),context);

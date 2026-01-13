@@ -1,17 +1,13 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
-
-import '../../data_model/checkout_save_address_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
-
+import '../../data_model/checkout_save_address_model.dart';
 import '../../data_model/checkout_save_shipping_model.dart';
 
 //ignore: must_be_immutable
@@ -45,6 +41,9 @@ class CheckoutShippingPageView extends StatefulWidget {
   Function? callbackNavigate;
   bool? useForShipping;
   Function(PaymentMethods)? paymentCallback;
+  
+  // 🟢 NEW: Accept Cart ID
+  String? cartId;
 
   CheckoutShippingPageView(
       {Key? key,
@@ -71,26 +70,30 @@ class CheckoutShippingPageView extends StatefulWidget {
       this.shippingPostCode,
       this.shippingPhone,
       this.callBack, required this.shippingId, required this.billingId, this.isDownloadable = false,
-      this.callbackNavigate, this.paymentCallback, this.useForShipping})
+      this.callbackNavigate, this.paymentCallback, this.useForShipping,
+      this.cartId // 🟢 Initialize it
+      })
       : super(key: key);
 
   @override
-  State<CheckoutShippingPageView> createState() =>
-      _CheckoutShippingPageViewState();
+  State<CheckoutShippingPageView> createState() => _CheckoutShippingPageViewState();
 }
 
 class _CheckoutShippingPageViewState extends State<CheckoutShippingPageView> {
-  String shippingId = '';
+  String selectedShippingCode = '';
 
   @override
   Widget build(BuildContext context) {
-    return _shippingBloc(context);
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F8),
+      body: _shippingBloc(context),
+    );
   }
 
-  ///ADDRESS BLOC CONTAINER///
-  _shippingBloc(BuildContext context) {
-    CheckOutShippingBloc checkOutShippingBloc =
-        context.read<CheckOutShippingBloc>();
+  Widget _shippingBloc(BuildContext context) {
+    CheckOutShippingBloc checkOutShippingBloc = context.read<CheckOutShippingBloc>();
+    
+    // 🟢 PASS CART ID HERE TO PREVENT REVERTING TO OLD CART
     checkOutShippingBloc.add(CheckOutFetchShippingEvent(
       billingCompanyName: widget.billingCompanyName,
       billingFirstName: widget.billingFirstName,
@@ -116,8 +119,10 @@ class _CheckoutShippingPageViewState extends State<CheckoutShippingPageView> {
       shippingPhone: widget.shippingPhone,
       billingId: widget.billingId,
       shippingId: widget.shippingId,
-      useForShipping: widget.useForShipping ?? true
+      useForShipping: widget.useForShipping ?? true,
+      cartId: widget.cartId // 🟢 CRITICAL FIX
     ));
+
     return BlocConsumer<CheckOutShippingBloc, CheckOutShippingBaseState>(
       listener: (BuildContext context, CheckOutShippingBaseState state) {
         if(state is CheckOutFetchShippingState){
@@ -126,16 +131,7 @@ class _CheckoutShippingPageViewState extends State<CheckoutShippingPageView> {
                 cart: state.checkOutSaveAddressModel?.cart);
             widget.paymentCallback!(payment);
           }
-          if((state.checkOutSaveAddressModel?.shippingMethods ?? []).isEmpty && widget.isDownloadable==false){
-            ShowMessage.showNotification(StringConstants.failed.localized(), StringConstants.noShippingMsg.localized(),
-                Colors.red, const Icon(Icons.cancel_outlined));
-          }
         }
-        // if(widget.isDownloadable){
-        //   if (widget.callbackNavigate != null) {
-        //       widget.callbackNavigate!();
-        //   }
-        // }
       },
       builder: (BuildContext context, CheckOutShippingBaseState state) {
         return buildUI(context, state);
@@ -143,71 +139,76 @@ class _CheckoutShippingPageViewState extends State<CheckoutShippingPageView> {
     );
   }
 
-  ///ADDRESS UI METHODS///
   Widget buildUI(BuildContext context, CheckOutShippingBaseState state) {
     if (state is CheckOutFetchShippingState) {
       if (state.status == CheckOutShippingStatus.success) {
-        return _shippingMethods(state.checkOutSaveAddressModel!);
+        // Handle case where PaymentMethods came from saveShippingMethod
+        if (state.paymentMethods != null) {
+           // We are in a payment state, no need to show shipping list, or show selected
+           return const SizedBox(); 
+        }
+        return _buildShippingList(state.checkOutSaveAddressModel!);
       }
-      if (state.status == CheckOutShippingStatus.fail) {
-        return ErrorMessage.errorMsg(
-          StringConstants.serverError.localized(),
-        );
-      }
+    }
+    if (state is CheckOutShippingLoaderState) { // Updated state check
+      return const Center(child: CircularProgressIndicator());
     }
     if (state is CheckOutShippingInitialState) {
-      return SkeletonLoader(
-          highlightColor: Theme.of(context).highlightColor,
-          baseColor: Theme.of(context).scaffoldBackgroundColor,
-
-          builder: Container(
-              height: 100,
-              padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-              child: const Card(
-                margin: EdgeInsets.zero,
-                color: Colors.red,
-              )));
+       return const Center(child: CircularProgressIndicator());
     }
-
     return const SizedBox();
   }
 
-  _shippingMethods(SaveCheckoutAddresses checkOutSaveAddressModel) {
-    return Container(
-        height: AppSizes.spacingWide * 5,
-        padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingNormal),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: AppSizes.spacingNormal),
-            Text(
-              StringConstants.shippingMethods.localized(),
-              style: Theme.of(context).textTheme.labelLarge,
+  Widget _buildShippingList(SaveCheckoutAddresses model) {
+    var methods = model.shippingMethods ?? [];
+    if (methods.isEmpty) {
+       return const Center(child: Text("No shipping methods available"));
+    }
+    
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: methods.length,
+      separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+      itemBuilder: (ctx, i) {
+        var method = methods[i];
+        var code = method.methods?.code ?? '';
+        bool isSelected = selectedShippingCode == code;
+
+        return InkWell(
+          onTap: () {
+            setState(() => selectedShippingCode = code);
+            if (widget.callBack != null) widget.callBack!(code);
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF0C831F) : Colors.transparent, 
+                width: 1.5
+              ),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
             ),
-            Card(
-              elevation: 2,
-              margin: const EdgeInsets.fromLTRB(0, AppSizes.spacingNormal, 0, AppSizes.spacingSmall),
-              child: RadioButtonGroup(
-                  activeColor: Theme.of(context).colorScheme.onPrimary,
-                  key: const Key('Shipping'),
-                  labels: checkOutSaveAddressModel.shippingMethods
-                          ?.map((e) =>
-                              '${e.title ?? ''}  ${e.methods?.formattedPrice.toString() ?? ''}')
-                          .toList() ??
-                      [],
-                  onChange: (value, index) {
-                    if ((checkOutSaveAddressModel.shippingMethods?.length ??
-                            0) >
-                        0) {
-                      if (widget.callBack != null) {
-                        widget.callBack!(checkOutSaveAddressModel
-                                .shippingMethods?[index].methods?.code ??
-                            '');
-                      }
-                    }
-                  }),
+            child: Row(
+              children: [
+                Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: isSelected ? const Color(0xFF0C831F) : Colors.grey),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(method.title ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 4),
+                      Text(method.methods?.formattedPrice ?? '', style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ));
+          ),
+        );
+      },
+    );
   }
 }

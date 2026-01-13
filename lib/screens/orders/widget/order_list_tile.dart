@@ -1,203 +1,236 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/screens/orders/utils/index.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; 
 
 class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
- final Data? data;
- final VoidCallback? reload;
+  final Data? data;
+  final VoidCallback? reload;
 
-  String capitalize(String str) => str[0].toUpperCase() + str.substring(1);
+  String capitalize(String str) {
+    if (str.isEmpty) return "";
+    return str[0].toUpperCase() + str.substring(1);
+  }
 
-  OrdersListTile({Key? key, this.data, this.reload}) : super(key: key);
+  const OrdersListTile({Key? key, this.data, this.reload}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
+    // 🟢 1. SAFE DATE PARSING
+    String displayDate = "Date: N/A";
+    if (data?.createdAt != null && data!.createdAt.toString() != "null") {
+      try {
+        DateTime parsedDate = DateTime.parse(data!.createdAt.toString());
+        // Format: 12 Oct 2024
+        displayDate = DateFormat("dd MMM yyyy").format(parsedDate);
+      } catch (e) {
+        displayDate = data!.createdAt.toString();
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            // 🟢 2. CLICK ACTION
+            Navigator.pushNamed(context, orderDetailPage, arguments: data?.id)
+                .then((value) {
+              if (reload != null) {
+                reload!();
+              }
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🟢 ROW 1: Order ID & Date & Status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8.0, 0, 0, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                StringConstants.orderNo.localized(),
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: Colors.grey.shade600,
-                                  letterSpacing: 0.15
-                                ),
-                              ),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                StringConstants.qty.localized(),
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                    letterSpacing: 0.15
-                                ),
-                              ),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                StringConstants.totalPrice.localized(),
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                    letterSpacing: 0.15
-                                ),
-                              ),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                StringConstants.date.localized(),
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                    letterSpacing: 0.15
-                                ),
-                              ),
-                            ],
+                        Text(
+                          "ORDER #${data?.id ?? '0'}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: Colors.black87,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8.0,0,8,8),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(":",
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: Colors.grey.shade600,
-                                  )),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(":",
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                  )),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(":",
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                  )),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(":",
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                  )),
-                            ],
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 12, color: Colors.grey[500]),
+                            const SizedBox(width: 4),
+                            Text(
+                              displayDate,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    _buildStatusBadge(context, data?.status),
+                  ],
+                ),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: Color(0xFFF0F0F0)),
+                ),
+
+                // 🟢 ROW 2: Quantity & Price
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Column 1: Quantity
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "ITEMS",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8.0, 0, 0, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                data?.id.toString() ?? "",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                data?.totalQtyOrdered.toString() ??
-                                    "",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              Text(
-                                data?.formattedPrice?.grandTotal.toString() ??
-                                    "",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(height: AppSizes.spacingNormal),
-                              SizedBox(
-                              width: MediaQuery.of(context).size.width/3,
-                                child: Text(
-                                  data?.createdAt.toString() ?? "",
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.labelMedium,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 4),
+                        Text(
+                          "${data?.totalQtyOrdered ?? 1} Items",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Column 2: Total Price
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "TOTAL AMOUNT",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          data?.formattedPrice?.grandTotal ?? "₹0.00",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: Color(0xFF0C831F), // Brand Green
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ),
-              Container(
-                margin: const EdgeInsets.all(AppSizes.spacingNormal),
-                padding: const EdgeInsets.all(AppSizes.spacingNormal),
-                decoration: BoxDecoration(
-                    color: getOrderBgColor(data?.status ?? ""),
-                    borderRadius: BorderRadius.circular(4.0)),
-                child: Text(
-                  capitalize(data?.status ?? "".toUpperCase()),
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizes.spacingNormal),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: AppSizes.spacingWide/2, vertical: 5.0),
-            child: SizedBox(
-              height: AppSizes.spacingWide*2,
-              child: MaterialButton(
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(4))),
-                elevation: 0.0,
-                height: AppSizes.buttonHeight,
-                minWidth: MediaQuery.of(context).size.width,
-                color: Theme.of(context).colorScheme.onBackground,
-                onPressed: () {
-                  Navigator.pushNamed(context, orderDetailPage,
-                          arguments: data?.id)
-                      .then((value) {
-                    if (reload != null) {
-                      reload!();
-                    }
-                  });
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                
+                // 🟢 ROW 3: Footer (View Details)
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(Icons.info_outline, color: Theme.of(context).colorScheme.background),
-                    const SizedBox(
-                      width: 5,
-                    ),
                     Text(
-                      StringConstants.orderDetails.localized().toUpperCase(),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.background),
+                      "View Details",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 14,
+                      color: Colors.grey[600],
                     ),
                   ],
-                ),
-              ),
+                )
+              ],
             ),
           ),
-          const SizedBox(
-            height: 6,
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // 🟢 HELPER: Colorful Status Badges
+  Widget _buildStatusBadge(BuildContext context, String? status) {
+    Color bgColor = const Color(0xFFF5F5F5);
+    Color textColor = Colors.grey;
+    String text = capitalize(status ?? "Pending");
+
+    if (status == "pending") {
+      bgColor = const Color(0xFFFFF8E1); // Light Orange
+      textColor = const Color(0xFFFFA000); // Dark Orange
+    } else if (status == "processing") {
+      bgColor = const Color(0xFFE3F2FD); // Light Blue
+      textColor = const Color(0xFF1976D2); // Dark Blue
+    } else if (status == "completed") {
+      bgColor = const Color(0xFFE8F5E9); // Light Green
+      textColor = const Color(0xFF388E3C); // Dark Green
+    } else if (status == "canceled") {
+      bgColor = const Color(0xFFFFEBEE); // Light Red
+      textColor = const Color(0xFFD32F2F); // Dark Red
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: bgColor.withOpacity(0.5)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.3
+        ),
       ),
     );
   }

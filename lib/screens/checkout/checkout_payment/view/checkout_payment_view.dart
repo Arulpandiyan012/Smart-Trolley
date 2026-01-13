@@ -1,130 +1,143 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
-
-
-
-
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 import '../../data_model/checkout_save_shipping_model.dart';
-export 'package:bagisto_app_demo/screens/checkout/data_model/checkout_save_shipping_model.dart';
+// Ensure url_launcher is in your pubspec.yaml
+import 'package:url_launcher/url_launcher.dart'; 
 
 class CheckoutPaymentView extends StatefulWidget {
   final String? shippingId;
   final Function(String)? callBack;
   final ValueChanged<String>? priceCallback;
   final String? total;
-  PaymentMethods? paymentMethods;
+  final PaymentMethods? paymentMethods;
 
-   CheckoutPaymentView(
-      {Key? key,
-      this.total,
-      this.shippingId,
-      this.callBack,
-      this.priceCallback, this.paymentMethods})
-      : super(key: key);
+  const CheckoutPaymentView({
+    Key? key,
+    this.total,
+    this.shippingId,
+    this.callBack,
+    this.priceCallback,
+    this.paymentMethods,
+  }) : super(key: key);
 
   @override
   State<CheckoutPaymentView> createState() => _CheckoutPaymentViewState();
 }
 
 class _CheckoutPaymentViewState extends State<CheckoutPaymentView> {
+  // GPay Settings
+  static const String _merchantVpa = 'your-vpa@bank'; 
+  static const String _merchantName = 'Store Name';
+  
+  String? _selectedPaymentCode; 
+
   @override
   Widget build(BuildContext context) {
-    return _paymentBloc(context);
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F8),
+      body: _paymentBloc(context),
+    );
   }
 
-  ///ADDRESS BLOC CONTAINER///
-  _paymentBloc(BuildContext context) {
-    CheckOutPaymentBloc checkOutPaymentBloc =
-        context.read<CheckOutPaymentBloc>();
-    if((widget.paymentMethods?.paymentMethods ?? []).isEmpty){
-      checkOutPaymentBloc
-          .add(CheckOutPaymentEvent(shippingMethod: widget.shippingId));
+  Widget _paymentBloc(BuildContext context) {
+    final checkOutPaymentBloc = context.read<CheckOutPaymentBloc>();
+    if ((widget.paymentMethods?.paymentMethods ?? []).isEmpty) {
+      checkOutPaymentBloc.add(
+        CheckOutPaymentEvent(shippingMethod: widget.shippingId),
+      );
     }
     return BlocConsumer<CheckOutPaymentBloc, CheckOutPaymentBaseState>(
-      listener: (BuildContext context, CheckOutPaymentBaseState state) {},
-      builder: (BuildContext context, CheckOutPaymentBaseState state) {
-        return (widget.paymentMethods?.paymentMethods ?? []).isNotEmpty ? _paymentMethods(widget.paymentMethods!)
-            : buildUI(context, state);
+      listener: (context, state) {},
+      builder: (context, state) {
+        return (widget.paymentMethods?.paymentMethods ?? []).isNotEmpty
+            ? _buildPaymentList(widget.paymentMethods!)
+            : _buildUI(context, state);
       },
     );
   }
 
-  ///ADDRESS UI METHODS///
-  Widget buildUI(BuildContext context, CheckOutPaymentBaseState state) {
-    if (state is CheckOutFetchPaymentState) {
-      if (state.status == CheckOutPaymentStatus.success) {
-        return _paymentMethods(state.checkOutShipping!);
-      }
-      if (state.status == CheckOutPaymentStatus.fail) {
-        return ErrorMessage.errorMsg(StringConstants.somethingWrong.localized());
-      }
+  Widget _buildUI(BuildContext context, CheckOutPaymentBaseState state) {
+    if (state is CheckOutFetchPaymentState && state.status == CheckOutPaymentStatus.success) {
+      return _buildPaymentList(state.checkOutShipping!);
     }
-    if (state is CheckOutPaymentInitialState) {
-      return SkeletonLoader(
-          highlightColor: Theme.of(context).highlightColor,
-          baseColor: Theme.of(context).scaffoldBackgroundColor,
-          builder: Container(
-              height: 130,
-              padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
-              child: const Card(
-                margin: EdgeInsets.zero,
-                color: Colors.grey,
-              )));
-    }
-    return const SizedBox();
+    return const Center(child: CircularProgressIndicator());
   }
 
-  _paymentMethods(PaymentMethods checkOutShipping) {
+  Widget _buildPaymentList(PaymentMethods checkOutShipping) {
     if (widget.priceCallback != null) {
-      widget.priceCallback!(
-          checkOutShipping.cart?.formattedPrice?.grandTotal ?? "");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+         widget.priceCallback!(checkOutShipping.cart?.formattedPrice?.grandTotal ?? "");
+      });
     }
-    var paymentMethods = checkOutShipping.paymentMethods
-        ?.where((element) => availablePaymentMethods.contains(element.method));
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingNormal),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: AppSizes.spacingNormal),
-          Text(
-            StringConstants.paymentMethods.localized(),
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          Card(
-            elevation: 2,
-            margin: const EdgeInsets.fromLTRB(0, AppSizes.spacingNormal, 0, AppSizes.spacingSmall),
-            child: Container(
-              padding: const EdgeInsets.all(AppSizes.spacingNormal),
-              child: RadioButtonGroup(
-                  activeColor: Theme.of(context).colorScheme.onPrimary,
-                  key: const Key('Payment'),
-                  labels: paymentMethods
-                          ?.map((e) => e.methodTitle ?? '')
-                          .toList() ??
-                      [],
-                  onChange: (value, id) {
-                    var payment = checkOutShipping.paymentMethods
-                        ?.firstWhere((element) => element.methodTitle == value);
-                    if (widget.callBack != null) {
-                      widget.callBack!(
-                        payment?.method ?? '',
-                      );
-                    }
-                  }),
+
+    final methods = checkOutShipping.paymentMethods
+        ?.where((element) => availablePaymentMethods.contains(element.method))
+        .toList() ?? [];
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: methods.length + 1, // +1 for GPay button if selected
+      separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+      itemBuilder: (ctx, i) {
+        if (i == methods.length) {
+          // GPay Button (Only if UPI selected)
+          if (_selectedPaymentCode != null && (_selectedPaymentCode!.contains('money') || _selectedPaymentCode!.contains('bank'))) {
+             return SizedBox(
+               height: 50,
+               child: ElevatedButton.icon(
+                 style: ElevatedButton.styleFrom(
+                   backgroundColor: const Color(0xFF0C831F), 
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                 ),
+                 icon: const Icon(Icons.payment, color: Colors.white),
+                 label: const Text('PAY VIA UPI / GPAY', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                 onPressed: () => _payWithGPay(),
+               ),
+             );
+          }
+          return const SizedBox();
+        }
+
+        var method = methods[i];
+        bool isSelected = _selectedPaymentCode == method.method;
+
+        return InkWell(
+          onTap: () {
+            setState(() => _selectedPaymentCode = method.method);
+            if (widget.callBack != null) widget.callBack!(method.method ?? '');
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isSelected ? const Color(0xFF0C831F) : Colors.transparent, width: 1.5),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
+            ),
+            child: Row(
+              children: [
+                Icon(isSelected ? Icons.check_circle : Icons.circle_outlined, color: isSelected ? const Color(0xFF0C831F) : Colors.grey),
+                const SizedBox(width: 16),
+                Text(method.methodTitle ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  Future<void> _payWithGPay() async {
+    final uri = Uri.parse('upi://pay?pa=$_merchantVpa&pn=$_merchantName&am=${widget.total?.replaceAll(RegExp(r'[^0-9.]'), '')}&cu=INR');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not launch UPI app')));
+    }
   }
 }

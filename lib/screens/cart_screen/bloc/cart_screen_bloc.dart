@@ -82,16 +82,18 @@ class CartScreenBloc extends Bloc<CartScreenBaseEvent, CartScreenBaseState> {
       }
     } else if (event is MoveToCartEvent) {
       try {
+        // 🟢 PASS ID AS STRING (Removed '?? 0')
         AddToCartModel? baseModel =
-            await repository?.moveToWishlist(event.id ?? 0);
-        if (baseModel?.success == true) {
+            await repository?.moveToWishlist(event.id.toString());
+            
+        if (baseModel?.success == true || baseModel?.status == true) {
           emit(MoveToCartState.success(
             response: baseModel,
             id: event.id,
           ));
         } else {
           emit(MoveToCartState.fail(
-              error: baseModel?.message ?? StringConstants.somethingWrong.localized()));
+              error: baseModel?.message ?? baseModel?.graphqlErrors ?? "Failed"));
         }
       } catch (e) {
         emit(MoveToCartState.fail(error: e.toString()));

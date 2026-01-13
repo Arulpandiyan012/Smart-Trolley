@@ -1,22 +1,19 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
-
 import 'package:bagisto_app_demo/screens/wishList/utils/index.dart';
-
 import '../../cart_screen/cart_model/cart_data_model.dart';
 
 abstract class WishListRepository {
   Future<WishListData?> callWishListApi();
   Future<AddToCartModel?> callWishListDeleteItem(var wishListProductId);
-  Future<AddToCartModel?> callAddToCartAPi(int productId, String quantity);
+  
+  // 🟢 FIX: Changed 'int' to 'String' to match implementation
+  Future<AddToCartModel?> callAddToCartAPi(String productId, String quantity);
+  
   Future<BaseModel?> removeAllWishListProducts();
   Future<CartModel?> cartCountApi();
 }
@@ -35,12 +32,10 @@ class WishListRepositoryImp implements WishListRepository {
   }
 
   @override
-  Future<AddToCartModel?> callWishListDeleteItem(
-      var wishListProductId) async {
+  Future<AddToCartModel?> callWishListDeleteItem(var wishListProductId) async {
     AddToCartModel? removeFromWishlist;
     try {
-      removeFromWishlist =
-          await ApiClient().removeFromWishlist(wishListProductId);
+      removeFromWishlist = await ApiClient().removeFromWishlist(wishListProductId);
     } catch (error, stacktrace) {
       debugPrint("Error -->${error.toString()}");
       debugPrint("StackTrace -->${stacktrace.toString()}");
@@ -49,7 +44,8 @@ class WishListRepositoryImp implements WishListRepository {
   }
 
   @override
-  Future<AddToCartModel?> callAddToCartAPi(int productId, String quantity) async {
+  // 🟢 FIX: Matches abstract class (String)
+  Future<AddToCartModel?> callAddToCartAPi(String productId, String quantity) async {
     AddToCartModel? baseModel;
     try {
       baseModel = await ApiClient().moveFromWishlistToCart(
@@ -57,7 +53,6 @@ class WishListRepositoryImp implements WishListRepository {
       );
     } catch (error, stacktrace) {
       debugPrint("Error -->${error.toString()}");
-      debugPrint("StackTrace -->${stacktrace.toString()}");
     }
     return baseModel;
   }
@@ -66,7 +61,6 @@ class WishListRepositoryImp implements WishListRepository {
   Future<BaseModel?> removeAllWishListProducts() async {
     BaseModel? baseModel;
     baseModel = await ApiClient().removeAllWishlistProducts();
-
     return baseModel;
   }
 

@@ -1,13 +1,3 @@
-/*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
- */
-
 import '../utils/cart_index.dart';
 
 class PriceDetailView extends StatelessWidget {
@@ -18,170 +8,72 @@ class PriceDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-            initiallyExpanded: true,
-            iconColor: Colors.grey,
-            title: Text(
-              StringConstants.priceDetails.localized(),
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04), 
+            blurRadius: 4, 
+            offset: const Offset(0, 2)
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+             StringConstants.priceDetails.localized(), 
+             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.grey[800]),
+          ),
+          const SizedBox(height: 16),
+          
+          // Subtotal
+          _buildRow(StringConstants.subTotal.localized(), cartDetailsModel.formattedPrice?.subTotal ?? ""),
+          
+          // Discount
+          if (cartDetailsModel.formattedPrice?.discountAmount != null)
+             _buildRow(StringConstants.discount.localized(), cartDetailsModel.formattedPrice?.discountAmount ?? "", isGreen: true),
+
+          // Tax
+          if (cartDetailsModel.taxTotal > 0)
+             _buildRow(StringConstants.tax.localized(), cartDetailsModel.formattedPrice?.taxTotal.toString() ?? ""),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.0),
+            child: Divider(height: 1),
+          ),
+          
+          // Grand Total
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.fromLTRB(
-                    AppSizes.spacingMedium, 0, AppSizes.spacingMedium, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      StringConstants.subTotal.localized(),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      cartDetailsModel.formattedPrice?.subTotal.toString() ??
-                          "",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  ],
-                ),
+              Text(
+                StringConstants.grandTotal.localized(),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium,
-                    AppSizes.spacingSmall, AppSizes.spacingMedium, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      StringConstants.discount.localized(),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      cartDetailsModel.formattedPrice?.discountAmount != null
-                          ? cartDetailsModel.formattedPrice?.discountAmount.toString() ?? ""
-                          : "${GlobalData.currencySymbol}0.0",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
+              Text(
+                cartDetailsModel.formattedPrice?.grandTotal.toString() ?? "",
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
-              cartDetailsModel.taxTotal > 0
-                  ? Container(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.spacingMedium, vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                              color: Colors.grey.shade300,
-                              width: 1), // Left border
-                          bottom: BorderSide(
-                              color: Colors.grey.shade300,
-                              width: 1), // Right border
-                        ),
-                      ),
-                      child: ExpansionTile(
-                        iconColor: Colors.grey,
-                        tilePadding: const EdgeInsets.symmetric(
-                            horizontal: 0, vertical: 0),
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              StringConstants.tax.localized(),
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              cartDetailsModel.formattedPrice?.taxTotal
-                                      ?.toString() ??
-                                  "",
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...?cartDetailsModel.appliedTaxRates
-                                  ?.map((taxRate) {
-                                return Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          taxRate.taxName.trim(),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.normal),
-                                        ),
-                                        Text(
-                                          taxRate.totalAmount,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ],
-                          ),
-                        ],
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium,
-                          AppSizes.spacingSmall, AppSizes.spacingMedium, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            StringConstants.tax.localized(),
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          Text(
-                            cartDetailsModel.formattedPrice?.taxTotal
-                                    ?.toString() ??
-                                "",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-              Container(
-                padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium,
-                    AppSizes.spacingSmall, AppSizes.spacingMedium, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(StringConstants.grandTotal.localized(),
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(
-                      cartDetailsModel.formattedPrice?.grandTotal.toString() ??
-                          "",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                height: AppSizes.spacingMedium,
-              ),
-            ]),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildRow(String label, String value, {bool isGreen = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500)),
+          Text(value, style: TextStyle(color: isGreen ? Colors.green : Colors.black, fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }

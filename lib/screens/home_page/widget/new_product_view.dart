@@ -1,360 +1,303 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
  */
 
-import 'package:bagisto_app_demo/utils/application_localization.dart';
-import 'package:bagisto_app_demo/widgets/price_widget.dart';
-import 'package:bagisto_app_demo/widgets/wishlist_compare_widget.dart';
-import '../../../utils/app_global_data.dart';
-import '../../../utils/app_constants.dart';
-import '../../../utils/check_internet_connection.dart';
-import '../../../utils/prefetching_helper.dart';
-import '../../../utils/route_constants.dart';
-import '../../../utils/string_constants.dart';
-import '../../../widgets/common_widgets.dart';
-import '../../../widgets/image_view.dart';
-import '../../../widgets/show_message.dart';
-import '../bloc/home_page_bloc.dart';
-import '../bloc/home_page_event.dart';
-import '../data_model/new_product_data.dart';
-import '../utils/home_page_event.dart';
-import '../utils/route_argument_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:collection/collection.dart';
+import '../utils/index.dart';
 
 class NewProductView extends StatefulWidget {
-  final List<NewProducts>? model;
+  final List<dynamic>? model;
   final String title;
   final bool? isLogin;
   final bool isRecentProduct;
   final bool callPreCache;
+  final bool useGrid;
+  
+  final void Function(int id)? onAddToCart;
+  // 🟢 UPDATED: Now accepts 'product' (dynamic) as the 3rd argument
+  final void Function(String id, bool isInWishlist, dynamic product)? onAddToWishlist;
 
-  const NewProductView(
-      {Key? key, this.model, required this.title, this.isLogin, this.isRecentProduct = false,
-      this.callPreCache = false})
-      : super(key: key);
+  const NewProductView({
+    Key? key,
+    this.model,
+    required this.title,
+    this.isLogin,
+    this.isRecentProduct = false,
+    this.callPreCache = false,
+    this.useGrid = false,
+    this.onAddToCart,
+    this.onAddToWishlist,
+  }) : super(key: key);
 
   @override
   State<NewProductView> createState() => _NewProductViewState();
 }
 
 class _NewProductViewState extends State<NewProductView> {
-  HomePageBloc? homepageBloc;
   final ScrollController _controller = ScrollController();
 
   @override
-  void initState() {
-    homepageBloc = context.read<HomePageBloc>();
-    super.initState();
+  Widget build(BuildContext context) {
+    final items = widget.model ?? const [];
+
+    if (widget.useGrid) {
+      return SizedBox(
+        height: 150,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            final val = items[index];
+            return SizedBox(
+              width: 120,
+              child: _ProductCard(
+                data: val,
+                onAddToCart: widget.onAddToCart,
+                onAddToWishlist: widget.onAddToWishlist,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingNormal),
+      color: Theme.of(context).colorScheme.secondaryContainer,
+      padding: const EdgeInsets.all(AppSizes.spacingNormal),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
+          ]),
+          const SizedBox(height: AppSizes.spacingMedium),
+          SizedBox(
+            height: AppSizes.screenHeight * 0.30,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              controller: _controller,
+              itemCount: items.length,
+              itemBuilder: (context, index) => SizedBox(
+                width: AppSizes.screenWidth * 0.52,
+                child: _ProductCard(
+                  data: items[index],
+                  onAddToCart: widget.onAddToCart,
+                  onAddToWishlist: widget.onAddToWishlist,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductCard extends StatelessWidget {
+  final dynamic data;
+  final void Function(int id)? onAddToCart;
+  // 🟢 UPDATED definition
+  final void Function(String id, bool isInWishlist, dynamic product)? onAddToWishlist;
+
+  const _ProductCard({Key? key, required this.data, this.onAddToCart, this.onAddToWishlist})
+      : super(key: key);
+
+  String? _imageFromAny(dynamic img) {
+    if (img == null) return null;
+    try { if (img.url is String && img.url.isNotEmpty) return img.url; } catch (_) {}
+    try { if (img.imageUrl is String && img.imageUrl.isNotEmpty) return img.imageUrl; } catch (_) {}
+    try { if (img.path is String && img.path.isNotEmpty) return img.path; } catch (_) {}
+    return null;
+  }
+
+  String? _productImage(dynamic p) {
+    try {
+      final imgs = (p as dynamic).images;
+      if (imgs is List && imgs.isNotEmpty) {
+        final u = _imageFromAny(imgs.first);
+        if (u != null && u.isNotEmpty) return u;
+      }
+    } catch (_) {}
+    try {
+      final v = (p as dynamic).baseImage?.url;
+      if (v is String && v.isNotEmpty) return v;
+    } catch (_) {}
+    return null;
+  }
+
+  String _productPrice(dynamic p) {
+     dynamic ph;
+     try { ph = (p as dynamic).priceHtml; } catch (_) {}
+     
+     try {
+       final f = (ph as dynamic)?.formattedFinalPrice?.toString();
+       if (f != null) return f;
+     } catch (_) {}
+     
+     final sym = "₹";
+     try {
+       final val = (p as dynamic).price;
+       if (val != null) return "$sym$val";
+     } catch (_) {}
+     
+     return "";
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingNormal),
-      color: Theme.of(context).colorScheme.secondaryContainer,
-      padding: const EdgeInsets.all( AppSizes.spacingNormal),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ],
+    final imageUrl = _productImage(data);
+    final name = (data as dynamic).name?.toString() ?? "";
+    final priceText = _productPrice(data);
+    final productId = int.tryParse((data as dynamic).id?.toString() ?? '0') ?? 0;
+    
+    // Check Wishlist Status
+    bool isInWishlist = (data as dynamic).isInWishlist ?? false;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          productScreen,
+          arguments: PassProductData(
+            title: name,
+            urlKey: (data as dynamic).urlKey,
+            productId: productId,
           ),
-          const SizedBox(height:  AppSizes.spacingMedium),
-          Expanded(
-            child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                shrinkWrap: true,
-                controller: _controller,
-                itemCount: widget.model?.length ?? 0,
-                itemBuilder: (context, index) {
-                  NewProducts? val = widget.model?[index];
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F4F1),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 90,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE2E8E4),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  alignment: Alignment.center,
+                  child: (imageUrl != null && imageUrl.isNotEmpty)
+                      ? ImageView(
+                          url: imageUrl,
+                          fit: BoxFit.contain,
+                          height: 70,
+                          width: 70,
+                        )
+                      : const Icon(Icons.image, size: 44, color: Colors.grey),
+                ),
 
-                  if(widget.callPreCache){
-                    // preCacheProductDetails(val?.urlKey ?? "");
-                  }
-
-                  return GestureDetector(
+                // 🟢 Wishlist Button
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: InkWell(
                     onTap: () {
-                      Navigator.pushNamed(context, productScreen,
-                          arguments: PassProductData(
-                              title: val?.name ?? "",
-                              urlKey: val?.urlKey,
-                              productId:
-                                  int.parse(val?.id ?? "")));
+                       if (onAddToWishlist != null) {
+                         // 🟢 PASS THE DATA OBJECT SO IT CAN BE UPDATED
+                         onAddToWishlist!(productId.toString(), isInWishlist, data);
+                       }
                     },
-                    child: SizedBox(
-                      width: AppSizes.screenWidth / 1.8,
-                      child: Card(
-                        clipBehavior: Clip.antiAliasWithSaveLayer,
-                        elevation: 0,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Stack(
-                              children: [
-                                (val?.url != null ||
-                                        ((val?.images
-                                                        ?.length ??
-                                                    0) >
-                                                0 &&
-                                            (val?.images ??
-                                                    [])
-                                                .isNotEmpty))
-                                    ? ImageView(
-                                        url: val?.images?[0]
-                                                .url ??
-                                            val?.url ??
-                                            "",
-                                        height: AppSizes.screenHeight * 0.25,
-                                        width: AppSizes.screenWidth,
-                                        fit: BoxFit.fill,
-                                      )
-                                    : ImageView(
-                                        url: "",
-                                        height: AppSizes.screenHeight * 0.25,
-                                        width: AppSizes.screenWidth,
-                                        fit: BoxFit.fill,
-                                      ),
-                                (val?.isInSale ?? false)
-                                    ? Positioned(
-                                        left: AppSizes.spacingNormal,
-                                        top: AppSizes.spacingNormal,
-                                        child: Container(
-                                          decoration: const BoxDecoration(
-                                              color: Colors.red,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(15))),
-                                          child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: AppSizes
-                                                          .spacingMedium,
-                                                      vertical: AppSizes
-                                                          .spacingSmall),
-                                              child: Text(
-                                                StringConstants.sale.localized(),
-                                                style: const TextStyle(
-                                                    color: Colors.white),
-                                              )),
-                                        ))
-                                    : ((val?.productFlats?[0]
-                                                    .isNew ??
-                                                true) ||
-                                            (val?.isNew ??
-                                                false))
-                                        ? Positioned(
-                                            left: AppSizes.spacingSmall,
-                                            top: AppSizes.spacingSmall,
-                                            child: Container(
-                                              decoration: const BoxDecoration(
-                                                color: Colors.green,
-                                                borderRadius: BorderRadius
-                                                    .all(Radius.circular(
-                                                        AppSizes
-                                                            .spacingLarge)),
-                                              ),
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.only(
-                                                  left:
-                                                      AppSizes.spacingNormal,
-                                                  right:
-                                                      AppSizes.spacingNormal,
-                                                  top: AppSizes.spacingSmall /
-                                                      2,
-                                                  bottom:
-                                                      AppSizes.spacingSmall,
-                                                ),
-                                                child: Text(
-                                                  StringConstants.statusNew.localized(),
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                        : Container(
-                                            color: Colors.transparent,
-                                          ),
-                                if(widget.isRecentProduct == false) Positioned(
-                                  right: AppSizes.spacingNormal,
-                                  top: 10,
-                                  child: InkWell(
-                                      onTap: () {
-                                        checkInternetConnection()
-                                            .then((value) {
-                                          if (value) {
-                                            homepageBloc?.add(
-                                                OnClickLoaderEvent(
-                                                    isReqToShowLoader: true));
-                                            if (widget.isLogin ?? false) {
-                                              if (val
-                                                      ?.isInWishlist ??
-                                                  false) {
-                                                homepageBloc?.add(
-                                                  RemoveWishlistItemEvent(
-                                                    val?.id ??
-                                                        "",
-                                                    val,
-                                                  ),
-                                                );
-                                              } else {
-                                                homepageBloc?.add(
-                                                  FetchAddWishlistHomepageEvent(
-                                                    val?.id ??
-                                                        "",
-                                                    val,
-                                                  ),
-                                                );
-                                              }
-                                            } else {
-                                              ShowMessage.warningNotification(
-                                                  StringConstants.pleaseLogin.localized(),
-                                                  context);
-                                              homepageBloc?.add(
-                                                  OnClickLoaderEvent(
-                                                      isReqToShowLoader:
-                                                          false));
-                                            }
-                                          } else {
-                                            ShowMessage.errorNotification(
-                                                StringConstants.internetIssue
-                                                    .localized(),
-                                                context);
-                                          }
-                                        });
-                                      },
-                                      child: wishlistIcon(context,
-                                          val?.isInWishlist)),
-                                ),
-                                if(widget.isRecentProduct == false) Positioned(
-                                  right: 8.0,
-                                  top: 45,
-                                  child: InkWell(
-                                      onTap: () {
-                                        checkInternetConnection()
-                                            .then((value) {
-                                          if (value) {
-                                            if (widget.isLogin ?? false){
-                                              homepageBloc?.add(
-                                                  OnClickLoaderEvent(
-                                                      isReqToShowLoader: true));
-                                              homepageBloc?.add(
-                                                AddToCompareHomepageEvent(
-                                                  val
-                                                      ?.id ??
-                                                      val?.productId ?? "",
-                                                  "",
-                                                ),
-                                              );
-                                            }
-                                            else {
-                                              ShowMessage.warningNotification(
-                                                  StringConstants.pleaseLogin.localized(),
-                                                  context);
-                                            }
-                                          } else {
-                                            ShowMessage.errorNotification(
-                                                StringConstants.internetIssue
-                                                    .localized(),
-                                                context);
-                                          }
-                                        });
-                                      },
-                                      child: compareIcon(context)),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: AppSizes.spacingNormal,
-                                  ),
-                                  child: SizedBox(
-                                    width: AppSizes.screenWidth / 2,
-                                    child: CommonWidgets().getDrawerTileText(
-                                        val?.productFlats
-                                                ?.firstWhereOrNull((element) =>
-                                                    element.locale ==
-                                                    GlobalData.locale)
-                                                ?.name ??
-                                            val?.name ??
-                                            "",
-                                        context),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSizes.spacingLarge),
-                            
-                            PriceWidgetHtml(priceHtml: val?.priceHtml?.priceHtml ?? ""),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                           BoxShadow(color: Colors.black12, blurRadius: 2)
+                        ]
+                      ),
+                      child: Icon(
+                        isInWishlist ? Icons.favorite : Icons.favorite_border, 
+                        size: 14, 
+                        // 🟢 Dynamic Color
+                        color: isInWishlist ? Colors.red : Colors.grey
+                      ),
+                    ),
+                  ),
+                ),
 
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 6.0),
-                              child: Opacity(
-                                opacity: (val?.isSaleable ?? false) ? 1 : 0.3,
-                                child: CommonWidgets().appButton(
-                                    context,
-                                    StringConstants.addToCart.localized(),
-                                    MediaQuery.of(context).size.width, (val?.isSaleable ?? false) ? () {
-                                  checkInternetConnection().then((value) {
-                                    if (value) {
-                                      homepageBloc?.add(OnClickLoaderEvent(
-                                          isReqToShowLoader: true));
-                                      if ((val?.priceHtml
-                                                  ?.type) ==
-                                              StringConstants.simple ||
-                                          val?.type ==
-                                              StringConstants.simple || val?.type == StringConstants.virtual) {
-                                        homepageEvent(
-                                            val,
-                                            HomePageAction.addToCart,
-                                            widget.isLogin,
-                                            homepageBloc,
-                                            context);
-                                      } else {
-                                        ShowMessage.warningNotification(
-                                            StringConstants.addOptions
-                                                .localized(),context);
-                                        homepageBloc?.add(OnClickLoaderEvent(
-                                            isReqToShowLoader: false));
-                                      }
-                                    } else {
-                                      ShowMessage.errorNotification(
-                                          StringConstants.internetIssue
-                                              .localized(),context);
-                                    }
-                                  });
-                                } : (){}),
-                              ),
-                            )
-                          ],
+                if (priceText.isNotEmpty)
+                  Positioned(
+                    left: 6,
+                    bottom: 6,
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        priceText,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          height: 1.0,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
-                  );
-                }),
-          ),
-        ],
+                  ),
+
+                Positioned(
+                  right: 6,
+                  bottom: 6,
+                  child: InkWell(
+                    onTap: () => onAddToCart?.call(productId),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF2E7D32),
+                        shape: BoxShape.circle,
+                      ),
+                      child:
+                          const Icon(Icons.add, size: 13, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
+              child: Text(
+                name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.10,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

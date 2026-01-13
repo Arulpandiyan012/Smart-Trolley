@@ -1,15 +1,16 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/screens/orders/utils/index.dart';
 import 'package:bagisto_app_demo/utils/prefetching_helper.dart';
+import 'package:flutter/material.dart';
 
 class OrdersList extends StatefulWidget {
   const OrdersList({Key? key, this.isFromDashboard}) : super(key: key);
@@ -56,22 +57,68 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
         appBar: (widget.isFromDashboard ?? false)
             ? null
             : AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0.5,
                 centerTitle: false,
-                title: Text(StringConstants.orders.localized()),
+                iconTheme: const IconThemeData(color: Colors.black),
+                title: Text(
+                  StringConstants.orders.localized(),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 actions: [
-                  IconButton(
-                      onPressed: () {
-                        showModalBottomSheet(
-                            context: context,
-                            builder: (context) => _getOrderFilter());
-                      },
-                      icon: const Icon(
-                        Icons.filter_alt,
-                        size: AppSizes.spacingLarge * 2,
-                      ))
+                  // 🟢 MODERN FILTER CAPSULE
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: Center(
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              isScrollControlled: true,
+                              builder: (context) => _getOrderFilter());
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey.shade300),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2)
+                              )
+                            ]
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.tune_rounded, size: 16, color: Colors.black),
+                              SizedBox(width: 6),
+                              Text(
+                                "Filter", 
+                                style: TextStyle(
+                                  color: Colors.black, 
+                                  fontWeight: FontWeight.w600, 
+                                  fontSize: 13
+                                )
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
         body: _orderList(context));
@@ -133,7 +180,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
       return const EmptyDataView();
     } else {
       return RefreshIndicator(
-        color: Theme.of(context).colorScheme.onPrimary,
+        color: const Color(0xFF0C831F),
         onRefresh: () {
           return Future.delayed(const Duration(seconds: 1), () {
             orderListBloc?.add(FetchOrderListEvent(
@@ -146,12 +193,11 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
           });
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingLarge),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: ListView.separated(
             shrinkWrap: true,
             controller: _scrollController,
             itemBuilder: (BuildContext context, int itemIndex) {
-              // preCacheOrderDetails(ordersListModel.data?[itemIndex].id ?? 0);
               return OrdersListTile(
                 data: ordersListModel.data?[itemIndex],
                 reload: fetchOrder,
@@ -171,277 +217,252 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
     }
   }
 
-  ///Filter view
-
+  /// 🟢 MODERN FILTER SHEET UI (Blinkit Style)
   _getOrderFilter() {
-    return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Card(
-        margin: EdgeInsets.zero,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      StringConstants.filterBy.localized(),
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    MaterialButton(
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(5.0))),
-                      elevation: 0.0,
-                      minWidth: AppSizes.buttonHeight,
-                      color: Theme.of(context).colorScheme.onBackground,
-                      textColor: Theme.of(context).colorScheme.background,
-                      onPressed: () {
-                        page = 1;
-                        orderId.clear();
-                        total.clear();
-                        endDateController.clear();
-                        startDateController.clear();
-                        _currentStatus = 0;
-                        orderListBloc?.add(FetchOrderListEvent(
-                            id: "",
-                            status: "",
-                            startDate: "",
-                            endDate: "",
-                            total: 0,
-                            page: 1));
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        StringConstants.clear.localized().toUpperCase(),
-                        style:
-                            const TextStyle(fontSize: AppSizes.spacingMedium),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Theme(
-                data: Theme.of(context)
-                    .copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  initiallyExpanded: true,
-                  iconColor: Colors.grey,
-                  title: Text(
-                    StringConstants.searchOrder.localized(),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.spacingNormal, vertical: 6),
-                      child: Column(
-                        children: [
-                          CommonWidgets().getTextField(context, orderId,
-                              StringConstants.enterOrderId.localized(),
-                              label: StringConstants.orderId.localized(),
-                              validLabel: ""),
-                          const SizedBox(height: AppSizes.spacingWide),
-                          CommonWidgets().getTextField(context, total,
-                              StringConstants.enterTotal.localized(),
-                              label: StringConstants.total.localized(),
-                              validLabel: ""),
-                          const SizedBox(height: AppSizes.spacingWide),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.spacingWide),
-              Theme(
-                data: Theme.of(context)
-                    .copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  initiallyExpanded: true,
-                  iconColor: Colors.grey,
-                  title: Text(
-                    StringConstants.orderDate.localized(),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.spacingNormal, vertical: 6),
-                      child: Column(
-                        children: [
-                          CommonDatePicker(
-                            controller: startDateController,
-                            hintText: "YYYY-MM-DD",
-                            labelText: StringConstants.fromDate.localized(),
-                            isRequired: true,
-                            save: 0,
-                          ),
-                          const SizedBox(height: AppSizes.spacingWide),
-                          CommonDatePicker(
-                            controller: endDateController,
-                            hintText: "YYYY-MM-DD",
-                            labelText: StringConstants.toDate.localized(),
-                            isRequired: true,
-                            save: 1,
-                          ),
-                          const SizedBox(height: AppSizes.spacingWide),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.spacingWide),
-              Theme(
-                data: Theme.of(context)
-                    .copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  initiallyExpanded: true,
-                  iconColor: Colors.grey,
-                  title: Text(
-                    StringConstants.orderStatus.localized(),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.spacingNormal, vertical: 6),
-                      child: DropdownButtonFormField(
-                          iconEnabledColor: Colors.grey[600],
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          items: status
-                              ?.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          onChanged: (String? value) {
-                            setState(() {
-                              _currentStatus = status!.indexOf(value!);
-                            });
-                          },
-                          value: status?[_currentStatus],
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.fromLTRB(
-                                12.0, 16.0, 12.0, 16.0),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(8.0)),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade500),
-                            ),
-                            labelStyle: Theme.of(context).textTheme.bodyMedium,
-                            fillColor: Colors.black,
-                            labelText: StringConstants.orderStatus.localized(),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius:
-                                    const BorderRadius.all(Radius.zero),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade500)),
-                          )),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.spacingWide),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20)
+        )
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- HEADER ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  MaterialButton(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          side: BorderSide(
-                              color:
-                                  Theme.of(context).colorScheme.onBackground)),
-                      elevation: 2.0,
-                      height: AppSizes.buttonHeight,
-                      minWidth: MediaQuery.of(context).size.width / 2.2,
-                      textColor: Theme.of(context).colorScheme.onBackground,
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            StringConstants.cancel.localized().toUpperCase(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onBackground),
-                          ),
-                        ],
-                      )),
-                  MaterialButton(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0)),
-                      elevation: 2.0,
-                      height: AppSizes.buttonHeight,
-                      minWidth: MediaQuery.of(context).size.width / 2.2,
-                      color: Theme.of(context).colorScheme.onBackground,
-                      textColor: MobiKulTheme.primaryColor,
-                      onPressed: () {
-                        page = 1;
-                        String startDate = startDateController.text != ""
-                            ? "${startDateController.text} 00:00:01"
-                            : startDateController.text;
-                        String endDate = endDateController.text != ""
-                            ? "${endDateController.text} 23:59:59"
-                            : endDateController.text;
-                        orderListBloc?.add(FetchOrderListEvent(
-                          id: orderId.text,
-                          startDate: startDate,
-                          endDate: endDate,
-                          status: status?[_currentStatus] ==
-                                  StringConstants.all.localized()
-                              ? ""
-                              : status?[_currentStatus],
-                          total: double.tryParse(total.text),
-                          page: page,
-                          isFilterApply: true,
-                        ));
-                        Navigator.pop(context);
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(StringConstants.submit.localized().toUpperCase(),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .secondaryContainer)),
-                        ],
-                      )),
+                  Text(
+                    StringConstants.filterBy.localized(),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _clearFilters();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(50, 30),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      StringConstants.clear.localized().toUpperCase(),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(
-                height: AppSizes.spacingWide,
-              )
-            ],
-          ),
+            ),
+            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  
+                  // 1. SEARCH SECTION
+                  _buildSectionTitle(StringConstants.searchOrder.localized()),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _buildModernTextField(orderId, StringConstants.orderId.localized())),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildModernTextField(total, StringConstants.total.localized())),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 2. DATE SECTION
+                  _buildSectionTitle(StringConstants.orderDate.localized()),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CommonDatePicker(
+                            controller: startDateController,
+                            hintText: "Start Date",
+                            labelText: "", // Hidden label for cleaner look
+                            isRequired: false,
+                            save: 0,
+                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                         child: CommonDatePicker(
+                            controller: endDateController,
+                            hintText: "End Date",
+                            labelText: "",
+                            isRequired: false,
+                            save: 1,
+                          ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 3. STATUS SECTION
+                  _buildSectionTitle(StringConstants.orderStatus.localized()),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonFormField(
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                        decoration: const InputDecoration(border: InputBorder.none),
+                        style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500),
+                        items: status?.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          setState(() {
+                            _currentStatus = status!.indexOf(value!);
+                          });
+                        },
+                        value: status?[_currentStatus],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // --- FOOTER BUTTONS ---
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFEEEEEE)))
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.black12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        StringConstants.cancel.localized().toUpperCase(), 
+                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0C831F),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                      ),
+                      onPressed: () {
+                        _applyFilters();
+                      },
+                      child: Text(
+                        StringConstants.submit.localized().toUpperCase(), 
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10)
+          ],
         ),
       ),
     );
+  }
+
+  // Helper for Section Titles
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: TextStyle(
+        color: Colors.grey[600],
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5
+      ),
+    );
+  }
+
+  // Helper for Modern Text Fields
+  Widget _buildModernTextField(TextEditingController controller, String hint) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5), // Soft Grey Background
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF0C831F), width: 1.5)
+        )
+      ),
+    );
+  }
+
+  void _clearFilters() {
+      page = 1;
+      orderId.clear();
+      total.clear();
+      endDateController.clear();
+      startDateController.clear();
+      _currentStatus = 0;
+      orderListBloc?.add(FetchOrderListEvent(
+          id: "",
+          status: "",
+          startDate: "",
+          endDate: "",
+          total: 0,
+          page: 1));
+      Navigator.pop(context);
+  }
+
+  void _applyFilters() {
+      page = 1;
+      String startDate = startDateController.text != ""
+          ? "${startDateController.text} 00:00:01"
+          : startDateController.text;
+      String endDate = endDateController.text != ""
+          ? "${endDateController.text} 23:59:59"
+          : endDateController.text;
+      
+      orderListBloc?.add(FetchOrderListEvent(
+        id: orderId.text,
+        startDate: startDate,
+        endDate: endDate,
+        status: status?[_currentStatus] == StringConstants.all.localized()
+            ? ""
+            : status?[_currentStatus],
+        total: double.tryParse(total.text),
+        page: page,
+        isFilterApply: true,
+      ));
+      Navigator.pop(context);
   }
 
   fetchOrder() async {

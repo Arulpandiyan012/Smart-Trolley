@@ -25,7 +25,7 @@ abstract class CartScreenRepository {
 
   Future<BaseModel?> removeAllCartItem();
 
-  Future<AddToCartModel?> moveToWishlist(int id);
+  Future<AddToCartModel?> moveToWishlist(String id);
 }
 
 class CartScreenRepositoryImp implements CartScreenRepository {
@@ -94,7 +94,7 @@ class CartScreenRepositoryImp implements CartScreenRepository {
   }
 
   @override
-  Future<AddToCartModel?> moveToWishlist(int id) async {
+  Future<AddToCartModel?> moveToWishlist(String id) async {
     AddToCartModel? baseModel;
     try {
       baseModel = await ApiClient().moveCartToWishlist(id);

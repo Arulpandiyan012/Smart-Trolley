@@ -1,21 +1,27 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
+
 class ShippingAndPaymentInfo extends StatelessWidget {
-  final  OrderDetail? orderDetailModel;
+  final OrderDetail? orderDetailModel;
 
   const ShippingAndPaymentInfo({Key? key, this.orderDetailModel}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // 1. SAFETY CHECK: If the entire model is null, don't build anything.
+    if (orderDetailModel == null) {
+      return const SizedBox();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -72,8 +78,10 @@ class ShippingAndPaymentInfo extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: AppSizes.spacingSmall),
-              _getFormattedBillingAddress(
-                  orderDetailModel!, context),
+              
+              // 2. FIXED: Removed '!' and used '?' safe call
+              _getFormattedBillingAddress(orderDetailModel, context),
+              
               const SizedBox(height: AppSizes.spacingSmall),
               Text(
                 "${StringConstants.contact.localized()} ${orderDetailModel?.billingAddress?.phone ?? ""}",
@@ -130,15 +138,17 @@ class ShippingAndPaymentInfo extends StatelessWidget {
       ],
     );
   }
-  _getFormattedBillingAddress(
-      OrderDetail orderDetailModel, BuildContext context) {
+
+  // 3. FIXED: Changed argument type to 'OrderDetail?' (nullable)
+  Widget _getFormattedBillingAddress(OrderDetail? orderDetailModel, BuildContext context) {
+    var address1 = orderDetailModel?.billingAddress?.address1 ?? "";
     return Text(
-      "${orderDetailModel.billingAddress?.address1!.replaceAll("[", "").replaceAll("]", "") ?? ""}, ${orderDetailModel.billingAddress?.city ?? ""}, ${orderDetailModel.billingAddress?.state ?? ""}, ${orderDetailModel.billingAddress?.country ?? ""}, ${orderDetailModel.billingAddress?.postcode ?? ""}",
+      "${address1.replaceAll("[", "").replaceAll("]", "")}, ${orderDetailModel?.billingAddress?.city ?? ""}, ${orderDetailModel?.billingAddress?.state ?? ""}, ${orderDetailModel?.billingAddress?.country ?? ""}, ${orderDetailModel?.billingAddress?.postcode ?? ""}",
       style: Theme.of(context).textTheme.labelSmall,
     );
   }
 
-  getShippingAddress(OrderDetail? orderDetailModel, BuildContext context) {
+  Widget getShippingAddress(OrderDetail? orderDetailModel, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
@@ -170,19 +180,26 @@ class ShippingAndPaymentInfo extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSizes.spacingSmall),
-        _getFormattedAddress(orderDetailModel!, context),
+        
+        // 4. FIXED: Removed '!' and used '?' safe call
+        _getFormattedAddress(orderDetailModel, context),
+        
         const SizedBox(height: AppSizes.spacingSmall),
+        // 5. FIXED: Added '?' to orderDetailModel
         Text(
-          "${StringConstants.contact.localized()} ${orderDetailModel.shippingAddress?.phone ?? ""}",
+          "${StringConstants.contact.localized()} ${orderDetailModel?.shippingAddress?.phone ?? ""}",
           style: Theme.of(context).textTheme.labelMedium,
         ),
         const SizedBox(height: AppSizes.spacingMedium),
       ],
     );
   }
-  _getFormattedAddress(OrderDetail orderDetailModel, BuildContext context) {
+
+  // 6. FIXED: Changed argument type to 'OrderDetail?' (nullable)
+  Widget _getFormattedAddress(OrderDetail? orderDetailModel, BuildContext context) {
+    var address1 = orderDetailModel?.shippingAddress?.address1 ?? "";
     return Text(
-      "${orderDetailModel.shippingAddress?.address1!.replaceAll("[", "").replaceAll("]", "") ?? ""}, ${orderDetailModel.shippingAddress?.city ?? ""}, ${orderDetailModel.shippingAddress?.state ?? ""}, ${orderDetailModel.shippingAddress?.country ?? ""}, ${orderDetailModel.shippingAddress?.postcode ?? ""}",
+      "${address1.replaceAll("[", "").replaceAll("]", "")}, ${orderDetailModel?.shippingAddress?.city ?? ""}, ${orderDetailModel?.shippingAddress?.state ?? ""}, ${orderDetailModel?.shippingAddress?.country ?? ""}, ${orderDetailModel?.shippingAddress?.postcode ?? ""}",
       style: Theme.of(context).textTheme.labelSmall,
     );
   }

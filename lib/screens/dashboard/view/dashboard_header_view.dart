@@ -1,13 +1,5 @@
-/*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
- */
-
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bagisto_app_demo/screens/dashboard/utils/index.dart';
 
 class DashboardHeaderView extends StatefulWidget {
@@ -20,136 +12,131 @@ class DashboardHeaderView extends StatefulWidget {
 class _DashboardHeaderViewState extends State<DashboardHeaderView> {
   String? name;
   String? customerEmail;
+  String? customerPhone;
   String? image;
 
   @override
   void initState() {
+    _fetchUserData();
+    super.initState();
+  }
+
+  void _fetchUserData() {
     name = appStoragePref.getCustomerName();
     customerEmail = appStoragePref.getCustomerEmail();
+    customerPhone = appStoragePref.getCustomerPhone();
     image = appStoragePref.getCustomerImage();
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height / 3,
-      width: MediaQuery.of(context).size.width,
-      child: Card(
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          child: Stack(
-            children: [
-              Image.asset(
-                AssetConstants.customerBannerPlaceholder,
-                width: MediaQuery.of(context).size.width,
-              ),
-              Container(
-                  height: MediaQuery.of(context).size.height / 3,
-                  decoration: const BoxDecoration(
-                    color: Color(0x0bd7f77d),
-                    shape: BoxShape.rectangle,
-                  )),
-              Center(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Stack(
-                      children: [
-                        Container(
-                            height: AppSizes.spacingWide * 4,
-                            width: AppSizes.spacingWide * 4,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: MobiKulTheme.accentColor,
-                                    width: 1.0)),
-                            child: ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                    AppSizes.spacingWide * 5),
-                                child: CachedNetworkImage(
-                                  fit: BoxFit.cover,
-                                  imageUrl: image ?? "",
-                                  placeholder: (context, url) => Image.asset(
-                                      AssetConstants
-                                          .customerProfilePlaceholder),
-                                  errorWidget: (context, url, error) =>
-                                      Image.asset(AssetConstants
-                                          .customerProfilePlaceholder),
-                                ))),
-                      ],
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSizes.spacingNormal),
-                        child: Column(
-                          children: [
-                            Text(
-                              name ?? "",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(color: Colors.white),
-                            ),
-                            const SizedBox(
-                              height: AppSizes.spacingSmall,
-                            ),
-                            Text(
-                              customerEmail ?? "",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      fontSize: AppSizes.spacingMedium,
-                                      color: Colors.white,
-                                      letterSpacing: 1,
-                                      fontWeight: FontWeight.w400),
-                            ),
-                            const SizedBox(
-                              height: AppSizes.spacingNormal,
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context)
-                                    .pushNamed(accountInfo)
-                                    .then((value) {
-                                    setState(() {
-                                      name = appStoragePref.getCustomerName();
-                                      customerEmail = appStoragePref.getCustomerEmail();
-                                      image = appStoragePref.getCustomerImage();
-                                    });
-                                });
-                              },
-                              child: Container(
-                                  decoration: const BoxDecoration(
-                                      color: Colors.white30,
-                                      shape: BoxShape.rectangle,
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(25.0))),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: AppSizes.spacingNormal,
-                                      horizontal: AppSizes.spacingMedium,
-                                    ),
-                                    child: Text(
-                                      StringConstants.editInfo
-                                          .localized()
-                                          .toUpperCase(),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(color: Colors.white),
-                                    ),
-                                  )),
-                            ),
-                          ],
-                        ))
-                  ],
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      // 🟢 Compact Padding: Reduces overall height to ~20% of screen
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Stack(
+        children: [
+          // 🟢 1. Centered Content (Profile + Info)
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Takes minimal height
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Profile Image (Reduced to 60px)
+                Container(
+                  height: 60,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey.shade200, width: 2),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 3))
+                    ]
+                  ),
+                  child: ClipOval(
+                    child: (image != null && image!.isNotEmpty)
+                        ? CachedNetworkImage(
+                            fit: BoxFit.cover,
+                            imageUrl: image!,
+                            placeholder: (context, url) =>
+                                Image.asset(AssetConstants.customerProfilePlaceholder),
+                            errorWidget: (context, url, error) =>
+                                Image.asset(AssetConstants.customerProfilePlaceholder),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Image.asset(AssetConstants.customerProfilePlaceholder),
+                          ),
+                  ),
+                ),
+                
+                const SizedBox(height: 10), // Reduced spacing
+
+                // Name
+                Text(
+                  (name ?? "Guest User").toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16, // Smaller Font
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                
+                const SizedBox(height: 4),
+
+                // Email
+                if (customerEmail != null && customerEmail!.isNotEmpty)
+                  Text(
+                    customerEmail!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500), // Smaller Font
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                // Phone
+                if (customerPhone != null && customerPhone!.isNotEmpty)
+                  Text(
+                    customerPhone!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500], fontWeight: FontWeight.w500), // Smaller Font
+                  ),
+              ],
+            ),
+          ),
+
+          // 🟢 2. Edit Icon (Top Right Corner)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).pushNamed(accountInfo).then((value) {
+                  setState(() {
+                    _fetchUserData();
+                  });
+                });
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6), // Light Grey Circle
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.edit_outlined, // Clean Edit Icon
+                  size: 20, 
+                  color: Color(0xFF2E7D32), // Green
                 ),
               ),
-            ],
-          )),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

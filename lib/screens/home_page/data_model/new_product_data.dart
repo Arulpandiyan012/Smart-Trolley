@@ -101,6 +101,13 @@ class NewProducts extends HiveObject {
   @HiveField(30)
   bool? isSaleable;
   @HiveField(28)
+  @HiveField(31)
+  @JsonKey(name: "related_products")
+  List<NewProducts>? relatedProducts;
+
+  @HiveField(32)
+  @JsonKey(name: "up_sells")
+  List<NewProducts>? upSells;
   List<Inventories>? inventories;
   // List<dynamic>? videos;
   List<dynamic>? orderedInventories;
@@ -170,7 +177,9 @@ class NewProducts extends HiveObject {
       this.urlKey,
       this.averageRating,
       this.percentageRating,
-      this.customizableOptions});
+      this.customizableOptions,
+      this.relatedProducts,
+      this.upSells});
 
   factory NewProducts.fromJson(Map<String, dynamic> json) =>
       _$NewProductsFromJson(json);
