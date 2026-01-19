@@ -73,10 +73,22 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                                   "ORDER #${orderDetailModel?.id ?? ''}",
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  orderDetailModel?.createdAt ?? "",
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                const SizedBox(height: 6),
+                                
+                                // 🟢 FIXED: Using helper to convert UTC -> Local Time
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "Placed on: ${_formatDateToLocal(orderDetailModel?.createdAt)}",
+                                      style: TextStyle(
+                                        fontSize: 13, 
+                                        color: Colors.grey[800], 
+                                        fontWeight: FontWeight.w500
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -101,7 +113,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         const Divider(thickness: 1, height: 1),
                         const SizedBox(height: 16),
 
-                        // 2. ITEMS ORDERED (Moved to Top)
+                        // 2. ITEMS ORDERED
                         const Text("Items Ordered", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                         const SizedBox(height: 12),
                         ListView.separated(
@@ -118,14 +130,14 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         const Divider(thickness: 1, height: 1),
                         const SizedBox(height: 16),
 
-                        // 3. MY ADDRESS (Moved Below Items)
+                        // 3. ADDRESS DETAILS
                         const Text("Delivery Details", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                         const SizedBox(height: 16),
                         
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // LEFT: BILLING ADDRESS
+                            // LEFT: BILLING
                             Expanded(
                               flex: 4,
                               child: _buildAddressNode(
@@ -145,14 +157,14 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                               ),
                             ),
 
-                            // RIGHT: SHIPPING ADDRESS
+                            // RIGHT: SHIPPING
                             Expanded(
                               flex: 4,
                               child: _buildAddressNode(
                                 icon: Icons.local_shipping_outlined, 
                                 title: "Shipping Address",
                                 address: orderDetailModel?.shippingAddress,
-                                alignLeft: false // Align to right
+                                alignLeft: false 
                               ),
                             ),
                           ],
@@ -221,7 +233,32 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     );
   }
 
-  // --- HELPER WIDGETS ---
+  // --- 🟢 NEW HELPER: Formats Server Date (UTC) to Local Time ---
+  String _formatDateToLocal(String? serverDate) {
+    if (serverDate == null || serverDate.isEmpty) return "N/A";
+    try {
+      // 1. Parse string to DateTime (Initially it might be parsed as local but with wrong values)
+      DateTime temp = DateTime.parse(serverDate);
+      
+      // 2. Force it to be UTC because server sends UTC without 'Z' usually
+      DateTime utcDate = DateTime.utc(temp.year, temp.month, temp.day, temp.hour, temp.minute, temp.second);
+      
+      // 3. Convert to Device Local Time (Adds +5:30 for India)
+      DateTime localDate = utcDate.toLocal();
+
+      // 4. Format manually to "14 Jan 2026, 11:42 PM"
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      String month = months[localDate.month - 1];
+      
+      String amPm = localDate.hour >= 12 ? "PM" : "AM";
+      int hour12 = localDate.hour > 12 ? localDate.hour - 12 : (localDate.hour == 0 ? 12 : localDate.hour);
+      String minute = localDate.minute.toString().padLeft(2, '0');
+
+      return "${localDate.day} $month ${localDate.year}, $hour12:$minute $amPm";
+    } catch (e) {
+      return serverDate; // Fallback
+    }
+  }
 
   Widget _buildAddressNode({required IconData icon, required String title, required dynamic address, required bool alignLeft}) {
     CrossAxisAlignment align = alignLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end;
@@ -230,7 +267,6 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     return Column(
       crossAxisAlignment: align,
       children: [
-        // Icon Circle
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -241,21 +277,14 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
           child: Icon(icon, size: 20, color: Colors.black87),
         ),
         const SizedBox(height: 8),
-        
-        // Title
         Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
         const SizedBox(height: 4),
-
-        // Name
         Text(
           "${address?.firstName ?? ''} ${address?.lastName ?? ''}", 
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           textAlign: textAlign,
         ),
-        
         const SizedBox(height: 2),
-
-        // FULL ADDRESS (Multiline)
         Text(
           _getFullAddress(address), 
           style: TextStyle(fontSize: 12, color: Colors.grey[700], height: 1.4),
@@ -263,10 +292,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
           overflow: TextOverflow.ellipsis,
           textAlign: textAlign,
         ),
-        
         const SizedBox(height: 4),
-
-        // Phone
         if (address?.phone != null)
           Text(
             "Phone: ${address?.phone}",
@@ -286,7 +312,6 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
 
     return Row(
       children: [
-        // Image
         Container(
           width: 48, height: 48,
           decoration: BoxDecoration(
@@ -300,8 +325,6 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
           child: imageUrl.isEmpty ? const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.grey) : null,
         ),
         const SizedBox(width: 12),
-        
-        // Name & Qty
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,8 +335,6 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
             ],
           ),
         ),
-        
-        // Price
         Text(
           item.formattedPrice?.price ?? "", 
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
@@ -338,11 +359,8 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     );
   }
 
-  // Helper: Concatenates all address fields nicely
   String _getFullAddress(dynamic address) {
     if (address == null) return "";
-    
-    // Parse Street (Address 1)
     String street = "";
     var addr1 = address.address1;
     if (addr1 is List && addr1.isNotEmpty) {
@@ -357,7 +375,6 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     String country = address.country ?? "";
     String postcode = address.postcode ?? "";
 
-    // Build the string with commas
     List<String> parts = [];
     if (street.isNotEmpty) parts.add(street);
     if (city.isNotEmpty) parts.add(city);

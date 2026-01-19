@@ -12,10 +12,13 @@ import 'package:bagisto_app_demo/screens/home_page/widget/address_details_sheet.
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/widget/saved_address_sheet.dart';
 import 'package:bagisto_app_demo/screens/sign_in/view/sign_in_screen.dart';
-import 'package:dio/dio.dart'; // 🟢 Added Dio for API call
+import 'package:dio/dio.dart'; 
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({Key? key}) : super(key: key);
+  // 🟢 NEW: Flag to check if opened from Bottom Bar
+  final bool isFromBottomNav; 
+  
+  const CartScreen({Key? key, this.isFromBottomNav = false}) : super(key: key);
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -54,7 +57,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  // 🟢 NEW: Function to Save Address to Backend immediately
   Future<void> _saveCartAddress(String addressId) async {
       try {
         String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
@@ -66,16 +68,12 @@ class _CartScreenState extends State<CartScreen> {
           'cart_id': cartId,
           'address_id': addressId
         });
-
-        debugPrint("🔵 Saving Address ID $addressId for Cart $cartId...");
-
         await dio.post(
           'https://ecom.thesmartedgetech.com/mobikul-save-checkout-address.php', 
           data: formData
         );
-        debugPrint("✅ Address Saved Successfully to Cart!");
       } catch (e) {
-        debugPrint("❌ Failed to save address: $e");
+        debugPrint("Failed to save address: $e");
       }
   }
 
@@ -89,10 +87,14 @@ class _CartScreenState extends State<CartScreen> {
           backgroundColor: Colors.white,
           elevation: 0.5,
           centerTitle: false,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
+          // 🟢 FIXED: Only show back button if NOT from bottom nav
+          automaticallyImplyLeading: false,
+          leading: widget.isFromBottomNav 
+              ? null // No back button if it's a tab
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.pop(context),
+                ),
           title: Text(
             StringConstants.cart.localized(),
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
@@ -100,7 +102,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
         body: _cartScreenData(context),
         
-        // Bottom Bar that updates immediately on state change
+        // This bottom bar (Proceed to Pay) will sit ABOVE the main App Bottom Bar
         bottomNavigationBar: (_cartDetailsModel?.items?.isNotEmpty ?? false)
             ? BlinkitBottomCartBar(
                 currentAddress: _deliveryAddress,
@@ -140,11 +142,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ).then((selectedAddress) {
         if (selectedAddress != null && selectedAddress is AddressData) {
-           
-           // 🟢 1. CALL API TO SAVE ADDRESS
            _saveCartAddress(selectedAddress.id.toString());
-
-           // 2. Update UI
            setState(() {
              _deliveryAddress = "${selectedAddress.address1}, ${selectedAddress.city}";
              CurrentLocationManager.address = _deliveryAddress;
@@ -214,15 +212,13 @@ class _CartScreenState extends State<CartScreen> {
   _cartScreenData(BuildContext context) {
     return BlocConsumer<CartScreenBloc, CartScreenBaseState>(
       listener: (BuildContext context, CartScreenBaseState state) {
-        // 1. HANDLE DATA FETCH (INITIAL LOAD)
         if (state is FetchCartDataState) {
           if (state.status == CartStatus.success) {
             _cartDetailsModel = state.cartDetailsModel;
-            setState(() {}); // Force rebuild so BottomBar appears immediately
+            setState(() {}); 
           }
         }
 
-        // 2. HANDLE REMOVE ITEM
         if (state is RemoveCartItemState) {
           if (state.status == CartStatus.success) {
             ShowMessage.successNotification(state.removeCartProductModel?.message ?? "", context);
@@ -237,7 +233,6 @@ class _CartScreenState extends State<CartScreen> {
           }
         }
 
-        // 3. HANDLE UPDATE QTY
         if (state is UpdateCartState) {
           if (state.status == CartStatus.success) {
             setState(() => quantityChanged = false);
@@ -247,7 +242,6 @@ class _CartScreenState extends State<CartScreen> {
           }
         }
         
-        // 4. HANDLE ADD COUPON
         if (state is AddCouponState) {
            if (state.status == CartStatus.success) {
              fetchCartData(); 
@@ -256,7 +250,6 @@ class _CartScreenState extends State<CartScreen> {
            }
         }
 
-        // 5. HANDLE REMOVE COUPON
         if (state is RemoveCouponCartState) {
            if (state.status == CartStatus.success) {
              fetchCartData(); 
@@ -278,7 +271,6 @@ class _CartScreenState extends State<CartScreen> {
        _cartDetailsModel = state.cartDetailsModel;
     }
     
-    // Always update counts if model exists
     if (_cartDetailsModel != null) {
         _discountController.text = _cartDetailsModel?.couponCode ?? "";
         GlobalData.cartCountController.sink.add(_cartDetailsModel?.itemsQty ?? 0);
