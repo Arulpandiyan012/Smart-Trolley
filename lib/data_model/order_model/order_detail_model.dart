@@ -209,9 +209,18 @@ class OrderProduct {
      }
      return op;
   }
+
+  // 👇 ADD THIS METHOD
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sku': sku,
+      'name': name,
+      'images': images?.map((i) => i.toJson()).toList(),
+    };
+  }
 }
 
-// ✅ ADDED THIS MISSING CLASS
 class Images {
   String? url;
   String? path;
@@ -223,6 +232,14 @@ class Images {
       url: json['url']?.toString(),
       path: json['path']?.toString(),
     );
+  }
+
+  // 👇 ADD THIS METHOD
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'path': path,
+    };
   }
 }
 

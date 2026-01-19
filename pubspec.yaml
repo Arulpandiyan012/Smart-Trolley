@@ -67,7 +67,7 @@ dependencies:
   google_maps_flutter: ^2.6.0
   geolocator: ^11.0.0 
   dio: ^5.3.3
-  retrofit: ^4.0.2
+  retrofit: '>=4.0.0 <4.9.0'
   collection: ^1.17.0
   provider: ^6.0.1
   internet_connection_checker: ^3.0.1
@@ -84,7 +84,7 @@ dev_dependencies:
     sdk: flutter
 
   build_runner: ^2.1.4
-  retrofit_generator: ^9.1.9
+  retrofit_generator: ^8.1.0
   built_value_generator: ^8.1.2
   json_serializable: ^6.5.4
   hive_generator: ^2.0.0
