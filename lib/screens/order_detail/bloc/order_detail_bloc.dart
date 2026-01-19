@@ -24,7 +24,6 @@ class OrderDetailBloc extends Bloc<OrderDetailBaseEvent, OrderDetailBaseState> {
       try {
         OrderDetail orderDetailModel = await repository!.getOrderDetails(event.orderId ?? 1);
         
-        // 🟢 FIX: Smart Check - Accepts Boolean true OR String "true"
         bool isSuccess = false;
         if (orderDetailModel.responseStatus is bool) {
           isSuccess = orderDetailModel.responseStatus == true;
@@ -44,10 +43,32 @@ class OrderDetailBloc extends Bloc<OrderDetailBaseEvent, OrderDetailBaseState> {
     else if (event is CancelOrderEvent) {
       try {
         BaseModel baseModel = await repository!.cancelOrder(event.id ?? 0);
-        if (baseModel.status == true) {
+        
+        // 🟢 FIX START: Robust check for Success
+        bool isSuccess = false;
+
+        // 1. Check Status (Handle Bool or String)
+        if (baseModel.status is bool) {
+          isSuccess = baseModel.status == true;
+        } else if (baseModel.status != null) {
+          isSuccess = baseModel.status.toString().toLowerCase() == "true";
+        }
+
+        // 2. Fallback: If status is false/null, check if message implies success
+        // This catches "false negatives" where API says status: false but message is "Order Cancelled Successfully"
+        if (!isSuccess && (baseModel.message?.toLowerCase().contains("success") ?? false)) {
+           isSuccess = true;
+        }
+        if (!isSuccess && (baseModel.message?.toLowerCase().contains("cancelled") ?? false)) {
+           isSuccess = true;
+        }
+        // 🟢 FIX END
+
+        if (isSuccess) {
           emit(CancelOrderState.success(baseModel: baseModel, successMsg: baseModel.message));
         } else {
-          emit(CancelOrderState.fail(error: baseModel.graphqlErrors));
+          // If it really failed, send the server error or message
+          emit(CancelOrderState.fail(error: baseModel.graphqlErrors ?? baseModel.message ?? "Failed to cancel"));
         }
       } catch (e) {
         emit(CancelOrderState.fail(error: StringConstants.somethingWrong.localized()));
