@@ -1,18 +1,22 @@
 buildscript {
-    ext.kotlin_version = '2.2.0'
+    // UPDATED: 1.9.24 or 2.1.0 are the stable choices for Flutter 3.10+ 
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
     }
 
-
     dependencies {
-        classpath 'com.google.gms:google-services:4.3.15'
-        classpath 'com.android.tools.build:gradle:8.8.2'
+        // UPDATED: Use 4.4.1 for better compatibility with Gradle 8+
+        classpath 'com.google.gms:google-services:4.4.1'
+        
+        // CORRECT: Matches your requirements
+        classpath 'com.android.tools.build:gradle:8.9.1'
+        
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.6.1'
-
-
+        
+        // UPDATED: Use 3.0.2 for modern Crashlytics support
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
     }
 }
 
@@ -26,6 +30,8 @@ allprojects {
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
     project.evaluationDependsOn(':app')
 }
 

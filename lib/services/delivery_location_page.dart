@@ -4,6 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // Keep this as is
+import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as places; // Add "as places"
 
 class DeliveryLocationPage extends StatefulWidget {
   const DeliveryLocationPage({Key? key}) : super(key: key);

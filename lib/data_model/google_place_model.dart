@@ -16,7 +16,8 @@ part 'google_place_model.g.dart';
 
 @RestApi(baseUrl:"https://maps.googleapis.com/maps/api/")
  abstract class GooglePlaceApiClient {
-  factory GooglePlaceApiClient(Dio dio,{String? baseUrl})= _GooglePlaceApiClient;
+  // Add ParseErrorLogger? errorLogger here
+factory GooglePlaceApiClient(Dio dio, {String baseUrl, ParseErrorLogger? errorLogger}) = _GooglePlaceApiClient;
   @GET('place/textsearch/json?query={endPoint}')
   Future<GooglePlaceModel> getGooglePlace(
       @Path() String endPoint);

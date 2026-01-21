@@ -5,13 +5,13 @@
  *
  * @author Webkul <support@webkul.com>
  * @category Webkul
- * @package com.webkul.mobikul
+ * @package webkul.bagisto_app_demo
  * @copyright 2010-2018 Webkul Software Private Limited (https://webkul.com)
  * @license https://store.webkul.com/license.html ASL Licence
  * @link https://store.webkul.com/license.html
  */
 
-package  webkul.bagisto_app_demo.arcore.activities
+package webkul.bagisto_app_demo.arcore.activities
 
 import android.Manifest
 import android.app.Activity
@@ -28,8 +28,9 @@ import android.util.Log
 import android.view.MotionEvent
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
-import com.example.bagisto_app_demo.databinding.ActivityArBinding
-import com.example.bagisto_app_demo.R
+// UPDATED IMPORTS: Pointing to your actual project namespace
+import webkul.bagisto_app_demo.databinding.ActivityArBinding
+import webkul.bagisto_app_demo.R
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
@@ -40,7 +41,6 @@ import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.ux.ArFragment
 import com.google.ar.sceneform.ux.TransformableNode
 import java.util.concurrent.CompletableFuture
-
 
 class ArActivity : AppCompatActivity() {
     private val MIN_OPENGL_VERSION = 3.1
@@ -59,11 +59,11 @@ class ArActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Ensure R.layout.activity_ar exists in your res/layout folder
         mContentViewBinding = DataBindingUtil.setContentView(this, R.layout.activity_ar)
         arModel = intent.getStringExtra("link")
         initSupportActionBar()
         if (checkIsSupportedDeviceOrFinish(this)) {
-
             startInitialization()
         } else {
             Toast.makeText(
@@ -81,21 +81,15 @@ class ArActivity : AppCompatActivity() {
         supportActionBar?.title = title
         supportActionBar?.elevation = 4f
     }
+
     private fun startInitialization() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     try {
-
                         arFragment = supportFragmentManager.findFragmentById(R.id.ux_fragment) as ArFragment
-
-
                         Toast.makeText(this@ArActivity, getString(R.string.downloading_model), Toast.LENGTH_SHORT).show()
-
-                        // Init renderable
                         loadModel()
-
-                        // Set tap listener
                         arFragment!!.setOnTapArPlaneListener { hitResult: HitResult, plane: Plane?, motionEvent: MotionEvent? ->
                             val anchor = hitResult.createAnchor()
                             if (anchorNode == null) {
@@ -127,15 +121,15 @@ class ArActivity : AppCompatActivity() {
                 node.scaleController.sensitivity = 0.1f
                 node.setParent(anchorNode)
                 node.renderable = objectRenderable
-
                 node.select()
+                
+                // Uses the Binding object to access the layout ID
                 mModelStateSnackBar = Snackbar.make(mContentViewBinding.arLayout, getString(R.string.model_ready), Snackbar.LENGTH_INDEFINITE).setAction(getString(R.string.dismiss)) {
                     mModelStateSnackBar?.dismiss()
                 }
             }
         } catch (e: Exception) {
             Toast.makeText(this@ArActivity, getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
-
         }
     }
 
@@ -156,10 +150,8 @@ class ArActivity : AppCompatActivity() {
                     .thenAccept { renderable: ModelRenderable ->
                         objectRenderable = renderable
                         Toast.makeText(this@ArActivity, getString(R.string.model_ready), Toast.LENGTH_SHORT).show()
-
                     }
                     .exceptionally { throwable: Throwable? ->
-                     //   Log.i("Model", "cant load")
                         Toast.makeText(this@ArActivity, getString(R.string.model_error)+throwable?.message, Toast.LENGTH_SHORT).show()
                         mModelStateSnackBar = Snackbar.make(mContentViewBinding.arLayout, getString(R.string.model_error), Snackbar.LENGTH_INDEFINITE).setAction(getString(R.string.try_again)) {
                             mModelStateSnackBar?.dismiss()
@@ -172,8 +164,6 @@ class ArActivity : AppCompatActivity() {
             e.printStackTrace()
         }
     }
-
-
 
     private fun checkIsSupportedDeviceOrFinish(activity: Activity): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {

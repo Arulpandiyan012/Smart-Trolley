@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package  webkul.bagisto_app_demo.mlkit.activities
+package webkul.bagisto_app_demo.mlkit.activities
 
 import android.Manifest
 import android.content.Context
@@ -32,16 +32,17 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.bagisto_app_demo.R
-import com.example.bagisto_app_demo.databinding.ActivityCameraSearchBinding
+// FIXED: Corrected imports to match your project namespace
+import webkul.bagisto_app_demo.R
+import webkul.bagisto_app_demo.databinding.ActivityCameraSearchBinding
 import com.google.android.gms.common.annotation.KeepName
 import com.google.mlkit.vision.label.ImageLabel
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.text.Text
-import  webkul.bagisto_app_demo.mlkit.adapters.CameraSearchResultAdapter
-import  webkul.bagisto_app_demo.mlkit.customviews.CameraSource
-import  webkul.bagisto_app_demo.mlkit.labeldetector.LabelDetectorProcessor
-import  webkul.bagisto_app_demo.mlkit.textdetector.TextRecognitionProcessor
+import webkul.bagisto_app_demo.mlkit.adapters.CameraSearchResultAdapter
+import webkul.bagisto_app_demo.mlkit.customviews.CameraSource
+import webkul.bagisto_app_demo.mlkit.labeldetector.LabelDetectorProcessor
+import webkul.bagisto_app_demo.mlkit.textdetector.TextRecognitionProcessor
 import java.io.IOException
 
 /** Live preview demo for ML Kit APIs.  */
@@ -55,7 +56,6 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
     private var selectedModel = TEXT_RECOGNITION
     lateinit var displayList: ArrayList<String>
     private var hasFlash = false
-    var TAG = "CameraActivity"
 
     companion object {
         const val CAMERA_SEARCH_HELPER = "searchHelper"
@@ -90,27 +90,25 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
         if (intent.hasExtra(CAMERA_SELECTED_MODEL)) {
             selectedModel = intent.getStringExtra(CAMERA_SELECTED_MODEL)!!
         }
+        
+        // Permission check
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_DENIED
         ) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 200)
-            onBackPressed()
         }
 
+        // Setup UI via Binding
         mContentViewBinding.resultsMessageTv.text = getString(R.string.x_results_found, displayList.size)
         mContentViewBinding.resultRv.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         displayAdapter = CameraSearchResultAdapter(this, displayList)
         mContentViewBinding.resultRv.adapter = displayAdapter
-
         mContentViewBinding.resultRv.bringToFront()
 
         initSupportActionBar()
-
         cameraSwitchSetup()
-
         flashSetup()
-
 
         if (allPermissionsGranted()) {
             mContentViewBinding.previewView.stop()
@@ -119,8 +117,6 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
         } else {
             runtimePermissions
         }
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -137,7 +133,7 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
 
     private fun cameraSwitchSetup() {
         if (hasFrontCamera()) {
-            mContentViewBinding.facingSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            mContentViewBinding.facingSwitch.setOnCheckedChangeListener { _, isChecked ->
                 if (cameraSource != null) {
                     if (isChecked) {
                         mContentViewBinding.flashSwitch.visibility = View.GONE
@@ -146,7 +142,6 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
                         flashSetup()
                         cameraSource!!.setFacing(CameraSource.CAMERA_FACING_BACK)
                     }
-
                 }
                 mContentViewBinding.previewView.stop()
                 displayList.clear()
@@ -161,22 +156,20 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
     }
 
     private fun flashSetup() {
-        hasFlash =
-            applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
+        hasFlash = applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
 
         if (hasFlash) {
             mContentViewBinding.flashSwitch.visibility = View.VISIBLE
-            mContentViewBinding.flashSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            mContentViewBinding.flashSwitch.setOnCheckedChangeListener { _, isChecked ->
                 if (cameraSource != null) {
                     val camera = cameraSource!!.camera
                     if (camera != null) {
-                        val parameters = camera!!.parameters
-                        if (isChecked) {
-                            parameters.flashMode = Camera.Parameters.FLASH_MODE_TORCH
+                        val parameters = camera.parameters
+                        parameters.flashMode = if (isChecked) {
+                            Camera.Parameters.FLASH_MODE_TORCH
                         } else {
-                            parameters.flashMode = Camera.Parameters.FLASH_MODE_OFF
+                            Camera.Parameters.FLASH_MODE_OFF
                         }
-
                         camera.parameters = parameters
                     }
                 } else {
@@ -192,7 +185,6 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
         }
     }
 
-
     private fun hasFrontCamera(): Boolean {
         val cameraInfo = CameraInfo()
         val numberOfCameras = Camera.getNumberOfCameras()
@@ -206,62 +198,36 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
     }
 
     override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
-        Log.d(TAG, "Set facing")
         if (cameraSource != null) {
-            if (isChecked) {
-                cameraSource?.setFacing(CameraSource.CAMERA_FACING_FRONT)
-            } else {
-                cameraSource?.setFacing(CameraSource.CAMERA_FACING_BACK)
-            }
+            cameraSource?.setFacing(if (isChecked) CameraSource.CAMERA_FACING_FRONT else CameraSource.CAMERA_FACING_BACK)
         }
         mContentViewBinding.previewView.stop()
         startCameraSource()
     }
 
     private fun createCameraSource(model: String) {
-        // If there's no existing cameraSource, create one.
         if (cameraSource == null) {
             cameraSource = CameraSource(this, mContentViewBinding.graphicOverlay)
         }
         try {
             when (model) {
                 TEXT_RECOGNITION -> {
-                    Log.i(
-                        TAG,
-                        "Using on-device Text recognition Processor"
-                    )
                     cameraSource!!.setMachineLearningFrameProcessor(TextRecognitionProcessor(this))
                     displayList.clear()
                 }
                 IMAGE_LABELING -> {
-                    Log.i(
-                        TAG,
-                        "Using Image Label Detector Processor"
-                    )
                     cameraSource!!.setMachineLearningFrameProcessor(
-                        LabelDetectorProcessor(
-                            this,
-                            ImageLabelerOptions.DEFAULT_OPTIONS
-                        )
+                        LabelDetectorProcessor(this, ImageLabelerOptions.DEFAULT_OPTIONS)
                     )
                     displayList.clear()
                 }
-                else -> Log.e(TAG, "Unknown model: $model")
+                else -> Log.e("CameraActivity", "Unknown model: $model")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Can not create image processor: $model", e)
-            Toast.makeText(
-                applicationContext, "Can not create image processor: " + e.message,
-                Toast.LENGTH_LONG
-            ).show()
+            Log.e("CameraActivity", "Can not create image processor: $model", e)
         }
     }
 
-    /**
-     * Starts or restarts the camera source, if it exists. If the camera source doesn't exist yet
-     * (e.g., because onResume was called before the camera source was created), this will be called
-     * again when the camera source is created.
-     */
     private fun startCameraSource() {
         if (cameraSource != null) {
             try {
@@ -270,7 +236,7 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
                     mContentViewBinding.graphicOverlay
                 )
             } catch (e: IOException) {
-                Log.e(TAG, "Unable to start camera source.", e)
+                Log.e("CameraActivity", "Unable to start camera source.", e)
                 cameraSource!!.release()
                 cameraSource = null
             }
@@ -279,12 +245,10 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
 
     public override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume")
         createCameraSource(selectedModel)
         startCameraSource()
     }
 
-    /** Stops the camera.  */
     override fun onPause() {
         super.onPause()
         mContentViewBinding.previewView.stop()
@@ -292,64 +256,39 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
 
     public override fun onDestroy() {
         super.onDestroy()
-        if (cameraSource != null) {
-            cameraSource?.release()
-        }
+        cameraSource?.release()
     }
 
     private val requiredPermissions: Array<String?>
         get() = try {
-            val info = this.packageManager
-                .getPackageInfo(this.packageName, PackageManager.GET_PERMISSIONS)
-            val ps = info.requestedPermissions
-            if (ps != null && ps.isNotEmpty()) {
-                ps
-            } else {
-                arrayOfNulls(0)
-            }
+            val info = this.packageManager.getPackageInfo(this.packageName, PackageManager.GET_PERMISSIONS)
+            info.requestedPermissions ?: arrayOfNulls(0)
         } catch (e: Exception) {
             arrayOfNulls(0)
         }
 
     private fun allPermissionsGranted(): Boolean {
         for (permission in requiredPermissions) {
-            if (!isPermissionGranted(this, permission)) {
-                return false
-            }
+            if (!isPermissionGranted(this, permission)) return false
         }
         return true
     }
 
     private val runtimePermissions: Unit
         get() {
-            val allNeededPermissions: MutableList<String?> = ArrayList()
-            for (permission in requiredPermissions) {
-                if (!isPermissionGranted(this, permission)) {
-                    allNeededPermissions.add(permission)
-                }
-            }
+            val allNeededPermissions = requiredPermissions.filter { !isPermissionGranted(this, it) }
             if (allNeededPermissions.isNotEmpty()) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    allNeededPermissions.toTypedArray(),
-                    PERMISSION_REQUESTS
-                )
+                ActivityCompat.requestPermissions(this, allNeededPermissions.toTypedArray(), PERMISSION_REQUESTS)
             }
         }
 
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (allPermissionsGranted()) {
             createCameraSource(selectedModel)
             startCameraSource()
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
-
 
     fun sendResultBack(position: Int) {
         val resultIntent = Intent()
@@ -372,12 +311,10 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
             }
         }
         if (contentChange) {
-            mContentViewBinding.resultsMessageTv.text =
-                getString(R.string.x_results_found, displayList.size)
+            mContentViewBinding.resultsMessageTv.text = getString(R.string.x_results_found, displayList.size)
             mContentViewBinding.resultRv.adapter?.notifyDataSetChanged()
             contentChange = false
         }
-
     }
 
     fun updateSpinnerFromResults(labelList: List<ImageLabel>) {
@@ -385,17 +322,12 @@ class CameraSearchActivity : AppCompatActivity(), ActivityCompat.OnRequestPermis
             if (!displayList.contains(visionLabel.text) && visionLabel.confidence > 0.5f && displayList.size <= 9) {
                 displayList.add(visionLabel.text)
                 contentChange = true
-                //    resultList?.add(visionLabel)
             }
         }
         if (contentChange) {
-            mContentViewBinding.resultsMessageTv.text =
-                getString(R.string.x_results_found, displayList.size)
+            mContentViewBinding.resultsMessageTv.text = getString(R.string.x_results_found, displayList.size)
             mContentViewBinding.resultRv.adapter?.notifyDataSetChanged()
             contentChange = false
         }
-        //  mContentViewBinding.resultRv.adapter = CameraSearchResultAdapter(this, displayList)
-
     }
-
 }
