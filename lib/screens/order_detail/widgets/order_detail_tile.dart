@@ -62,36 +62,49 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 1. HEADER: Order ID & Status
+                        // 1. HEADER: Order ID & Status (🟢 FIXED OVERFLOW)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start, 
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "ORDER #${orderDetailModel?.id ?? ''}",
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 6),
-                                
-                                // 🟢 FIXED: Using helper to convert UTC -> Local Time
-                                Row(
-                                  children: [
-                                    const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Placed on: ${_formatDateToLocal(orderDetailModel?.createdAt)}",
-                                      style: TextStyle(
-                                        fontSize: 13, 
-                                        color: Colors.grey[800], 
-                                        fontWeight: FontWeight.w500
+                            // 🟢 Wrapped in Expanded to prevent right-side overflow
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "ORDER #${orderDetailModel?.id ?? ''}",
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  
+                                  // 🟢 FIXED: Date Conversion Logic
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      // Flexible ensures text wraps if screen is small
+                                      Flexible(
+                                        child: Text(
+                                          "Placed on: ${_formatDateToLocal(orderDetailModel?.createdAt)}",
+                                          style: TextStyle(
+                                            fontSize: 13, 
+                                            color: Colors.grey[800], 
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
+                            
+                            const SizedBox(width: 8),
+
+                            // Status Chip
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
@@ -233,20 +246,53 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     );
   }
 
-  // --- 🟢 NEW HELPER: Formats Server Date (UTC) to Local Time ---
+  // --- 🟢 UPDATED HELPER: Handles both ISO and "20 Jan 2026" formats ---
   String _formatDateToLocal(String? serverDate) {
     if (serverDate == null || serverDate.isEmpty) return "N/A";
+    
+    DateTime? utcDate;
+
     try {
-      // 1. Parse string to DateTime (Initially it might be parsed as local but with wrong values)
+      // Strategy 1: Try Standard ISO Parse (e.g. "2026-01-20 16:56:00")
       DateTime temp = DateTime.parse(serverDate);
-      
-      // 2. Force it to be UTC because server sends UTC without 'Z' usually
-      DateTime utcDate = DateTime.utc(temp.year, temp.month, temp.day, temp.hour, temp.minute, temp.second);
-      
-      // 3. Convert to Device Local Time (Adds +5:30 for India)
+      utcDate = DateTime.utc(temp.year, temp.month, temp.day, temp.hour, temp.minute, temp.second);
+    } catch (_) {
+      // Strategy 2: Try parsing "20 Jan 2026, 04:56 PM" manually
+      try {
+        // Clean string: "20 Jan 2026 04:56 PM"
+        String clean = serverDate.replaceAll(",", ""); 
+        List<String> parts = clean.split(" "); 
+        // Expected parts: [20, Jan, 2026, 04:56, PM]
+        
+        if (parts.length >= 5) {
+            int day = int.parse(parts[0]);
+            String monthStr = parts[1];
+            int year = int.parse(parts[2]);
+            
+            List<String> timeParts = parts[3].split(":");
+            int hour = int.parse(timeParts[0]);
+            int minute = int.parse(timeParts[1]);
+            String amPm = parts[4];
+
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            int month = months.indexOf(monthStr) + 1;
+
+            if (amPm == "PM" && hour < 12) hour += 12;
+            if (amPm == "AM" && hour == 12) hour = 0;
+
+            utcDate = DateTime.utc(year, month, day, hour, minute);
+        }
+      } catch (e) {
+         // If both fail, return original
+         return serverDate;
+      }
+    }
+
+    if (utcDate != null) {
+      // Convert to Local (Device Time)
       DateTime localDate = utcDate.toLocal();
 
-      // 4. Format manually to "14 Jan 2026, 11:42 PM"
+      // Format back to readable string
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       String month = months[localDate.month - 1];
       
@@ -255,9 +301,9 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
       String minute = localDate.minute.toString().padLeft(2, '0');
 
       return "${localDate.day} $month ${localDate.year}, $hour12:$minute $amPm";
-    } catch (e) {
-      return serverDate; // Fallback
     }
+
+    return serverDate;
   }
 
   Widget _buildAddressNode({required IconData icon, required String title, required dynamic address, required bool alignLeft}) {

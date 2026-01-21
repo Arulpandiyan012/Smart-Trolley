@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/dashboard/utils/index.dart';
+import 'package:bagisto_app_demo/screens/wishList/bloc/wishlist_bloc.dart';
+import 'package:bagisto_app_demo/screens/wishList/bloc/wishlist_repository.dart';
+import 'package:bagisto_app_demo/screens/wishList/view/wishlist_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -27,27 +30,24 @@ class _DashboardScreenState extends State<DashboardScreen>
       create: (context) => AddressBloc(AddressRepositoryImp()),
       child: const AddressScreen(isFromDashboard: true));
 
+  // 🟢 NEW: Wishlist Screen (Moved from Sidebar)
+  Widget wishlistScreen = BlocProvider(
+      create: (context) => WishListBloc(WishListRepositoryImp()), 
+      child: const WishListScreen()); // Verify constructor args if any
+
   @override
   Widget build(BuildContext context) {
     addressIsEmpty = appStoragePref.getAddressData();
 
     return DefaultTabController(
-      length: 3,
+      length: 4, // 🟢 NOW 4 TABS
       child: Scaffold(
         backgroundColor: Colors.white, // Clean white background
+        // 🟢 Remove Header Title as requested
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          toolbarHeight: 0, 
           elevation: 0,
-          centerTitle: false,
-          automaticallyImplyLeading: false,
-          title: Text(
-            StringConstants.dashboard.localized(),
-            style: const TextStyle(
-              color: Colors.black, 
-              fontWeight: FontWeight.w800, 
-              fontSize: 22
-            ),
-          ),
+          backgroundColor: Colors.white,
         ),
         body: dashboardView(),
       ),
@@ -86,6 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               Tab(text: StringConstants.recentOrders.localized()),
               Tab(text: StringConstants.addressTitle.localized()),
               Tab(text: StringConstants.reviewsTitle.localized()),
+              Tab(text: StringConstants.wishlist.localized()), // 🟢 NEW TAB
             ],
           ),
         ),
@@ -98,9 +99,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               // --- Orders Tab ---
               _buildTabContent(
                 child: orderScreen,
-                btnText: StringConstants.continueShopping.localized(),
-                icon: Icons.arrow_forward_rounded,
-                onPressed: () => Navigator.pushReplacementNamed(context, home),
+                btnText: "", 
+                icon: Icons.abc, // Dummy
+                onPressed: () {},
+                showButton: false, // 🟢 HIDE BUTTON
               ),
 
               // --- Address Tab ---
@@ -122,9 +124,19 @@ class _DashboardScreenState extends State<DashboardScreen>
               // --- Reviews Tab ---
               _buildTabContent(
                 child: reviewsScreen,
-                btnText: StringConstants.continueShopping.localized(),
-                icon: Icons.arrow_forward_rounded,
-                onPressed: () => Navigator.pushReplacementNamed(context, home),
+                btnText: "",
+                icon: Icons.abc, // Dummy
+                onPressed: () {},
+                showButton: false, // 🟢 HIDE BUTTON
+              ),
+
+              // --- Wishlist Tab ---
+              _buildTabContent(
+                child: wishlistScreen, 
+                btnText: "", // Text doesn't matter if hidden
+                icon: Icons.favorite_border_rounded,
+                onPressed: () {},
+                showButton: false, // 🟢 HIDE BUTTON
               ),
             ],
           ),
@@ -139,6 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     required String btnText,
     required IconData icon,
     required VoidCallback onPressed,
+    bool showButton = true, // 🟢 Default to true
   }) {
     return Column(
       children: [
@@ -146,9 +159,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(child: child),
         
         // Modern Bottom Button Container
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+        if (showButton)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
               BoxShadow(

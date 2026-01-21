@@ -1,11 +1,11 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
@@ -58,7 +58,24 @@ class Data {
       this.createdAt,
       this.formattedPrice});
 
-  factory Data.fromJson(Map<String, dynamic> json) => _$DataFromJson(json);
+  // 🟢 FIXED: Manual mapping to ensure keys match API (snake_case -> camelCase)
+  factory Data.fromJson(Map<String, dynamic> json) {
+    return Data(
+      id: json['id'] as int?,
+      status: json['status'] as String?,
+      
+      // Fix: Look for 'total_qty_ordered' OR 'totalQtyOrdered'
+      totalQtyOrdered: (json['total_qty_ordered'] ?? json['totalQtyOrdered']) as int?,
+      
+      // Fix: Look for 'created_at' OR 'createdAt'
+      createdAt: (json['created_at'] ?? json['createdAt']) as String?,
+      
+      // Fix: Look for 'formatted_price' OR 'formattedPrice'
+      formattedPrice: (json['formatted_price'] ?? json['formattedPrice']) == null
+          ? null
+          : FormattedPrice.fromJson(json['formatted_price'] ?? json['formattedPrice']),
+    );
+  }
 
   Map<String, dynamic> toJson() => _$DataToJson(this);
 }

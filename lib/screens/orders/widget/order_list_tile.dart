@@ -2,15 +2,10 @@
  * Webkul Software.
  * @package Mobikul Application Code.
  * @Category Mobikul
- * @author Webkul <support@webkul.com>
- * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- * @license https://store.webkul.com/license.html
- * @link https://store.webkul.com/license.html
  */
 
 import 'package:bagisto_app_demo/screens/orders/utils/index.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; 
 
 class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
   final Data? data;
@@ -25,17 +20,9 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
 
   @override
   Widget build(BuildContext context) {
-    // 🟢 1. SAFE DATE PARSING
-    String displayDate = "Date: N/A";
-    if (data?.createdAt != null && data!.createdAt.toString() != "null") {
-      try {
-        DateTime parsedDate = DateTime.parse(data!.createdAt.toString());
-        // Format: 12 Oct 2024
-        displayDate = DateFormat("dd MMM yyyy").format(parsedDate);
-      } catch (e) {
-        displayDate = data!.createdAt.toString();
-      }
-    }
+    // 🟢 1. ROBUST DATE PARSING
+    // We pass the raw string. If it's null, we handle it inside the helper.
+    String displayDate = _formatDateToLocal(data?.createdAt);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -68,7 +55,7 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 🟢 ROW 1: Order ID & Date & Status
+                // 🟢 ROW 1: Order ID & Date
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +72,7 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(Icons.calendar_today, size: 12, color: Colors.grey[500]),
@@ -196,6 +183,45 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
     );
   }
 
+  // 🟢 HELPER: Stronger Date Parsing
+  String _formatDateToLocal(String? serverDate) {
+    // 1. Handle Nulls explicitly
+    if (serverDate == null || serverDate == "null" || serverDate.isEmpty) {
+      return "Date Not Available"; 
+    }
+    
+    // 2. 🛠 FIX: Replace Space with T (e.g. "2026-01-20 18:00" -> "2026-01-20T18:00")
+    // This fixes the most common parsing error in Flutter/Dart
+    String cleanDate = serverDate.replaceAll(" ", "T");
+
+    DateTime? utcDate;
+    try {
+      // 3. Try Standard Parse with "T"
+      DateTime temp = DateTime.parse(cleanDate);
+      // Force UTC interpretation
+      utcDate = DateTime.utc(temp.year, temp.month, temp.day, temp.hour, temp.minute, temp.second);
+    } catch (_) {
+      // 4. Fallback: If parse fails, return the RAW string so we can see it.
+      // This is better than "N/A" because you can debug the format.
+      return serverDate; 
+    }
+
+    if (utcDate != null) {
+      DateTime localDate = utcDate.toLocal(); // Convert to Device Time (IST)
+      
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      String month = months[localDate.month - 1];
+      
+      String amPm = localDate.hour >= 12 ? "PM" : "AM";
+      int hour12 = localDate.hour > 12 ? localDate.hour - 12 : (localDate.hour == 0 ? 12 : localDate.hour);
+      String minute = localDate.minute.toString().padLeft(2, '0');
+
+      return "${localDate.day} $month ${localDate.year}, $hour12:$minute $amPm";
+    }
+
+    return serverDate;
+  }
+
   // 🟢 HELPER: Colorful Status Badges
   Widget _buildStatusBadge(BuildContext context, String? status) {
     Color bgColor = const Color(0xFFF5F5F5);
@@ -203,17 +229,17 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
     String text = capitalize(status ?? "Pending");
 
     if (status == "pending") {
-      bgColor = const Color(0xFFFFF8E1); // Light Orange
-      textColor = const Color(0xFFFFA000); // Dark Orange
+      bgColor = const Color(0xFFFFF8E1); 
+      textColor = const Color(0xFFFFA000); 
     } else if (status == "processing") {
-      bgColor = const Color(0xFFE3F2FD); // Light Blue
-      textColor = const Color(0xFF1976D2); // Dark Blue
+      bgColor = const Color(0xFFE3F2FD); 
+      textColor = const Color(0xFF1976D2); 
     } else if (status == "completed") {
-      bgColor = const Color(0xFFE8F5E9); // Light Green
-      textColor = const Color(0xFF388E3C); // Dark Green
+      bgColor = const Color(0xFFE8F5E9); 
+      textColor = const Color(0xFF388E3C); 
     } else if (status == "canceled") {
-      bgColor = const Color(0xFFFFEBEE); // Light Red
-      textColor = const Color(0xFFD32F2F); // Dark Red
+      bgColor = const Color(0xFFFFEBEE); 
+      textColor = const Color(0xFFD32F2F); 
     }
 
     return Container(
