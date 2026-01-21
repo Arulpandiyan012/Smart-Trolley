@@ -27,6 +27,46 @@ class _WishlistItemListState extends State<WishlistItemList> {
   // Store quantity for each product ID
   Map<String, int> quantityMap = {};
 
+  String? _imageFromAny(dynamic img) {
+    if (img == null) return null;
+    try { if (img.url is String && img.url.isNotEmpty) return img.url; } catch (_) {}
+    try { if (img.imageUrl is String && img.imageUrl.isNotEmpty) return img.imageUrl; } catch (_) {}
+    try { if (img.path is String && img.path.isNotEmpty) return img.path; } catch (_) {}
+    try { if (img.original is String && img.original.isNotEmpty) return img.original; } catch (_) {}
+    try { if (img.smallImageUrl is String && img.smallImageUrl.isNotEmpty) return img.smallImageUrl; } catch (_) {}
+    
+    if (img is Map) {
+       const keys = ['imageUrl', 'path', 'original', 'smallImageUrl', 'url'];
+       for (final k in keys) {
+         final v = img[k];
+         if (v is String && v.isNotEmpty) return v;
+       }
+    }
+    return null;
+  }
+
+  String? _productImage(dynamic p) {
+    try {
+      final imgs = (p as dynamic).images;
+      if (imgs is List && imgs.isNotEmpty) {
+        // Try all images, not just first
+        for(var i in imgs) {
+             final u = _imageFromAny(i);
+             if (u != null && u.isNotEmpty) return u;
+        }
+      }
+    } catch (_) {}
+    try {
+      final v = (p as dynamic).baseImage?.url;
+      if (v is String && v.isNotEmpty) return v;
+    } catch (_) {}
+    try {
+       // Fallback for Wishlist specific structure where product might be nested differenly?
+       // Usually item.product is the ProductData.
+    } catch (_) {}
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -49,10 +89,9 @@ class _WishlistItemListState extends State<WishlistItemList> {
             }
 
             // Image URL
-            String imageUrl = "";
-            if((item?.product?.images ?? []).isNotEmpty) {
-                 imageUrl = item?.product?.images![0].url ?? "";
-            }
+            // Image URL
+            // 🟢 UPDATED: Use robust extractor
+            String imageUrl = _productImage(item?.product) ?? "";
 
             return Container(
               decoration: BoxDecoration(

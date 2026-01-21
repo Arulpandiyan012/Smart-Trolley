@@ -85,25 +85,27 @@ class _AccountScreenState extends State<AccountScreen>
           title: Text(StringConstants.accountInfo.localized()),
         ),
         body: _profileBloc(context),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.symmetric(
-              vertical: AppSizes.spacingMedium,
-              horizontal: AppSizes.spacingMedium),
-          child: MaterialButton(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.spacingNormal)),
-            elevation: 2.0,
-            height: AppSizes.buttonHeight,
-            minWidth: MediaQuery.of(context).size.width,
-            color: Theme.of(context).colorScheme.onBackground,
-            onPressed: () {
-              _onPressSaveButton();
-            },
-            child: Text(
-              StringConstants.save.localized().toUpperCase(),
-              style: TextStyle(
-                  fontSize: AppSizes.spacingLarge,
-                  color: Theme.of(context).colorScheme.secondaryContainer),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                vertical: AppSizes.spacingMedium,
+                horizontal: AppSizes.spacingMedium),
+            child: MaterialButton(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.spacingNormal)),
+              elevation: 2.0,
+              height: AppSizes.buttonHeight,
+              minWidth: MediaQuery.of(context).size.width,
+              color: Theme.of(context).colorScheme.onBackground,
+              onPressed: () {
+                _onPressSaveButton();
+              },
+              child: Text(
+                StringConstants.save.localized().toUpperCase(),
+                style: TextStyle(
+                    fontSize: AppSizes.spacingLarge,
+                    color: Theme.of(context).colorScheme.secondaryContainer),
+              ),
             ),
           ),
         ),
