@@ -50,11 +50,13 @@ class AddEditAddressBloc
             ),
           );
         } else {
-          emit(
-            FetchEditAddressState.fail(
-              error: updateAddressModel?.graphqlErrors ?? "",
-            ),
-          );
+          String err = updateAddressModel?.graphqlErrors ?? updateAddressModel?.message ?? "Unknown Edit Error";
+          if (err.toLowerCase().contains("success")) {
+             updateAddressModel?.status = true;
+             emit(FetchEditAddressState.success(updateAddressModel: updateAddressModel));
+          } else {
+             emit(FetchEditAddressState.fail(error: err));
+          }
         }
 
         // }
@@ -80,7 +82,15 @@ class AddEditAddressBloc
         if (baseModel?.status == true) {
           emit(FetchAddAddressState.success(baseModel: baseModel));
         } else {
-          emit(FetchAddAddressState.fail(error: baseModel?.graphqlErrors));
+          // 🟢 FIX: Handle Ambiguous API Responses
+          String err = baseModel?.graphqlErrors ?? baseModel?.message ?? "Unknown API Error";
+          if (err.toLowerCase().contains("success")) {
+             // Treat as success
+             baseModel?.status = true; 
+             emit(FetchAddAddressState.success(baseModel: baseModel));
+          } else {
+             emit(FetchAddAddressState.fail(error: err));
+          }
         }
       } catch (e) {
         emit(FetchAddAddressState.fail(error: e.toString()));

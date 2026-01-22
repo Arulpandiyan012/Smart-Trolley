@@ -250,7 +250,8 @@ class _HomeScreenState extends State<HomeScreen> {
             addToCartModel = state.graphQlBaseModel;
             appStoragePref.setCartCount(addToCartModel?.cart?.itemsQty ?? 0);
             GlobalData.cartCountController.sink.add(addToCartModel?.cart?.itemsQty ?? 0);
-            
+            GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
+
             ShowMessage.successNotification(
                 state.successMsg ?? "Item added to cart successfully", context);
                 

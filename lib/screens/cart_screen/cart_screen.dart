@@ -34,6 +34,7 @@ class _CartScreenState extends State<CartScreen> {
   
   String? _deliveryAddress;
   String? _userName;
+  StreamSubscription? _cartSubscription; // 🟢 NEW: Subscription for cart updates
 
   @override
   void initState() {
@@ -41,7 +42,23 @@ class _CartScreenState extends State<CartScreen> {
     fetchCartData();
     _deliveryAddress = CurrentLocationManager.address;
     _fetchUserName();
+    
+    // 🟢 NEW: Listen for global cart updates
+    _cartSubscription = GlobalData.cartUpdateStream.stream.listen((_) async {
+      debugPrint("🟢 CartScreen: Received Update Event. Waiting 500ms...");
+      await Future.delayed(const Duration(milliseconds: 500)); // Wait for backend
+      debugPrint("🟢 CartScreen: Fetching Data now...");
+      fetchCartData();
+    });
+
     super.initState();
+  }
+
+  // 🟢 NEW: Dispose the subscription
+  @override
+  void dispose() {
+    _cartSubscription?.cancel();
+    super.dispose();
   }
 
   fetchCartData() {

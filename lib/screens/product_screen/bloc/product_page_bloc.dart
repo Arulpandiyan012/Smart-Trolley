@@ -42,6 +42,8 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
             event.configurableParams,
             event.configurableId);
         if (cartModel?.success == true) {
+          debugPrint("🟢 ProductBloc: Emitting Cart Update Event");
+          GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
           emit(AddToCartProductState.success(
               response: cartModel, successMsg: cartModel?.message));
         } else {
