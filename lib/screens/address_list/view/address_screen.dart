@@ -12,6 +12,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/address_list/utils/index.dart';
 import 'package:bagisto_app_demo/screens/categories_screen/utils/index.dart';
+// 🟢 NEW IMPORTS
+import 'package:bagisto_app_demo/screens/home_page/widget/address_details_sheet.dart';
+import 'package:bagisto_app_demo/utils/current_location_manager.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_bloc.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_repository.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_state.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_event.dart';
 
 class AddressScreen extends StatefulWidget {
   const AddressScreen({Key? key, this.isFromDashboard}) : super(key: key);
@@ -156,10 +163,7 @@ class _AddressScreenState extends State<AddressScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(context, addAddressScreen,
-                          arguments: AddressNavigationData(
-                              isEdit: false, addressModel: null, isCheckout: false))
-                          .then((value) => fetchAddressData());
+                      _openAddAddressSheet(); // 🟢 NEW FORM
                     },
                     icon: const Icon(Icons.add, color: Color(0xFF2E7D32)),
                     label: Text(
@@ -289,12 +293,7 @@ class _AddressScreenState extends State<AddressScreen> {
               Expanded(
                 child: TextButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(context, addAddressScreen,
-                        arguments: AddressNavigationData(
-                            isEdit: true,
-                            addressModel: data,
-                            isCheckout: false))
-                        .then((value) => fetchAddressData());
+                    _openAddAddressSheet(addressToEdit: data); // 🟢 NEW FORM (EDIT)
                   },
                   icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2E7D32)),
                   label: const Text("EDIT", style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
@@ -342,5 +341,150 @@ class _AddressScreenState extends State<AddressScreen> {
   fetchAddressData() async {
     AddressBloc addressBloc = context.read<AddressBloc>();
     addressBloc.add(FetchAddressEvent());
+  }
+
+  // 🟢 NEW: Open the Modern Address Sheet (Same as Checkout)
+  void _openAddAddressSheet({AddressData? addressToEdit}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.85,
+        child: AddressDetailsSheet(
+          // Pass existing data if editing
+          initialArea: addressToEdit?.address1,
+          initialPincode: addressToEdit?.postcode ?? CurrentLocationManager.pincode,
+          initialCity: addressToEdit?.city ?? CurrentLocationManager.city,
+          initialState: addressToEdit?.state ?? CurrentLocationManager.state,
+        ),
+      ),
+    ).then((value) {
+      if (value != null && value is Map) {
+         _saveNewAddress(value, addressToEdit?.id);
+      }
+    });
+  }
+
+  // 🟢 NEW: Handle API Call to Save Address
+  void _saveNewAddress(Map data, String? editId) {
+    // 1. Create Repository & Bloc
+    final repo = AddEditAddressRepositoryImp();
+    final bloc = AddEditAddressBloc(repo);
+
+    // 2. Prepare Data
+    String fName = data['firstName'] ?? "User";
+    String lName = data['lastName'] ?? ".";
+    String phone = data['phone'] ?? "";
+    // Note: email is optional in event, defaults to storage if null
+    
+    // Combine Address Parts
+    String house = data['flatHouseBuilding'] ?? '';
+    String area = data['area'] ?? '';
+    String landmark = data['landmark'] ?? '';
+    List<String> parts = [];
+    if (house.isNotEmpty) parts.add(house);
+    if (area.isNotEmpty) parts.add(area);
+    if (landmark.isNotEmpty) parts.add("Near $landmark");
+    String fullAddress = parts.join(", ");
+    if (fullAddress.trim().isEmpty) fullAddress = area;
+    
+    // 🟢 FIX: Map State Name to Code (e.g., "Tamil Nadu" -> "563" or "TN")
+    String stateName = data['state'] ?? "";
+    String stateCode = _mapStateToCode(stateName);
+
+    // 3. Dispatch Event
+    if (editId != null) {
+      // HANDLE EDIT
+      bloc.add(FetchEditAddressEvent(
+        addressId: int.tryParse(editId) ?? 0,
+        firstName: fName,
+        lastName: lName,
+        phone: phone,
+        address: fullAddress, 
+        country: "IN",
+        state: stateCode, // 🟢 Modified
+        city: data['city'],
+        postCode: data['pincode'],
+        isDefault: false
+      ));
+    } else {
+      // HANDLE ADD NEW
+      bloc.add(FetchAddAddressEvent(
+         firstName: fName,
+         lastName: lName,
+         phone: phone,
+         address: fullAddress, 
+         country: "IN",
+         state: stateCode, // 🟢 Modified
+         city: data['city'],
+         postCode: data['pincode'],
+         isDefault: false
+      ));
+    }
+
+    // 4. Show Loader & Listen for Result
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => BlocProvider.value(
+        value: bloc,
+        child: BlocConsumer<AddEditAddressBloc, AddEditAddressBaseState>(
+          listener: (context, state) {
+            // Check for Success
+            if (state is FetchAddAddressState && state.status == AddEditStatus.success) {
+               Navigator.pop(ctx); 
+               fetchAddressData(); 
+               ShowMessage.successNotification("Address Added Successfully", context);
+            }
+            else if (state is FetchEditAddressState && state.status == AddEditStatus.success) {
+               Navigator.pop(ctx); 
+               fetchAddressData(); 
+               ShowMessage.successNotification("Address Updated Successfully", context);
+            }
+            // Check for Failure
+            else if (state is FetchAddAddressState && state.status == AddEditStatus.fail) {
+               Navigator.pop(ctx);
+               // 🟢 IMPROVED ERROR MSG
+               String err = state.error ?? "Failed";
+               if (err.contains("state")) err = "Invalid State. Try: TN, KA, KL, DL, MH";
+               ShowMessage.errorNotification(err, context);
+            }
+            else if (state is FetchEditAddressState && state.status == AddEditStatus.fail) {
+               Navigator.pop(ctx);
+               ShowMessage.errorNotification(state.error ?? "Failed to update address", context);
+            }
+          },
+          builder: (context, state) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)));
+          },
+        ),
+      ),
+    );
+  }
+
+  // 🟢 HELPER: Map State Name to Code (Required for API)
+  String _mapStateToCode(String stateName) {
+    String clean = stateName.trim().toUpperCase();
+    Map<String, String> codes = {
+      "TAMIL NADU": "TN", "TAMILNADU": "TN",
+      "KERALA": "KL", "KARNATAKA": "KA",
+      "ANDHRA PRADESH": "AP", "TELANGANA": "TG",
+      "MAHARASHTRA": "MH", "DELHI": "DL",
+      "NEW DELHI": "DL", "PUDUCHERRY": "PY",
+      "WEST BENGAL": "WB", "UTTAR PRADESH": "UP",
+      "MADHYA PRADESH": "MP", "GUJARAT": "GJ",
+      "RAJASTHAN": "RJ", "PUNJAB": "PB",
+      "HARYANA": "HR", "BIHAR": "BR",
+      "ODISHA": "OR", "JHARKHAND": "JH",
+      "CHHATTISGARH": "CT", "ASSAM": "AS",
+      "UTTARAKHAND": "UK", "HIMACHAL PRADESH": "HP",
+      "JAMMU AND KASHMIR": "JK", "GOA": "GA",
+      "TRIPURA": "TR", "MEGHALAYA": "ML",
+      "MANIPUR": "MN", "NAGALAND": "NL",
+      "ARUNACHAL PRADESH": "AR", "MIZORAM": "MZ",
+      "SIKKIM": "SK"
+    };
+    return codes[clean] ?? stateName;
   }
 }

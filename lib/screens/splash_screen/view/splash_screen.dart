@@ -11,6 +11,8 @@
 
 
 import 'package:bagisto_app_demo/screens/splash_screen/utils/index.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:bagisto_app_demo/utils/route_constants.dart';
 
 import '../../../utils/prefetching_helper.dart';
 class SplashScreen extends StatefulWidget {
@@ -52,7 +54,12 @@ Widget build(BuildContext context) {
     Directory appDocDir = await getApplicationDocumentsDirectory();
     appDocPath = appDocDir.path;
     Timer(const Duration(seconds: defaultSplashDelay), () {
-      Navigator.pushReplacementNamed(context, home);
+      bool hasSeenOnboarding = GetStorage().read('hasSeenOnboarding') ?? false;
+      if (hasSeenOnboarding) {
+        Navigator.pushReplacementNamed(context, home);
+      } else {
+        Navigator.pushReplacementNamed(context, onboarding);
+      }
     });
   }
 }

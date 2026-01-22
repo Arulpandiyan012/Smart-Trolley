@@ -24,7 +24,11 @@ String appDocPath = "";
 class GraphQlApiCalling {
   final loggerLink = LoggerLink();
   final authLink = AuthLink(
-    getToken: appStoragePref.getCustomerToken,
+    getToken: () async {
+      String? token = appStoragePref.getCustomerToken();
+      log("🟢 AuthLink Token: $token");
+      return token != null ? "Bearer $token" : null;
+    },
   );
 
   GraphQLClient clientToQuery() {

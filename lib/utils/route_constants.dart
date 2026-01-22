@@ -11,6 +11,7 @@
 
 const String splash = 'splashScreen';
 const String home = 'homeScreen';
+const String onboarding = 'onboarding'; // Added onboarding route
 const String categoryScreen = 'categoryScreen';
 const String signUp = 'signUp';
 const String signIn = 'signIn';

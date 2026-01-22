@@ -1342,7 +1342,7 @@ String cartDetails() {
 }""";
   }
 
-  String deleteAddress(String? id) {
+  String deleteAddress(int? id) {
     return """
     mutation deleteAddress {
     deleteAddress(id: $id) {

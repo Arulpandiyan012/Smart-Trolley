@@ -44,6 +44,7 @@ import 'package:bagisto_app_demo/screens/sign_up/bloc/sign_up_repository.dart';
 import 'package:bagisto_app_demo/screens/sign_up/view/sign_up.dart';
 import 'package:bagisto_app_demo/screens/splash_screen/view/splash_screen.dart';
 import 'package:bagisto_app_demo/utils/route_constants.dart';
+import 'package:bagisto_app_demo/screens/on_boarding/on_boarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/root/bottom_nav_scaffold.dart' show BottomNavScaffold;
@@ -122,6 +123,10 @@ Route<dynamic> generateRoute(RouteSettings settings) {
           child: const BottomNavScaffold(),
         ),
       );
+
+    case onboarding:
+      return MaterialPageRoute(builder: (_) => const OnBoardingScreen());
+
 
     case categoryScreen:
       CategoriesArguments data = settings.arguments as CategoriesArguments;

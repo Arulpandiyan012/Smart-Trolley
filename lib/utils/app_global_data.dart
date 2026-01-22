@@ -37,5 +37,8 @@ class GlobalData {
   static StreamController<NewProductsModel?> productsStream =
       StreamController<NewProductsModel?>.broadcast();
 
+  // 🟢 NEW: Stream to notify Cart Screen to refresh
+  static StreamController<void> cartUpdateStream = StreamController<void>.broadcast();
+
   static List<NewProductsModel?>? allProducts = [];
 }

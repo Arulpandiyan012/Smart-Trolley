@@ -392,6 +392,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                                  if (state.status == CategoriesStatus.success) {
                                    // Refresh Cart on initial ADD
                                    context.read<CartScreenBloc>().add(FetchCartDataEvent());
+                                   GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
                                    GlobalData.cartCountController.sink.add(state.response?.cart?.itemsQty ?? 0);
                                    ShowMessage.successNotification(state.successMsg ?? "Added", context);
                                  } else if (state.status == CategoriesStatus.fail) {

@@ -31,8 +31,14 @@ class AddressBloc extends Bloc<AddressBaseEvent, AddressBaseState> {
     } else if (event is RemoveAddressEvent) {
       try {
         BaseModel? baseModel = await repository?.callRemoveAddressApi(event.id);
-        emit(RemoveAddressState.success(
-            response: baseModel, customerDeletedId: event.id));
+        if (baseModel?.success == true) {
+           emit(RemoveAddressState.success(
+              response: baseModel, customerDeletedId: event.id));
+        } else {
+           // 🟢 FIX: Emit Fail if API returns false (e.g. GraphQL error)
+           emit(RemoveAddressState.fail(
+              error: baseModel?.graphqlErrors ?? baseModel?.message ?? "Failed to delete"));
+        }
       } catch (e) {
         emit(RemoveAddressState.fail(
             error: StringConstants.somethingWrong.localized()));

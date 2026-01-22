@@ -56,20 +56,26 @@ class ApiClient {
   GraphQlApiCalling client = GraphQlApiCalling();
   MutationsData mutation = MutationsData();
 
-  // 🟢 HELPER: Safe Public Client
+  // 🟢 HELPER: Safe Public Client (Manual Headers)
   GraphQLClient _getPublicClient() {
     String? token = appStoragePref.getCustomerToken();
     String? cookie = appStoragePref.getCookieGet();
-    bool isFakeLogin = (token == "fake_token_bypass");
-
+    
     Map<String, String> headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    // ALWAYS send Cookie (Required for Cart)
     if (cookie != null && cookie.isNotEmpty) {
       headers['Cookie'] = cookie;
+    }
+    
+    // 🟢 FIX: Send Token in multiple formats to satisfy API guards
+    if (token != null && token.isNotEmpty) {
+      // Standard GraphQL Auth
+      headers['Authorization'] = "Bearer $token";
+      // Mobikul Custom Header
+      headers['token'] = token; 
     }
 
     final HttpLink httpLink = HttpLink(
@@ -77,7 +83,10 @@ class ApiClient {
       defaultHeaders: headers
     );
     
-    return GraphQLClient(link: httpLink, cache: GraphQLCache());
+    return GraphQLClient(
+      link: httpLink,
+      cache: GraphQLCache()
+    );
   }
 
   // 🟢 1. GLOBAL HANDLER (Brute-Force Parser)
@@ -695,7 +704,9 @@ Future<BaseModel?> cancelOrder(int orderId) async {
   Future<AddressModel?> getAddressData() async {
     try {
       String customerId = appStoragePref.getCustomerId().toString();
-      var url = Uri.parse("$baseDomain/mobikul-get-addresses.php?customer_id=$customerId");
+      // 🟢 FIX: Add timestamp to prevent caching
+      String antiCache = DateTime.now().millisecondsSinceEpoch.toString();
+      var url = Uri.parse("$baseDomain/mobikul-get-addresses.php?customer_id=$customerId&t=$antiCache");
       var response = await http.get(url);
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
@@ -716,15 +727,62 @@ Future<BaseModel?> cancelOrder(int orderId) async {
   }
 
   Future<BaseModel?> deleteAddress(String? id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.deleteAddress(id)), fetchPolicy: FetchPolicy.networkOnly));
-    return handleResponse(response, 'deleteAddress', (json) => BaseModel.fromJson(json));
+    // 🟢 CUSTOM BACKEND DELETE
+    // Uses mobikul-delete-address.php (Raw PHP/PDO) checks 'addresses' table
+    try {
+      String customerId = appStoragePref.getCustomerId().toString(); 
+      String token = appStoragePref.getCustomerToken() ?? "";
+
+      var url = Uri.parse("$baseDomain/mobikul-delete-address.php");
+      debugPrint("🚀 PHP CUSTOM DELETE: $url (ID: $id, Cust: $customerId)");
+
+      var response = await http.post(url, body: { 
+        "id": id, 
+        "address_id": id, // Backup key
+        "customer_id": customerId,
+        "token": token // Sent for completeness
+      });
+      
+      debugPrint("🚀 PHP RESPONSE: ${response.statusCode} - ${response.body}");
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        // Robust success check matching the PHP script
+        if (data['success'] == true || data['success'] == "true") {
+           return BaseModel(success: true, message: data['message'] ?? "Deleted Successfully");
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ PHP FAIL: $e");
+    }
+    
+    return BaseModel(success: false, message: "Could not delete address");
   }
 
   Future<BaseModel?> createAddress(String companyName, String firstName, String lastName, String address, String address2, String country, String state, String city, String postCode, String phone, String vatId, bool? isDefault, String email) async {
     try {
       String customerId = appStoragePref.getCustomerId().toString(); 
+      String token = appStoragePref.getCustomerToken() ?? ""; // 🟢 FIX: Add Token
+      
       var url = Uri.parse("$baseDomain/mobikul-save-address.php");
-      var response = await http.post(url, body: { "customer_id": customerId, "company_name": companyName, "first_name": firstName, "last_name": lastName, "address1": address, "address2": address2, "country": country, "state": state, "city": city, "postcode": postCode, "phone": phone, "vat_id": vatId, "default_address": isDefault.toString(), "email": email });
+      var response = await http.post(url, body: { 
+        "customer_id": customerId, 
+        "token": token, // 🟢 Added Token to fix "Unauthenticated"
+        "company_name": companyName, 
+        "first_name": firstName, 
+        "last_name": lastName, 
+        "address1": address, 
+        "address2": address2, 
+        "country": country, 
+        "state": state, 
+        "city": city, 
+        "postcode": postCode, 
+        "phone": phone, 
+        "vat_id": vatId, 
+        "default_address": isDefault.toString(), 
+        "email": email 
+      });
+      
       var data = jsonDecode(response.body);
       return BaseModel(success: data['success'] == true, message: data['message'] ?? "Unknown Error");
     } catch (e) {
