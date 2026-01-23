@@ -13,7 +13,7 @@
 import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
 
 ///method will call when there is error on homepage
- homePageError(String error, BuildContext context) {
+ Future<dynamic> homePageError(String error, BuildContext context) {
   return showDialog(
       context: context,
       builder: (BuildContext context) {

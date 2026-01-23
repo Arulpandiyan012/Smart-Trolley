@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/services/api_client.dart';
 import '../../../utils/server_configuration.dart';
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({Key? key}) : super(key: key);
+  const SignInScreen({super.key});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -27,7 +27,7 @@ class _SignInScreenState extends State<SignInScreen> {
   bool otpSent = false;
   bool isLoggingIn = false; 
   String? verificationId;
-  String _countryCode = '+91';
+  final String _countryCode = '+91';
 
   // --- IMAGE ASSETS FOR 4 ROWS ---
   
@@ -104,9 +104,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       // Row 1
                       Expanded(
                         child: AutoScrollingRow(
-                          children: _buildProductCards(row1Images, const Color(0xFFFFF8E1)), 
                           duration: const Duration(seconds: 40),
                           reverse: false,
+                          children: _buildProductCards(row1Images, const Color(0xFFFFF8E1)),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -114,9 +114,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       // Row 2
                       Expanded(
                         child: AutoScrollingRow(
-                          children: _buildProductCards(row2Images, const Color(0xFFE8F5E9)), 
                           duration: const Duration(seconds: 45),
                           reverse: true,
+                          children: _buildProductCards(row2Images, const Color(0xFFE8F5E9)),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -124,9 +124,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       // Row 3
                       Expanded(
                         child: AutoScrollingRow(
-                          children: _buildProductCards(row3Images, const Color(0xFFE3F2FD)), 
                           duration: const Duration(seconds: 42),
                           reverse: false,
+                          children: _buildProductCards(row3Images, const Color(0xFFE3F2FD)),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -134,9 +134,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       // 🟢 NEW Row 4
                       Expanded(
                         child: AutoScrollingRow(
-                          children: _buildProductCards(row4Images, const Color(0xFFF3E5F5)), 
                           duration: const Duration(seconds: 38),
                           reverse: true,
+                          children: _buildProductCards(row4Images, const Color(0xFFF3E5F5)),
                         ),
                       ),
                       
@@ -426,11 +426,11 @@ class AutoScrollingRow extends StatefulWidget {
   final bool reverse;
 
   const AutoScrollingRow({
-    Key? key,
+    super.key,
     required this.children,
     this.duration = const Duration(seconds: 10),
     this.reverse = false,
-  }) : super(key: key);
+  });
 
   @override
   State<AutoScrollingRow> createState() => _AutoScrollingRowState();

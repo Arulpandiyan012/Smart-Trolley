@@ -12,7 +12,7 @@ import 'package:bagisto_app_demo/screens/account/widget/account_loader_view.dart
 GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({Key? key}) : super(key: key);
+  const AccountScreen({super.key});
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
@@ -91,7 +91,7 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
     );
   }
 
-  _profileBloc(BuildContext context) {
+  BlocConsumer<AccountInfoBloc, AccountInfoBaseState> _profileBloc(BuildContext context) {
     return BlocConsumer<AccountInfoBloc, AccountInfoBaseState>(
       listener: (context, state) {
         if (state is AccountInfoUpdateState) {
@@ -154,7 +154,7 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
     );
   }
 
-  _onPressSaveButton() {
+  void _onPressSaveButton() {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
       accountInfoBloc?.add(AccountInfoUpdateEvent(
@@ -173,7 +173,7 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
     }
   }
 
-  _updateSharedPreferences(AccountUpdate accountUpdate) {
+  void _updateSharedPreferences(AccountUpdate accountUpdate) {
     appStoragePref.setCustomerLoggedIn(true);
     var data = accountUpdate.data;
     if (data != null) {

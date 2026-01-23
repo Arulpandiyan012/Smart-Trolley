@@ -68,7 +68,7 @@ class ApiClient {
     };
 
     // ALWAYS send Cookie (Required for Cart)
-    if (cookie != null && cookie.isNotEmpty) {
+    if (cookie.isNotEmpty) {
       headers['Cookie'] = cookie;
     }
 
@@ -403,7 +403,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       String? billingCompanyName, String? billingFirstName, String? billingLastName, String? billingAddress, String? billingEmail, String? billingAddress2, String? billingCountry, String? billingState, String? billingCity, String? billingPostCode, String? billingPhone, String? shippingCompanyName, String? shippingFirstName, String? shippingLastName, String? shippingAddress, String? shippingEmail, String? shippingAddress2, String? shippingCountry, String? shippingState, String? shippingCity, String? shippingPostCode, String? shippingPhone, int id, {int? billingId, int? shippingId, bool useForShipping = true, String? cartId}) async { 
     try {
       var url = Uri.parse("$baseDomain/mobikul-save-checkout-address.php");
-      String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
+      String customerId = appStoragePref.getCustomerId().toString() ?? "0";
       String finalCartId = (cartId != null && cartId.isNotEmpty) ? cartId : "121";
 
       var response = await http.post(url, body: {

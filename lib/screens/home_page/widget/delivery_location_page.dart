@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'address_details_sheet.dart';
 
 class DeliveryLocationPage extends StatefulWidget {
-  const DeliveryLocationPage({Key? key}) : super(key: key);
+  const DeliveryLocationPage({super.key});
 
   @override
   State<DeliveryLocationPage> createState() => _DeliveryLocationPageState();

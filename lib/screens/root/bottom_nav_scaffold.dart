@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Screens
 import 'package:bagisto_app_demo/screens/home_page/home_page.dart';
@@ -16,8 +14,6 @@ import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repos
 import 'package:bagisto_app_demo/screens/orders/bloc/order_list_bloc.dart';
 import 'package:bagisto_app_demo/screens/orders/bloc/order_list_repo.dart';
 
-import 'package:bagisto_app_demo/utils/app_global_data.dart';
-import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 
 class BottomNavScaffold extends StatefulWidget {
   const BottomNavScaffold({super.key});

@@ -25,13 +25,12 @@ class ImageType extends StatefulWidget {
   List? optionArray;
 
   ImageType(
-      {Key? key,
+      {super.key,
       this.variation,
       this.callback,
       this.options,
       this.seletedId,
-      this.optionArray})
-      : super(key: key);
+      this.optionArray});
 
   @override
   State<StatefulWidget> createState() => _ImageTypeState();

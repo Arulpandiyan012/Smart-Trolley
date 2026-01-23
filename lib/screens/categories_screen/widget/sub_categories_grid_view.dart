@@ -19,8 +19,7 @@ class SubCategoriesGridView extends StatelessWidget {
   CategoryBloc? subCategoryBloc;
 
   SubCategoriesGridView(
-      {this.isLogin, this.data, this.subCategoryBloc, Key? key})
-      : super(key: key);
+      {this.isLogin, this.data, this.subCategoryBloc, super.key});
 
   @override
   Widget build(BuildContext context) {

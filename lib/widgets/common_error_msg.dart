@@ -11,7 +11,7 @@
 import '../screens/account/utils/index.dart';
 
 class ErrorMessage {
-  static errorMsg(String errorMsg) {
+  static Center errorMsg(String errorMsg) {
     return Center(
         child: Text(errorMsg,
             style: const TextStyle(

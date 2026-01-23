@@ -15,7 +15,7 @@ import 'package:bagisto_app_demo/screens/address_list/utils/index.dart';
 class AddNewAddressButton extends StatelessWidget {
   final  VoidCallback? reload;
   final bool? isFromDashboard;
-  const AddNewAddressButton({Key? key, this.reload,this.isFromDashboard}) : super(key: key);
+  const AddNewAddressButton({super.key, this.reload,this.isFromDashboard});
 
   @override
   Widget build(BuildContext context) {

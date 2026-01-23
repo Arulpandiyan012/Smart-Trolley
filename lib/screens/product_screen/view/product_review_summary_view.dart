@@ -23,15 +23,14 @@ class ProductReviewSummaryView extends StatefulWidget {
   final bool? isLogin;
 
   const ProductReviewSummaryView(
-      {Key? key,
+      {super.key,
       this.review,
       this.productName,
       this.productImage,
       this.averageRating,
       this.percentage,
       this.productId,
-      this.isLogin})
-      : super(key: key);
+      this.isLogin});
 
   @override
   State<StatefulWidget> createState() {

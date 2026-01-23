@@ -20,8 +20,7 @@ class DropDownType extends StatefulWidget {
 
   final Function(int)? callback;
 
-  DropDownType({Key? key, this.variation, required this.options, this.callback})
-      : super(key: key);
+  DropDownType({super.key, this.variation, required this.options, this.callback});
 
   @override
   State<StatefulWidget> createState() => _DropDownTypeState();

@@ -51,7 +51,7 @@ class WishListRepositoryImp implements WishListRepository {
       baseModel = await ApiClient().moveFromWishlistToCart(
         productId, quantity
       );
-    } catch (error, stacktrace) {
+    } catch (error) {
       debugPrint("Error -->${error.toString()}");
     }
     return baseModel;

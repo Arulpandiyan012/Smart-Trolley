@@ -3,8 +3,7 @@ import '../utils/cart_index.dart';
 class PriceDetailView extends StatelessWidget {
   final CartModel cartDetailsModel;
 
-  const PriceDetailView({Key? key, required this.cartDetailsModel})
-      : super(key: key);
+  const PriceDetailView({super.key, required this.cartDetailsModel});
 
   @override
   Widget build(BuildContext context) {

@@ -19,14 +19,13 @@ class QuantityView extends StatefulWidget {
   final ValueChanged<int>? callBack;
 
   const QuantityView(
-      {Key? key,
+      {super.key,
       this.minimum = 1,
       this.callBack,
       this.showTitle= false,
       this.title = StringConstants.quantity,
       this.subTitle,
-      this.qty = "1", this.setQuantity = false})
-      : super(key: key);
+      this.qty = "1", this.setQuantity = false});
 
   @override
   State<StatefulWidget> createState() {

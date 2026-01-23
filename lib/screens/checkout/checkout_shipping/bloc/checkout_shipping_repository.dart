@@ -103,7 +103,7 @@ class CheckOutShippingRepositoryImp implements CheckOutShippingRepository {
           shippingId: shippingId,
           useForShipping: useForShipping,
           cartId: cartId); // 🟢 Pass it to ApiClient
-    } catch (error, stacktrace) {
+    } catch (error) {
       debugPrint("Error --> $error");
     }
     return checkOutSaveAddressModel!;
@@ -114,7 +114,7 @@ class CheckOutShippingRepositoryImp implements CheckOutShippingRepository {
     PaymentMethods? paymentMethods;
     try {
       paymentMethods = await ApiClient().saveShippingMethods(shippingMethod);
-    } catch (error, stacktrace) {
+    } catch (error) {
       debugPrint("Error --> $error");
     }
     return paymentMethods;

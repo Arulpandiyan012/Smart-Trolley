@@ -16,7 +16,7 @@ import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart';
 class CategoriesView extends StatelessWidget {
   final List<HomeCategories>? data;
 
-  const CategoriesView({Key? key, this.data}) : super(key: key);
+  const CategoriesView({super.key, this.data});
 
   @override
   Widget build(BuildContext context) {

@@ -15,7 +15,7 @@ import 'app_constants.dart';
 import 'mobikul_theme.dart';
 
 mixin OrderStatusBGColorHelper {
-  getOrderBgColor(String state) {
+  Color getOrderBgColor(String state) {
     switch (state.toLowerCase()) {
       case StringConstants.completed:
         return AppColors.orderCompleteColor;

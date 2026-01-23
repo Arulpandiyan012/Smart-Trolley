@@ -204,14 +204,14 @@ class HomePageView extends StatefulWidget {
   final bool callPreCache;
 
   const HomePageView({
-    Key? key,
+    super.key,
     required this.customHomeData,
     required this.isLoading,
     this.getCategoriesData,
     this.isLogin = false,
     this.homePageBloc,
     this.callPreCache = false,
-  }) : super(key: key);
+  });
 
   @override
   State<HomePageView> createState() => _HomePageViewState();
@@ -522,16 +522,11 @@ class _HomePageViewState extends State<HomePageView> {
       final imgs = trans?.options?.images;
       
       if (imgs != null && imgs.isNotEmpty) {
-        if (imgs is List) {
-          for (var img in imgs) {
-             final u = _imageFromAny(img);
-             if (u != null && u.isNotEmpty) bannerUrls.add(u);
-          }
-        } else {
-           final u = _imageFromAny(imgs);
+        for (var img in imgs) {
+           final u = _imageFromAny(img);
            if (u != null && u.isNotEmpty) bannerUrls.add(u);
         }
-      }
+            }
     }
 
     if (bannerUrls.isEmpty) return _bannerFallback();
@@ -590,7 +585,9 @@ class _HomePageViewState extends State<HomePageView> {
     }
 
     final merged = <dynamic>[];
-    for (final s in sections) merged.addAll(s.products);
+    for (final s in sections) {
+      merged.addAll(s.products);
+    }
     
     for (var i = expectedTitles.length; i < productLists.length; i++) {
        final resp = productLists[i];
@@ -615,7 +612,7 @@ class _HomePageViewState extends State<HomePageView> {
 
 class _BannerCarousel extends StatefulWidget {
   final List<String> imageUrls;
-  const _BannerCarousel({Key? key, required this.imageUrls}) : super(key: key);
+  const _BannerCarousel({super.key, required this.imageUrls});
 
   @override
   State<_BannerCarousel> createState() => _BannerCarouselState();

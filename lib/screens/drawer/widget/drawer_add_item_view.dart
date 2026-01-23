@@ -18,8 +18,7 @@ class DrawerAddItemList extends StatelessWidget {
   final void Function()? onTap;
 
   const DrawerAddItemList(
-      {Key? key, this.headingTitle, this.subTitle, this.onTap, this.icon})
-      : super(key: key);
+      {super.key, this.headingTitle, this.subTitle, this.onTap, this.icon});
 
   @override
   Widget build(BuildContext context) {

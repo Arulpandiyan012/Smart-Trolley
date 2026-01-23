@@ -46,7 +46,7 @@ class CheckoutShippingPageView extends StatefulWidget {
   String? cartId;
 
   CheckoutShippingPageView(
-      {Key? key,
+      {super.key,
       this.billingCompanyName,
       this.billingFirstName,
       this.billingLastName,
@@ -72,8 +72,7 @@ class CheckoutShippingPageView extends StatefulWidget {
       this.callBack, required this.shippingId, required this.billingId, this.isDownloadable = false,
       this.callbackNavigate, this.paymentCallback, this.useForShipping,
       this.cartId // 🟢 Initialize it
-      })
-      : super(key: key);
+      });
 
   @override
   State<CheckoutShippingPageView> createState() => _CheckoutShippingPageViewState();

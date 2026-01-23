@@ -4,14 +4,13 @@ import 'package:flutter/material.dart';
 
 class SubCategoriesFilterScreen extends StatefulWidget {
   const SubCategoriesFilterScreen(
-      {Key? key,
+      {super.key,
       this.categorySlug,
       this.page,
       this.subCategoryBloc,
       this.data,
       this.superAttributes,
-      required this.filters})
-      : super(key: key);
+      required this.filters});
 
   final List<Map<String, dynamic>> filters;
   final GetFilterAttribute? data;

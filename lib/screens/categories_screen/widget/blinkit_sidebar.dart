@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class BlinkitSidebar extends StatefulWidget {
   final Function(int) onCategorySelected;
-  const BlinkitSidebar({Key? key, required this.onCategorySelected}) : super(key: key);
+  const BlinkitSidebar({super.key, required this.onCategorySelected});
 
   @override
   State<BlinkitSidebar> createState() => _BlinkitSidebarState();

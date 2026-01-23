@@ -32,7 +32,7 @@ class MutationsData {
     }""";
   }
 
-  getLanguageCurrencyList() {
+  String getLanguageCurrencyList() {
     return """
     query getDefaultChannel {
       getDefaultChannel {

@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/utils/prefetching_helper.dart';
 import 'package:flutter/material.dart';
 
 class OrdersList extends StatefulWidget {
-  const OrdersList({Key? key, this.isFromDashboard}) : super(key: key);
+  const OrdersList({super.key, this.isFromDashboard});
   final bool? isFromDashboard;
 
   @override
@@ -125,7 +125,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
   }
 
   ///bloc method
-  _orderList(BuildContext context) {
+  BlocConsumer<OrderListBloc, OrderListBaseState> _orderList(BuildContext context) {
     return BlocConsumer<OrderListBloc, OrderListBaseState>(
       listener: (BuildContext context, OrderListBaseState state) {},
       builder: (BuildContext context, OrderListBaseState state) {
@@ -173,7 +173,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
   }
 
   ///to get order list
-  _getOrdersList(OrdersListModel? ordersListModel) {
+  Widget _getOrdersList(OrdersListModel? ordersListModel) {
     if (ordersListModel == null) {
       return const NoDataFound();
     } else if ((ordersListModel.data ?? []).isEmpty) {
@@ -218,7 +218,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
   }
 
   /// 🟢 MODERN FILTER SHEET UI (Blinkit Style)
-  _getOrderFilter() {
+  Container _getOrderFilter() {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -333,7 +333,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                             _currentStatus = status!.indexOf(value!);
                           });
                         },
-                        value: status?[_currentStatus],
+                        initialValue: status?[_currentStatus],
                     ),
                   ),
                 ],
@@ -465,7 +465,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
       Navigator.pop(context);
   }
 
-  fetchOrder() async {
+  Future<void> fetchOrder() async {
     orderListBloc?.add(FetchOrderListEvent(
         id: "", status: "", startDate: "", endDate: "", total: 0, page: 1));
   }

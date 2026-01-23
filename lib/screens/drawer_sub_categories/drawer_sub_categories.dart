@@ -37,14 +37,13 @@ class DrawerSubCategoryView extends StatefulWidget {
   final String? parentId;
 
   const DrawerSubCategoryView(
-      {Key? key,
+      {super.key,
       this.title,
       this.id,
       this.image,
       this.categorySlug,
       this.metaDescription,
-      this.parentId})
-      : super(key: key);
+      this.parentId});
 
   @override
   State<DrawerSubCategoryView> createState() => _DrawerSubCategoryViewState();
@@ -84,7 +83,7 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
     }
   }
 
-  fetchProducts() {
+  void fetchProducts() {
     bloc?.add(FetchCategoryProductsEvent([
       {"key": '"category_id"', "value": '"${widget.id}"'}
     ], page));
@@ -99,7 +98,7 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
     );
   }
 
-  _subCategoriesList() {
+  BlocConsumer<DrawerSubCategoriesBloc, DrawerSubCategoriesState> _subCategoriesList() {
     return BlocConsumer<DrawerSubCategoriesBloc, DrawerSubCategoriesState>(
       listener: (context, state) {
         if (state is AddToCartState) {

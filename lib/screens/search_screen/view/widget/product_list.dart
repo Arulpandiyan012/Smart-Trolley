@@ -18,7 +18,7 @@ import '../../../../utils/prefetching_helper.dart';
 
 class ProductList extends StatelessWidget {
   final NewProductsModel? model;
-  const ProductList({Key? key,required this.model}) : super(key: key);
+  const ProductList({super.key,required this.model});
 
   @override
   Widget build(BuildContext context) {

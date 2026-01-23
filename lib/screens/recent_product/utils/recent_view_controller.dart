@@ -21,7 +21,7 @@ class RecentViewController {
     return _instance;
   }
 
-  closeController(){
+  void closeController(){
     controller.close();
   }
 }
