@@ -608,5 +608,10 @@
   "open": "OPEN",
   "subCategories": "Subcategories",
   "agreeTermsMsg": "I agree with the terms and conditions",
-  "agreementFieldRequired": "The agreement field is required"
+  "agreementFieldRequired": "The agreement field is required",
+  "otpUsage": "OTP Usage",
+  "whatIsOtp": "What is OTP?",
+  "otpDescription": "One-Time Password (OTP) is a secure way to log in.",
+  "howToUse": "How to use it?",
+  "otpSteps": "1. Enter your mobile number or email.\n2. Click on 'Send OTP'.\n3. Check your SMS or Email for the code.\n4. Enter the code in the app to proceed."
 }
