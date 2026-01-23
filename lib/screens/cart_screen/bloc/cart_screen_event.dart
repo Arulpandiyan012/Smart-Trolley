@@ -43,3 +43,5 @@ class RemoveCartItemEvent extends CartScreenBaseEvent{
 class RemoveAllCartItemEvent extends CartScreenBaseEvent{
   RemoveAllCartItemEvent();
 }
+
+class ClearCartEvent extends CartScreenBaseEvent {}

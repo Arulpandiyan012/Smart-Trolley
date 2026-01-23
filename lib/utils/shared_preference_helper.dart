@@ -59,6 +59,9 @@ class SharedPreferenceHelper {
     // 🟢 ADDED: Clear Phone on Logout
     configurationStorage.write("customerPhone", ''); 
     
+    // 🟢 ADDED: Clear Customer ID (Vital for Orders API)
+    configurationStorage.remove(customerId); 
+    
     configurationStorage.write(customerProfilePicUrl, '');
     configurationStorage.write(customerBannerPicUrl, '');
     configurationStorage.write(customerToken, '0');
