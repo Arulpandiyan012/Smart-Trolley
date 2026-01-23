@@ -98,6 +98,9 @@ class CartScreenBloc extends Bloc<CartScreenBaseEvent, CartScreenBaseState> {
       } catch (e) {
         emit(MoveToCartState.fail(error: e.toString()));
       }
+    } else if (event is ClearCartEvent) {
+      // 🟢 Clear cart by emitting success with null data
+      emit(FetchCartDataState.success(cartDetailsModel: null));
     }
   }
 }

@@ -11,6 +11,9 @@
 
 import 'package:bagisto_app_demo/data_model/account_models/account_info_details.dart';
 import 'package:bagisto_app_demo/screens/drawer/utils/index.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../cart_screen/bloc/cart_screen_bloc.dart';
+import '../../cart_screen/bloc/cart_screen_event.dart';
 
 
 // ignore: must_be_immutable
@@ -133,6 +136,13 @@ class _LogoutButtonState extends State<LogoutButton> {
       if (true) {
         appStoragePref.onUserLogout();
         widget.fetchSharedPreferenceData();
+        
+        // 🟢 1. Clear Cart Data (Global Bloc)
+        context.read<CartScreenBloc>().add(ClearCartEvent());
+
+        // 🟢 2. Reset Navigation Stack (Clears Order/Account Blocs)
+        // Redirect to HOME (Main Shell) not Dashboard (Profile Tab)
+        Navigator.of(context).pushNamedAndRemoveUntil(home, (route) => false);
       }
     });
   }
