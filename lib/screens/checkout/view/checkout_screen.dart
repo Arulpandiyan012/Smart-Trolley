@@ -120,7 +120,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
      debugPrint("🚀 V14: SENDING CUSTOMER ID FOR MOBILE USER...");
      
      try {
-       String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
+       String customerId = appStoragePref.getCustomerId().toString();
        
        var dio = Dio();
        var formData = FormData.fromMap({
@@ -223,7 +223,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
               ),
               if (isLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   child: const Center(child: CircularProgressIndicator(color: Color(0xFF0C831F))),
                 )
             ],

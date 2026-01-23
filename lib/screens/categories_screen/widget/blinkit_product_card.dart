@@ -259,7 +259,7 @@ class BlinkitProductCard extends StatelessWidget {
                                           ));
                                         } else {
                                           context.read<CartScreenBloc>().add(RemoveCartItemEvent(
-                                            cartItemId: int.parse(cartItemId!)
+                                            cartItemId: int.parse(cartItemId)
                                           ));
                                         }
                                       }
@@ -328,7 +328,7 @@ class BlinkitProductCard extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
