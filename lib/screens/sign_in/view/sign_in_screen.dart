@@ -4,13 +4,11 @@
  * @Category Mobikul
  */
 
-import 'dart:async';
-import 'package:flutter/material.dart';
+
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bagisto_app_demo/screens/sign_in/utils/index.dart';
-import 'package:bagisto_app_demo/services/api_client.dart'; 
-import '../../../utils/server_configuration.dart';
+
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -305,6 +303,22 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                     
+                    
+                    const SizedBox(height: 12),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, otpExplanation);
+                      },
+                      child: Text(
+                        StringConstants.whatIsOtp.localized(),
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 12),
                     
                     // 5. TERMS

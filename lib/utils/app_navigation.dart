@@ -44,6 +44,7 @@ import 'package:bagisto_app_demo/screens/sign_up/bloc/sign_up_repository.dart';
 import 'package:bagisto_app_demo/screens/sign_up/view/sign_up.dart';
 import 'package:bagisto_app_demo/screens/splash_screen/view/splash_screen.dart';
 import 'package:bagisto_app_demo/utils/route_constants.dart';
+import 'package:bagisto_app_demo/screens/otp_explanation/otp_explanation_screen.dart';
 import 'package:bagisto_app_demo/screens/on_boarding/on_boarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -384,6 +385,11 @@ case checkoutScreen:
               create: (context) =>
                   ContactUsScreenBloc(ContactUsScreenRepositoryImp()),
               child: const ContactUsPage()));
+    
+    case otpExplanation:
+      return MaterialPageRoute(
+        builder: (_) => const OtpExplanationScreen(),
+      );
 
     default:
       return MaterialPageRoute(

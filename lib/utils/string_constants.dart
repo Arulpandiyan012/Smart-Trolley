@@ -377,6 +377,11 @@ class StringConstants {
   static const String subCategories = "subCategories";
   static const String agreeTerms = "agreeTermsMsg";
   static const String agreementFieldRequired = "agreementFieldRequired";
+  static const String otpUsage = "otpUsage";
+  static const String whatIsOtp = "whatIsOtp";
+  static const String otpDescription = "otpDescription";
+  static const String howToUse = "howToUse";
+  static const String otpSteps = "otpSteps";
 
 }
 
