@@ -49,10 +49,18 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
     isLoggedIn = appStoragePref.getCustomerLoggedIn();
     if (isLoggedIn) {
       String fullName = appStoragePref.getCustomerName(); 
-      List<String> names = fullName.split(" ");
-      firstNameController.text = names.isNotEmpty ? names.first : "";
-      if (names.length > 1) {
-        lastNameController.text = names.sublist(1).join(" ");
+      
+      
+      // Fix: Name must contain at least one letter to be valid.
+      // This catches strictly numeric strings, formatted phone numbers (+1 234...), etc.
+      final hasLetters = RegExp(r'[a-zA-Z]').hasMatch(fullName);
+      
+      if (hasLetters && fullName.isNotEmpty) {
+        List<String> names = fullName.split(" ");
+        firstNameController.text = names.isNotEmpty ? names.first : "";
+        if (names.length > 1) {
+          lastNameController.text = names.sublist(1).join(" ");
+        }
       }
       emailController.text = appStoragePref.getCustomerEmail(); 
     }
@@ -65,27 +73,81 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
       child: Scaffold(
         appBar: AppBar(
           centerTitle: false,
-          title: Text(StringConstants.accountInfo.localized()),
+          elevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text(
+            StringConstants.accountInfo.localized(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         body: _profileBloc(context),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(AppSizes.spacingMedium),
-          child: MaterialButton(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.spacingNormal)),
-            elevation: 2.0,
-            height: AppSizes.buttonHeight,
-            minWidth: MediaQuery.of(context).size.width,
-            // 🟢 FIXED: Replaced onBackground with onSurface
-            color: Theme.of(context).colorScheme.onSurface,
-            onPressed: _onPressSaveButton,
-            child: Text(
-              StringConstants.save.localized().toUpperCase(),
-              style: TextStyle(
-                fontSize: AppSizes.spacingLarge, 
-                color: Theme.of(context).colorScheme.secondaryContainer
+        // 🟢 UPGRADED: Premium Bottom Navigation Bar with Trendy Save Button
+        bottomNavigationBar: BlocBuilder<AccountInfoBloc, AccountInfoBaseState>(
+          builder: (context, state) {
+            bool isLoading = (state is AccountInfoUpdateState && state.status == AccountStatus.loading);
+
+            return Container(
+              padding: const EdgeInsets.all(AppSizes.spacingMedium),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    offset: const Offset(0, -4),
+                    blurRadius: 10,
+                  ),
+                ],
               ),
-            ),
-          ),
+              child: Container(
+                height: 55, // Fixed height for a trendy feel
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _onPressSaveButton,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          StringConstants.save.localized().toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -99,7 +161,7 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
             ShowMessage.successNotification(state.accountUpdate?.message ?? "", context);
             _updateSharedPreferences(state.accountUpdate!);
             Navigator.pop(context, true);
-          } else {
+          } else if (state.status == AccountStatus.fail) {
             ShowMessage.errorNotification(StringConstants.invalidData.localized(), context);
           }
         }
@@ -120,8 +182,6 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
           phoneController.text = _accountInfoDetails!.phone ?? "";
           dobController.text = _accountInfoDetails!.dateOfBirth ?? "";
           subscribeNewsletter = _accountInfoDetails!.subscribedToNewsLetter ?? false;
-          
-          // 🟢 FIXED: Default to 0 as the model lacks a gender field
           currentGenderValue = 0; 
         }
       }
@@ -177,7 +237,9 @@ class _AccountScreenState extends State<AccountScreen> with EmailValidator, Phon
     appStoragePref.setCustomerLoggedIn(true);
     var data = accountUpdate.data;
     if (data != null) {
-      appStoragePref.setCustomerName("${data.firstName ?? ""} ${data.lastName ?? ""}".trim());
+      String fName = data.firstName ?? "";
+      String lName = data.lastName ?? "";
+      appStoragePref.setCustomerName("$fName $lName".trim());
       appStoragePref.setCustomerEmail(data.email ?? "");
       appStoragePref.setCustomerImage(data.imageUrl ?? "");
     }

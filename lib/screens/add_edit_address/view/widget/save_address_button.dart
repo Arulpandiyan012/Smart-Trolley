@@ -31,6 +31,7 @@ class SaveAddressButton extends StatefulWidget {
   final String? addressId;
   final AddEditAddressBloc? addEditAddressBloc;
   bool isDefault;
+  final Function? onChangeAutoValidate;
   SaveAddressButton(
       {super.key,
       required this.firstNameController,
@@ -51,7 +52,8 @@ class SaveAddressButton extends StatefulWidget {
       required this.isDefault,
       required this.cityController,
       required this.stateNameController,
-        required this.emailController});
+      required this.emailController,
+      this.onChangeAutoValidate});
 
   @override
   State<SaveAddressButton> createState() => _SaveAddressButtonState();
@@ -102,6 +104,7 @@ class _SaveAddressButtonState extends State<SaveAddressButton> {
 
   ///action performed on press save button
   void _onPressSaveButton() {
+    widget.onChangeAutoValidate?.call();
     if (widget.formKey.currentState!.validate()) {
       showDialog(
           context: context,
