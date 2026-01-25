@@ -13,9 +13,10 @@
 import 'package:bagisto_app_demo/screens/address_list/utils/index.dart';
 
 class AddNewAddressButton extends StatelessWidget {
-  final  VoidCallback? reload;
+  final VoidCallback? reload;
   final bool? isFromDashboard;
-  const AddNewAddressButton({Key? key, this.reload,this.isFromDashboard}) : super(key: key);
+  final VoidCallback? onAddPressed; // 🟢 NEW Callback
+  const AddNewAddressButton({Key? key, this.reload, this.isFromDashboard, this.onAddPressed}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +31,9 @@ class AddNewAddressButton extends StatelessWidget {
             color: Theme.of(context).colorScheme.onBackground,
             padding: const EdgeInsets.all(AppSizes.spacingMedium),
             onPressed: () {
+              if (onAddPressed != null) {
+                onAddPressed!(); // 🟢 Use callback if available
+              } else {
                 Navigator.pushNamed(context, addAddressScreen,
                         arguments: AddressNavigationData(
                             isEdit: false, addressModel: null, isCheckout: false))
@@ -38,6 +42,7 @@ class AddNewAddressButton extends StatelessWidget {
                     reload!();
                   }
                 });
+              }
             },
             child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
