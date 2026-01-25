@@ -4,6 +4,14 @@ import 'package:bagisto_app_demo/screens/dashboard/utils/index.dart';
 import 'package:bagisto_app_demo/screens/wishList/bloc/wishlist_bloc.dart';
 import 'package:bagisto_app_demo/screens/wishList/bloc/wishlist_repository.dart';
 import 'package:bagisto_app_demo/screens/wishList/view/wishlist_screen.dart';
+// 🟢 NEW IMPORTS
+import 'package:bagisto_app_demo/screens/address_list/bloc/address_event.dart'; // 🟢 FIX: Import Event
+import 'package:bagisto_app_demo/screens/home_page/widget/address_details_sheet.dart';
+import 'package:bagisto_app_demo/utils/current_location_manager.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_bloc.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_repository.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_state.dart';
+import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_event.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -26,14 +34,27 @@ class _DashboardScreenState extends State<DashboardScreen>
           ReviewsBloc(repository: ReviewsRepositoryImp(), context: context),
       child: const ReviewsScreen(isFromDashboard: true));
 
-  Widget addressScreen = BlocProvider(
-      create: (context) => AddressBloc(AddressRepositoryImp()),
-      child: const AddressScreen(isFromDashboard: true));
+
 
   // 🟢 NEW: Wishlist Screen (Moved from Sidebar)
   Widget wishlistScreen = BlocProvider(
       create: (context) => WishListBloc(WishListRepositoryImp()), 
       child: const WishListScreen()); // Verify constructor args if any
+  
+  // 🟢 Address Bloc Reference for Refreshing
+  AddressBloc? _addressBloc;
+  Widget? addressScreen;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize AddressBloc here to access it later
+    _addressBloc = AddressBloc(AddressRepositoryImp());
+    addressScreen = BlocProvider.value( // Use .value
+      value: _addressBloc!,
+      child: const AddressScreen(isFromDashboard: true),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,17 +128,17 @@ class _DashboardScreenState extends State<DashboardScreen>
 
               // --- Address Tab ---
               _buildTabContent(
-                child: addressScreen,
+                child: addressScreen!, // Use nullable widget
                 btnText: addressIsEmpty
                     ? StringConstants.addNewAddress.localized()
                     : StringConstants.manageAddress.localized(),
                 icon: addressIsEmpty ? Icons.add_location_alt_rounded : Icons.edit_location_alt_rounded,
                 onPressed: () {
-                  addressIsEmpty
-                      ? Navigator.pushNamed(context, addAddressScreen,
-                          arguments: AddressNavigationData(
-                              isEdit: false, addressModel: null, isCheckout: false))
-                      : Navigator.of(context).pushNamed(addressList);
+                  if (addressIsEmpty) {
+                    _openAddAddressSheet(); // 🟢 NEW FORM logic
+                  } else {
+                    Navigator.of(context).pushNamed(addressList);
+                  }
                 },
               ),
 
@@ -205,5 +226,121 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ],
     );
+  }
+  // 🟢 NEW: Open the Modern Address Sheet (Same as Checkout)
+  void _openAddAddressSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.85,
+        child: AddressDetailsSheet(
+          initialArea: "",
+          initialPincode: CurrentLocationManager.pincode,
+          initialCity: CurrentLocationManager.city,
+          initialState: CurrentLocationManager.state,
+        ),
+      ),
+    ).then((value) {
+      if (value != null && value is Map) {
+         _saveNewAddress(value);
+      }
+    });
+  }
+
+  // 🟢 NEW: Handle API Call to Save Address
+  void _saveNewAddress(Map data) {
+    // 1. Create Repository & Bloc
+    final repo = AddEditAddressRepositoryImp();
+    final bloc = AddEditAddressBloc(repo);
+
+    // 2. Prepare Data
+    String fName = data['firstName'] ?? "User";
+    String lName = data['lastName'] ?? ".";
+    String phone = data['phone'] ?? "";
+    
+    // Combine Address Parts
+    String house = data['flatHouseBuilding'] ?? '';
+    String area = data['area'] ?? '';
+    String landmark = data['landmark'] ?? '';
+    List<String> parts = [];
+    if (house.isNotEmpty) parts.add(house);
+    if (area.isNotEmpty) parts.add(area);
+    if (landmark.isNotEmpty) parts.add("Near $landmark");
+    String fullAddress = parts.join(", ");
+    if (fullAddress.trim().isEmpty) fullAddress = area;
+    
+    String stateName = data['state'] ?? "";
+    String stateCode = _mapStateToCode(stateName);
+
+    // 3. Dispatch Event
+    bloc.add(FetchAddAddressEvent(
+         firstName: fName,
+         lastName: lName,
+         phone: phone,
+         address: fullAddress, 
+         country: "IN",
+         state: stateCode,
+         city: data['city'],
+         postCode: data['pincode'],
+         isDefault: false
+    ));
+
+    // 4. Show Loader & Listen for Result
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => BlocProvider.value(
+        value: bloc,
+        child: BlocConsumer<AddEditAddressBloc, AddEditAddressBaseState>(
+          listener: (context, state) {
+            if (state is FetchAddAddressState && state.status == AddEditStatus.success) {
+               Navigator.pop(ctx); 
+               
+               // 🟢 REFRESH ADDRESS LIST
+               _addressBloc?.add(FetchAddressEvent());
+               setState(() { addressIsEmpty = false; }); // Optimistic update
+
+               ShowMessage.successNotification("Address Added Successfully", context);
+            }
+            else if (state is FetchAddAddressState && state.status == AddEditStatus.fail) {
+               Navigator.pop(ctx);
+               String err = state.error ?? "Failed";
+               if (err.contains("state")) err = "Invalid State. Try: TN, KA, KL, DL, MH";
+               ShowMessage.errorNotification(err, context);
+            }
+          },
+          builder: (context, state) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)));
+          },
+        ),
+      ),
+    );
+  }
+
+  // 🟢 HELPER: Map State Name to Code
+  String _mapStateToCode(String stateName) {
+    String clean = stateName.trim().toUpperCase();
+    Map<String, String> codes = {
+      "TAMIL NADU": "TN", "TAMILNADU": "TN",
+      "KERALA": "KL", "KARNATAKA": "KA",
+      "ANDHRA PRADESH": "AP", "TELANGANA": "TG",
+      "MAHARASHTRA": "MH", "DELHI": "DL",
+      "NEW DELHI": "DL", "PUDUCHERRY": "PY",
+      "WEST BENGAL": "WB", "UTTAR PRADESH": "UP",
+      "MADHYA PRADESH": "MP", "GUJARAT": "GJ",
+      "RAJASTHAN": "RJ", "PUNJAB": "PB",
+      "HARYANA": "HR", "BIHAR": "BR",
+      "ODISHA": "OR", "JHARKHAND": "JH",
+      "CHHATTISGARH": "CT", "ASSAM": "AS",
+      "UTTARAKHAND": "UK", "HIMACHAL PRADESH": "HP",
+      "JAMMU AND KASHMIR": "JK", "GOA": "GA",
+      "TRIPURA": "TR", "MEGHALAYA": "ML",
+      "MANIPUR": "MN", "NAGALAND": "NL",
+      "ARUNACHAL PRADESH": "AR", "MIZORAM": "MZ",
+      "SIKKIM": "SK"
+    };
+    return codes[clean] ?? stateName;
   }
 }

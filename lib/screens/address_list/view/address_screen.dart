@@ -144,6 +144,9 @@ class _AddressScreenState extends State<AddressScreen> {
       return AddNewAddressButton(
         reload: fetchAddressData,
         isFromDashboard: widget.isFromDashboard,
+        onAddPressed: () {
+          _openAddAddressSheet(); // 🟢 NEW FORM
+        },
       );
     } else {
       appStoragePref.setAddressData(false);
