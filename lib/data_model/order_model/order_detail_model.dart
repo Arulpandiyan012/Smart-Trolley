@@ -87,6 +87,25 @@ class OrderDetail extends GraphQlBaseErrorModel {
     if (val is int) return val;
     return int.tryParse(val.toString());
   }
+
+  static double? _toDouble(dynamic val) {
+    if (val == null) return null;
+    if (val is double) return val;
+    if (val is int) return val.toDouble();
+    return double.tryParse(val.toString());
+  }
+
+  static String? _safeLink(dynamic val) {
+     if (val == null) return null;
+     if (val is String) {
+        if (val.isEmpty || val.startsWith("{") || val.startsWith("[")) return null;
+        return val;
+     }
+     if (val is Map) {
+        return val['url']?.toString() ?? val['imageUrl']?.toString() ?? val['path']?.toString() ?? val['image_url']?.toString();
+     }
+     return null;
+  }
 }
 
 class Payment {
@@ -153,26 +172,42 @@ class Items {
   String? productId;
   OrderProduct? product;
   FormattedPrice? formattedPrice;
+  String? image; // 🟢 NEW: Direct image link if available
   dynamic additional;
+  String? couponCode;
+  double? weight;
+  double? totalWeight;
+  Map<String, dynamic>? rawData; // 🟢 FIX: Store raw JSON for brute-force recovery
 
   Items({
     this.id, this.sku, this.type, this.name, 
     this.qtyOrdered, this.qtyShipped, this.qtyInvoiced, 
     this.qtyCanceled, this.qtyRefunded, this.productId, 
-    this.product, this.formattedPrice, this.additional
+    this.product, this.formattedPrice, this.additional,
+    this.image,
+    this.couponCode,
+    this.weight,
+    this.totalWeight,
+    this.rawData
   });
 
   factory Items.fromJson(Map<String, dynamic> json) {
     var item = Items(
       id: json['id']?.toString(),
       sku: json['sku']?.toString(),
+      type: json['type']?.toString(),
       name: json['name']?.toString(),
-      qtyOrdered: OrderDetail._toInt(json['qtyOrdered'] ?? json['qty_ordered']),
+      couponCode: json['couponCode']?.toString(),
+      weight: OrderDetail._toDouble(json['weight']),
+      totalWeight: OrderDetail._toDouble(json['totalWeight']),
+      qtyOrdered: OrderDetail._toInt(json['qtyOrdered'] ?? json['qty_ordered'] ?? 0),
       qtyShipped: OrderDetail._toInt(json['qtyShipped'] ?? 0),
       qtyInvoiced: OrderDetail._toInt(json['qtyInvoiced'] ?? 0),
       qtyCanceled: OrderDetail._toInt(json['qtyCanceled'] ?? 0),
       qtyRefunded: OrderDetail._toInt(json['qtyRefunded'] ?? 0),
       productId: json['productId']?.toString() ?? json['product_id']?.toString(),
+      image: OrderDetail._safeLink(json['image_url']) ?? OrderDetail._safeLink(json['image']) ?? OrderDetail._safeLink(json['product_image']) ?? OrderDetail._safeLink(json['imageUrl']) ?? OrderDetail._safeLink(json['url']) ?? OrderDetail._safeLink(json['base_image']) ?? OrderDetail._safeLink(json['base_image_url']) ?? OrderDetail._safeLink(json['thumbnail']) ?? OrderDetail._safeLink(json['thumbnail_url']), 
+      rawData: json, // 🟢 Populate raw JSON
     );
     
     if (json['formattedPrice'] != null) {
@@ -192,14 +227,19 @@ class OrderProduct {
   String? sku;
   String? name;
   List<Images>? images;
+  BaseImage? baseImage; 
+  String? image; 
+  Map<String, dynamic>? rawData; // 🟢 FIX: Store raw JSON for brute-force recovery
 
-  OrderProduct({this.id, this.sku, this.name, this.images});
+  OrderProduct({this.id, this.sku, this.name, this.images, this.baseImage, this.image, this.rawData});
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
      var op = OrderProduct(
        id: json['id']?.toString(),
        sku: json['sku']?.toString(),
        name: json['name']?.toString(),
+       image: OrderDetail._safeLink(json['image_url']) ?? OrderDetail._safeLink(json['image']) ?? OrderDetail._safeLink(json['base_image_url']) ?? OrderDetail._safeLink(json['imageUrl']) ?? OrderDetail._safeLink(json['url']) ?? OrderDetail._safeLink(json['base_image']) ?? OrderDetail._safeLink(json['thumbnail']) ?? OrderDetail._safeLink(json['thumbnail_url']) ?? OrderDetail._safeLink(json['product_image']), 
+       rawData: json, // 🟢 Populate raw JSON
      );
      
      if (json['images'] != null && json['images'] is List) {
@@ -207,6 +247,17 @@ class OrderProduct {
            .map((i) => Images.fromJson(Map<String, dynamic>.from(i)))
            .toList();
      }
+
+     if (json['base_image'] != null) {
+        op.baseImage = BaseImage.fromJson(Map<String, dynamic>.from(json['base_image']));
+     } else if (json['baseImage'] != null) {
+        op.baseImage = BaseImage.fromJson(Map<String, dynamic>.from(json['baseImage']));
+     } else if (json['cacheGalleryImages'] != null) {
+        op.baseImage = BaseImage.fromJson(Map<String, dynamic>.from(json['cacheGalleryImages']));
+     } else if (json['cache_gallery_images'] != null) {
+        op.baseImage = BaseImage.fromJson(Map<String, dynamic>.from(json['cache_gallery_images']));
+     }
+     
      return op;
   }
 
@@ -229,8 +280,8 @@ class Images {
 
   factory Images.fromJson(Map<String, dynamic> json) {
     return Images(
-      url: json['url']?.toString(),
-      path: json['path']?.toString(),
+      url: json['url']?.toString() ?? json['image_url']?.toString() ?? json['imageUrl']?.toString() ?? json['image']?.toString() ?? json['path']?.toString(),
+      path: json['path']?.toString() ?? json['image']?.toString(),
     );
   }
 
@@ -255,4 +306,22 @@ class Options {
   String? label;
   Options({this.id, this.label});
   factory Options.fromJson(Map<String, dynamic> json) => Options();
+}
+
+class BaseImage {
+  String? smallImageUrl;
+  String? mediumImageUrl;
+  String? largeImageUrl;
+  String? originalImageUrl;
+
+  BaseImage({this.smallImageUrl, this.mediumImageUrl, this.largeImageUrl, this.originalImageUrl});
+
+  factory BaseImage.fromJson(Map<String, dynamic> json) {
+     return BaseImage(
+       smallImageUrl: json['small_image_url']?.toString() ?? json['smallImageUrl']?.toString(),
+       mediumImageUrl: json['medium_image_url']?.toString() ?? json['mediumImageUrl']?.toString(),
+       largeImageUrl: json['large_image_url']?.toString() ?? json['largeImageUrl']?.toString(),
+       originalImageUrl: json['original_image_url']?.toString() ?? json['originalImageUrl']?.toString(),
+     );
+  }
 }

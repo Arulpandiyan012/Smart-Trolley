@@ -77,7 +77,11 @@ class ApiClient {
       defaultHeaders: headers
     );
     
-    return GraphQLClient(link: httpLink, cache: GraphQLCache());
+    return GraphQLClient(
+      link: httpLink, 
+      cache: GraphQLCache(),
+      queryRequestTimeout: const Duration(seconds: 30),
+    );
   }
 
   // 🟢 1. GLOBAL HANDLER (Brute-Force Parser)
@@ -202,13 +206,48 @@ class ApiClient {
     }
   }
 
-Future<OrderDetail?> getOrderDetail(int id) async {
+  Future<OrderDetail?> getOrderDetail(int id) async {
+    try {
+      debugPrint("🔵 FETCHING ORDER ID (GQL): $id");
+      
+      var response = await _getPublicClient().query(QueryOptions(
+        document: gql(mutation.getOrderDetail(id)),
+        fetchPolicy: FetchPolicy.noCache
+      ));
+
+      if (response.hasException) {
+          debugPrint("❌ GQL ERROR: ${response.exception.toString()}");
+          // Fallback to PHP if GQL fails
+          return _getOrderDetailPHP(id);
+      }
+
+      var data = response.data?['orderDetail'];
+      if (data != null) {
+          Map<String, dynamic> safeData = Map<String, dynamic>.from(data);
+          
+          // Inject success flags for Bloc
+          safeData['success'] = true;
+          safeData['responseStatus'] = true;
+          
+          // Address Key Mapping (Query uses camelCase already, but just in case)
+          if (safeData['billingAddress'] == null) safeData['billingAddress'] = safeData['billing_address'];
+          if (safeData['shippingAddress'] == null) safeData['shippingAddress'] = safeData['shipping_address'];
+
+          return OrderDetail.fromJson(safeData);
+      }
+    } catch (e) {
+      debugPrint("🔥 GQL ORDER ERROR: $e");
+    }
+    return _getOrderDetailPHP(id); 
+  }
+
+  // 🟢 FALLBACK PHP METHOD
+  Future<OrderDetail?> _getOrderDetailPHP(int id) async {
     try {
       var url = Uri.parse("$baseDomain/mobikul-order-details-api.php");
       String customerId = appStoragePref.getCustomerId().toString();
       String token = appStoragePref.getCustomerToken() ?? "";
-
-      print("🔵 DEBUG: Fetching Order ID: $id");
+      debugPrint("🔵 PHP REQUEST (Order Details): ID $id for Customer $customerId at $url");
 
       var response = await http.post(
         url, 
@@ -223,54 +262,22 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       );
 
       if (response.statusCode == 200) {
+        debugPrint("📦 ORDER DETAIL PHP RAW RECEIVED: ${response.body}");
         var jsonResponse = jsonDecode(response.body);
+        debugPrint("📦 ORDER DETAIL PHP RAW: ${response.body}");
+        var innerData = (jsonResponse['success'] == true && jsonResponse['data'] != null) ? jsonResponse['data'] : jsonResponse;
         
-        // 1. UNWRAPPER
-        var innerData = jsonResponse;
-        if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-             innerData = jsonResponse['data'];
-        }
-
-        // 🟢 DEBUG: Print raw items to find the image field
-        if (innerData != null && innerData['items'] != null) {
-          debugPrint("📦 ORDER ITEMS RAW JSON: ${jsonEncode(innerData['items'])}");
-        }
-
         if (innerData is Map) {
             Map<String, dynamic> safeData = Map<String, dynamic>.from(innerData);
-
-            // 🟢 CRITICAL FIX: Inject the success flag so the Bloc doesn't reject the data
             safeData['success'] = true;
             safeData['responseStatus'] = true;
-
-            // 2. Address Key Fix (Camel vs Snake)
-            var rawBilling = safeData['billingAddress'] ?? safeData['billing_address'];
-            var rawShipping = safeData['shippingAddress'] ?? safeData['shipping_address'];
-
-            print("🧐 ADDRESS DEBUG - Billing: $rawBilling | Shipping: $rawShipping");
-
-            safeData['billingAddress'] = rawBilling;
-            safeData['shippingAddress'] = rawShipping;
-            
-            // Fix ID
-            if (safeData['id'] is String) safeData['id'] = int.tryParse(safeData['id']);
-
-            // Parse Prices
-            List<String> priceFields = ['grandTotal', 'grand_total', 'subTotal', 'sub_total'];
-            for (var field in priceFields) {
-              if (safeData[field] is String) {
-                String clean = safeData[field].replaceAll(RegExp(r'[^0-9.]'), '');
-                safeData[field] = double.tryParse(clean) ?? 0.0;
-              }
-            }
-
+            if (safeData['billingAddress'] == null) safeData['billingAddress'] = safeData['billing_address'];
+            if (safeData['shippingAddress'] == null) safeData['shippingAddress'] = safeData['shipping_address'];
             return OrderDetail.fromJson(safeData);
         }
       } 
-    } catch (e) {
-      print("🔥 API ERROR: $e");
-    }
-    return null; 
+    } catch (_) {}
+    return null;
   }
   // 🟢 4. LOGOUT (Clears Data)
   Future<BaseModel?> customerLogout() async {
@@ -642,8 +649,11 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var response = await http.post(url, body: {"customer_id": customerId, "page": page.toString()});
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-          return OrdersListModel.fromJson(jsonResponse['data']);
+        if (jsonResponse is Map && jsonResponse['success'] == true && jsonResponse['data'] != null) {
+          var orderData = jsonResponse['data'];
+          if (orderData is Map) {
+             return OrdersListModel.fromJson(Map<String, dynamic>.from(orderData));
+          }
         }
       }
     } catch (e) {

@@ -7,7 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
-import 'package:bagisto_app_demo/utils/index.dart'; 
+import 'package:bagisto_app_demo/utils/server_configuration.dart';
 
 class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
   final OrderDetail? orderDetailModel;
@@ -305,39 +305,132 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
 
   Widget _buildProductItem(var item) {
     if (item == null) return const SizedBox();
+    
+    // 🟢 ULTIMATE BRUTE-FORCE IMAGE CRAWLER
     String imageUrl = "";
-    if ((item.product?.images ?? []).isNotEmpty) {
-        imageUrl = item.product?.images?[0].url ?? "";
+    
+    // 1. Recursive Helper to find ANY image url in a dynamic Map
+    String? crawlForImage(Map? data) {
+       if (data == null) return null;
+       
+       // Priority 1: Known Bagisto Image Keys
+       final keys = [
+         "image_url", "image", "imageUrl", "url", "path", "product_image", 
+         "base_image", "thumbnail", "small_image", "swatch_url",
+         "small_image_url", "medium_image_url", "large_image_url", "original_image_url",
+         "smallImageUrl", "mediumImageUrl", "largeImageUrl", "originalImageUrl"
+       ];
+       for (var k in keys) {
+          if (data[k] != null && data[k] is String && data[k].toString().isNotEmpty) {
+             String v = data[k].toString();
+             if (v.contains(".") || v.startsWith("http") || v.startsWith("storage/")) return v;
+          }
+       }
+
+       // Priority 2: Crawler (Check every value recursively)
+       for (var entry in data.entries) {
+          var v = entry.value;
+          if (v is String && v.isNotEmpty) {
+             if (v.toLowerCase().contains(".jpg") || v.toLowerCase().contains(".png") || v.toLowerCase().contains(".jpeg") || v.toLowerCase().contains(".webp")) {
+                if (!v.contains(" ") && (v.contains("/") || v.startsWith("http"))) return v;
+             }
+          } else if (v is Map) {
+             String? deep = crawlForImage(v);
+             if (deep != null) return deep;
+          } else if (v is List) {
+             for (var item in v) {
+                if (item is Map) {
+                   String? deep = crawlForImage(item);
+                   if (deep != null) return deep;
+                } else if (item is String && item.isNotEmpty) {
+                   if (item.toLowerCase().contains(".jpg") || item.toLowerCase().contains(".png")) return item;
+                }
+             }
+          }
+       }
+       return null;
     }
 
+    // 2. Start Crawling
+    if (item is Items) {
+       // Try item direct image first, then crawl item JSON, then try product images
+       imageUrl = (item.image != null && item.image!.isNotEmpty) ? item.image! : (crawlForImage(item.rawData) ?? "");
+       
+       if (imageUrl.isEmpty && item.product != null) {
+          imageUrl = (item.product!.image != null && item.product!.image!.isNotEmpty) ? item.product!.image! : (crawlForImage(item.product!.rawData) ?? "");
+       }
+    }
+
+    // 3. Last Fallback: Check nested structures if crawling failed
+    if (imageUrl.isEmpty && item.product?.baseImage != null) {
+       imageUrl = item.product!.baseImage!.originalImageUrl ?? 
+                  item.product!.baseImage!.largeImageUrl ??
+                  item.product!.baseImage!.mediumImageUrl ?? 
+                  item.product!.baseImage!.smallImageUrl ?? "";
+    }
+
+    // Fix Relative URLs OR Wrong Domains (Internal IPs / Localhost)
+    if (imageUrl.isNotEmpty) {
+       // 1. Convert suspicious absolute URLs (internal IPs) to relative paths
+       if (imageUrl.startsWith("http")) {
+          if (imageUrl.contains("192.168.") || imageUrl.contains("localhost") || imageUrl.contains("127.0.0.1")) {
+              try {
+                Uri uri = Uri.parse(imageUrl);
+                imageUrl = uri.path; 
+                if (uri.query.isNotEmpty) imageUrl = "$imageUrl?${uri.query}";
+              } catch (_) {}
+          }
+       }
+       
+       // 2. Prefix relative URLs with baseDomain
+       if (!imageUrl.startsWith("http")) {
+          // Bagisto specific: Ensure storage/ prefix for paths like "products/1/x.jpg"
+          if (!imageUrl.startsWith("/") && !imageUrl.startsWith("storage/")) {
+             imageUrl = "storage/$imageUrl";
+          }
+          
+          if (!imageUrl.startsWith("/")) {
+             imageUrl = "/$imageUrl";
+          }
+          imageUrl = "$baseDomain$imageUrl";
+       }
+        
+        // 3. STORAGE FIX: The server returns 500 for direct /storage/ but works for /cache/medium/
+        if (imageUrl.contains("/storage/")) {
+           imageUrl = imageUrl.replaceAll("/storage/", "/cache/medium/");
+        }
+     }
+    
     return Row(
       children: [
         Container(
-          width: 48, height: 48,
+          width: 54, height: 54, // Slightly larger
+          margin: const EdgeInsets.only(right: 12),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey[200]!),
-            image: imageUrl.isNotEmpty 
-              ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-              : null
           ),
-          child: imageUrl.isEmpty ? const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.grey) : null,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: ImageView(
+              url: imageUrl,
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
-        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.name ?? "", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), maxLines: 2),
-              const SizedBox(height: 2),
-              Text("x${item.qtyOrdered}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+              Text(item.name ?? "", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 2),
+              const SizedBox(height: 4),
+              Text("x${item.qtyOrdered}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600])),
             ],
           ),
         ),
         Text(
           item.formattedPrice?.price ?? "", 
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black)
         ),
       ],
     );
