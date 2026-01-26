@@ -24,11 +24,20 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
       ProductScreenBaseEvent event, Emitter<ProductBaseState> emit) async {
     if (event is FetchProductEvent) {
       try {
-        NewProductsModel? productData = await repository?.getProductDetails([
-          {"key": '"url_key"', "value": '"${event.sku}"'}
-        ]);
+        List<Map<String, dynamic>> filters = [];
+        if (event.sku.isNotEmpty) {
+           filters.add({"key": '"url_key"', "value": '"${event.sku}"'});
+        } else if (event.productId != null && event.productId != 0) {
+           filters.add({"key": '"id"', "value": '"${event.productId}"'});
+        } else {
+           throw Exception("No Product Identifier provided (URL Key or ID)");
+        }
+        
+        NewProductsModel? productData = await repository?.getProductDetails(filters);
+        
         emit(FetchProductState.success(productData: productData?.data?.firstOrNull));
       } catch (e) {
+        debugPrint("🔥 FETCH PRODUCT BLOC ERROR: $e");
         emit(FetchProductState.fail(error: e.toString()));
       }
     } else if (event is AddToCartProductEvent) {

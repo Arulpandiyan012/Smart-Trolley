@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import 'package:bagisto_app_demo/utils/server_configuration.dart';
+import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
 
 class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
   final OrderDetail? orderDetailModel;
@@ -122,7 +123,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                           itemCount: orderDetailModel?.items?.length ?? 0,
                           separatorBuilder: (context, index) => const Divider(height: 20),
                           itemBuilder: (context, index) {
-                            return _buildProductItem(orderDetailModel?.items?[index]);
+                            return _buildProductItem(context, orderDetailModel?.items?[index]);
                           },
                         ),
 
@@ -303,7 +304,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     );
   }
 
-  Widget _buildProductItem(var item) {
+  Widget _buildProductItem(BuildContext context, var item) {
     if (item == null) return const SizedBox();
     
     // 🟢 ULTIMATE BRUTE-FORCE IMAGE CRAWLER
@@ -401,38 +402,67 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
         }
      }
     
-    return Row(
-      children: [
-        Container(
-          width: 54, height: 54, // Slightly larger
-          margin: const EdgeInsets.only(right: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: ImageView(
-              url: imageUrl,
-              fit: BoxFit.cover,
+    return InkWell(
+      onTap: () {
+         int pid = int.tryParse(item.productId ?? item.product?.id ?? item.rawData?['product_id']?.toString() ?? "0") ?? 0;
+         
+         // Try to find urlKey in any available rawData
+         String? urlKey = item.rawData?['urlKey']?.toString() ?? 
+                          item.rawData?['url_key']?.toString() ?? 
+                          item.product?.rawData?['urlKey']?.toString() ?? 
+                          item.product?.rawData?['url_key']?.toString() ??
+                          item.rawData?['product']?['url_key']?.toString() ??
+                          item.rawData?['product']?['urlKey']?.toString();
+         
+         
+         if (pid == 0 && urlKey == null) {
+            debugPrint("⚠️ NAVIGATION ABORTED: Missing Product Data");
+            return;
+         }
+
+         Navigator.pushNamed(
+           context,
+           productScreen,
+           arguments: PassProductData(
+             title: item.name ?? "",
+             productId: pid,
+             urlKey: urlKey
+           )
+         );
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 54, height: 54, // Slightly larger
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: ImageView(
+                url: imageUrl,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.name ?? "", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 2),
-              const SizedBox(height: 4),
-              Text("x${item.qtyOrdered}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600])),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.name ?? "", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 2),
+                const SizedBox(height: 4),
+                Text("x${item.qtyOrdered}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+              ],
+            ),
           ),
-        ),
-        Text(
-          item.formattedPrice?.price ?? "", 
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black)
-        ),
-      ],
+          Text(
+            item.formattedPrice?.price ?? "", 
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black)
+          ),
+        ],
+      ),
     );
   }
 
