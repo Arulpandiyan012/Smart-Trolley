@@ -220,14 +220,14 @@ class CartListItem extends StatelessWidget {
     cartScreenBloc?.add(UpdateCartEvent(updateItem));
   }
 
-  // Helper to format price (1 decimal)
+  // Helper to format price (2 decimals)
   String _formatPrice(dynamic price) {
     if (price == null) return "";
     String priceStr = price.toString();
     if (priceStr.contains('.')) {
       int dotIndex = priceStr.indexOf('.');
-      if (dotIndex + 2 <= priceStr.length) {
-        return priceStr.substring(0, dotIndex + 2); 
+      if (dotIndex + 3 <= priceStr.length) {
+        return priceStr.substring(0, dotIndex + 3); 
       }
     }
     return priceStr;
