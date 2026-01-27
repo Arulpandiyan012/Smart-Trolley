@@ -58,7 +58,7 @@ class _ProductScreenState extends State<ProductScreen> {
     GlobalData.cartCountController.sink.add(appStoragePref.getCartCount());
     
     productScreenBLoc = context.read<ProductScreenBLoc>();
-    productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId));
+    productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? ""));
     super.initState();
   }
 
@@ -99,7 +99,7 @@ class _ProductScreenState extends State<ProductScreen> {
               child: InkWell(
                 onTap: () => Navigator.pushNamed(context, cartScreen).then((value) {
                    // Refresh product when returning from cart
-                   productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId));
+                   productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? ""));
                 }),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(

@@ -21,8 +21,7 @@ class OnClickProductLoaderEvent extends ProductScreenBaseEvent{
 
 class FetchProductEvent extends ProductScreenBaseEvent {
   String sku;
-  int? productId;
-  FetchProductEvent(this.sku, {this.productId});
+  FetchProductEvent(this.sku);
 }
 
 class AddToWishListProductEvent extends ProductScreenBaseEvent{
