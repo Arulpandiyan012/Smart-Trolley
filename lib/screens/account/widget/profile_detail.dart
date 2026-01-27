@@ -50,33 +50,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     return null;
   }
 
-  // 🟢 VALIDATION: Email format
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Email is required";
-    }
-    final emailRegExp = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (!emailRegExp.hasMatch(value)) {
-      return "Please enter a valid email address";
-    }
-    return null;
-  }
-
-  // 🟢 VALIDATION: Phone Number (10 digits)
-  String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Phone number is required";
-    }
-    if (value.length != 10) {
-      return "Phone number must be exactly 10 digits";
-    }
-    final phoneRegExp = RegExp(r"^[0-9]+$");
-    if (!phoneRegExp.hasMatch(value)) {
-      return "Please enter only digits";
-    }
-    return null;
-  }
-
   // 🟢 DATE PICKER: Day-Month-Year format
   Future<void> _showCalendar(BuildContext context) async {
     DateTime? picked = await showDatePicker(
@@ -98,7 +71,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     return RichText(
       text: TextSpan(
         text: label,
-        style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+        style: const TextStyle(color: Colors.black87, fontSize: 14),
         children: [
           if (isRequired)
             const TextSpan(
@@ -113,12 +86,11 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    bool isRequired = false, 
+    bool isRequired = false, // New parameter
     bool readOnly = false,
     VoidCallback? onTap,
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
-    int? maxLength,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,12 +102,11 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
           readOnly: readOnly,
           onTap: onTap,
           keyboardType: keyboardType,
-          maxLength: maxLength,
           decoration: InputDecoration(
-            counterText: "", // Hide the default counter for phone number
-            hintText: "Enter your $label", 
+            // Removed labelText to use the custom label above for the asterisk effect
+            hintText: "Enter $label", 
             prefixIcon: label == "Date of Birth" ? const Icon(Icons.calendar_today, size: 20) : null,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           ),
           validator: validator,
@@ -159,32 +130,29 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             _buildTextField(
               controller: widget.firstNameController, 
               label: "First Name", 
-              isRequired: true, 
+              isRequired: true, // Added required
               validator: (v) => _validateName(v, "First Name")
             ),
             const SizedBox(height: AppSizes.spacingMedium),
             _buildTextField(
               controller: widget.lastNameController, 
               label: "Last Name", 
-              isRequired: true, // Typically required in e-commerce
-              validator: (v) => _validateName(v, "Last Name")
             ),
             const SizedBox(height: AppSizes.spacingMedium),
             _buildTextField(
               controller: widget.emailController, 
               label: "Email", 
-              isRequired: true, 
+              isRequired: true, // Added required
               keyboardType: TextInputType.emailAddress,
-              validator: _validateEmail
+              validator: (v) => v!.isEmpty ? "Required" : null
             ),
             const SizedBox(height: AppSizes.spacingMedium),
             _buildTextField(
               controller: widget.phoneController, 
               label: "Phone Number",
-              isRequired: true, 
+              isRequired: true, // Added required
               keyboardType: TextInputType.phone,
-              maxLength: 10,
-              validator: _validatePhone
+              validator: (v) => (v == null || v.isEmpty) ? "Required" : null
             ),
             const SizedBox(height: AppSizes.spacingMedium),
 
@@ -196,7 +164,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             ),
             
             const SizedBox(height: AppSizes.spacingLarge),
-            _buildFieldLabel("Gender", true), 
+            _buildFieldLabel("Gender", true), // Gender is required
             const SizedBox(height: 12),
 
             _buildGenderChips(),
