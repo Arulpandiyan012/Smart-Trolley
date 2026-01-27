@@ -23,7 +23,7 @@ import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
   final String? price;
   final NewProducts? productData;
   final int ? qty;
-   const AddToCartView({super.key, this.productData,this.price,required this.configurableParams,required this.bundleParams,required this.selectList,required this.selectParam,required this.groupedParams,required this.downloadLinks,this.configurableProductId,required this.qty});
+   const AddToCartView({Key? key, this.productData,this.price,required this.configurableParams,required this.bundleParams,required this.selectList,required this.selectParam,required this.groupedParams,required this.downloadLinks,this.configurableProductId,required this.qty}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,7 @@ import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
     );
   }
 
-  void _addToCart(BuildContext context) {
+  _addToCart(BuildContext context) {
     ProductScreenBLoc productScreenBLoc = context.read<ProductScreenBLoc>();
     List list = [];
     if (productData?.type == StringConstants.grouped) {

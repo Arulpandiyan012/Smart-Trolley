@@ -16,7 +16,8 @@ class AboutProductView extends StatefulWidget {
   final bool isLoggedIn;
 
   const AboutProductView(
-      {super.key, required this.productData, required this.isLoggedIn});
+      {Key? key, required this.productData, required this.isLoggedIn})
+      : super(key: key);
 
   @override
   State<AboutProductView> createState() => _AboutProductViewState();

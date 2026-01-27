@@ -20,7 +20,7 @@ class NewProductView extends StatefulWidget {
   final void Function(String id, bool isInWishlist, dynamic product)? onAddToWishlist;
 
   const NewProductView({
-    super.key,
+    Key? key,
     this.model,
     required this.title,
     this.isLogin,
@@ -29,7 +29,7 @@ class NewProductView extends StatefulWidget {
     this.useGrid = false,
     this.onAddToCart,
     this.onAddToWishlist,
-  });
+  }) : super(key: key);
 
   @override
   State<NewProductView> createState() => _NewProductViewState();
@@ -104,7 +104,8 @@ class _ProductCard extends StatelessWidget {
   // 🟢 UPDATED definition
   final void Function(String id, bool isInWishlist, dynamic product)? onAddToWishlist;
 
-  const _ProductCard({super.key, required this.data, this.onAddToCart, this.onAddToWishlist});
+  const _ProductCard({Key? key, required this.data, this.onAddToCart, this.onAddToWishlist})
+      : super(key: key);
 
   String? _imageFromAny(dynamic img) {
     if (img == null) return null;

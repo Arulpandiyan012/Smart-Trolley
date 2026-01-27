@@ -12,7 +12,7 @@ class BlinkitBottomCartBar extends StatelessWidget {
   final String buttonText;
 
   const BlinkitBottomCartBar({
-    super.key,
+    Key? key,
     required this.currentAddress,
     this.userName,
     required this.cartDetailsModel,
@@ -20,7 +20,7 @@ class BlinkitBottomCartBar extends StatelessWidget {
     required this.onChangeAddressTap,
     required this.onProceedTap,
     required this.buttonText,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

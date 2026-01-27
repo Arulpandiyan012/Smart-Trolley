@@ -18,7 +18,8 @@ class AddNewAddress extends StatefulWidget {
   final bool? isCheckout;
 
   const AddNewAddress(this.isEdit, this.addressModel,
-      {super.key, this.isCheckout = false});
+      {Key? key, this.isCheckout = false})
+      : super(key: key);
 
   @override
   State<AddNewAddress> createState() => _AddNewAddressState();
@@ -103,7 +104,7 @@ class _AddNewAddressState extends State<AddNewAddress> {
     super.initState();
   }
 
-  Future<void> _fetchSharedPreferenceData() async {
+  _fetchSharedPreferenceData() async {
     customerUserName = appStoragePref.getCustomerName();
     widget.isEdit ?? false
         ? firstNameController.text = widget.addressModel?.firstName ?? ""
@@ -176,7 +177,7 @@ class _AddNewAddressState extends State<AddNewAddress> {
   }
 
   ///BLOC CONTAINER///
-  BlocConsumer<AddEditAddressBloc, AddEditAddressBaseState> _addEditAddressBloc(BuildContext context) {
+  _addEditAddressBloc(BuildContext context) {
     return BlocConsumer<AddEditAddressBloc, AddEditAddressBaseState>(
       listener: (BuildContext context, AddEditAddressBaseState state) {
         if (state is FetchEditAddressState) {

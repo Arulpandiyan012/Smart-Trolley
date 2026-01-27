@@ -12,7 +12,7 @@
 import  'package:bagisto_app_demo/screens/review/utils/index.dart';
 
 class ReviewLoader extends StatelessWidget {
-  const ReviewLoader({super.key});
+  const ReviewLoader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -13,10 +13,11 @@ class WishlistItemList extends StatefulWidget {
   final WishListBloc? wishListBloc;
 
   const WishlistItemList(
-      {super.key,
+      {Key? key,
       required this.model,
       required this.isLoading,
-      this.wishListBloc});
+      this.wishListBloc})
+      : super(key: key);
 
   @override
   State<WishlistItemList> createState() => _WishlistItemListState();

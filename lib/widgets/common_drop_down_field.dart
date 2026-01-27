@@ -40,12 +40,12 @@ class CommonDropDownField extends StatelessWidget {
         ? const SizedBox()
         : Theme(
             data: Theme.of(context).copyWith(
-              canvasColor: Theme.of(context).colorScheme.surface,
+              canvasColor: Theme.of(context).colorScheme.background,
             ),
             child: DropdownButtonFormField(
                 iconEnabledColor: Theme.of(context).colorScheme.onPrimary,
                 style: Theme.of(context).textTheme.bodyMedium,
-                initialValue: value,
+                value: value,
                 isExpanded: true,
                 key: key,
                 validator: (val) {

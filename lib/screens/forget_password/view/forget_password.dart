@@ -11,7 +11,7 @@
 import 'package:bagisto_app_demo/screens/forget_password/utils/index.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {
-  const ForgetPasswordScreen({super.key});
+  const ForgetPasswordScreen({Key? key}) : super(key: key);
 
   @override
   State<ForgetPasswordScreen> createState() => _ForgetPasswordScreenState();
@@ -48,7 +48,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen>
   }
 
   ///forget Password in Bloc Container
-  BlocConsumer<ForgetPasswordBloc, ForgetPasswordBaseState> _forgetPasswordBloc(BuildContext context) {
+  _forgetPasswordBloc(BuildContext context) {
     return BlocConsumer<ForgetPasswordBloc, ForgetPasswordBaseState>(
       listener: (BuildContext context, ForgetPasswordBaseState state) {
         if (state is ForgetPasswordFetchState) {
@@ -96,7 +96,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen>
   }
 
   /// ui form
-  SafeArea _form() {
+  _form() {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -157,7 +157,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen>
   }
 
   ///on press  button
-  void _onPressButton() {
+  _onPressButton() {
     if (_forgetPasswordKey.currentState!.validate()) {
       showDialog(
           context: context,

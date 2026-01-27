@@ -12,7 +12,7 @@
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 
 class ZoomImageView extends StatefulWidget {
-  const ZoomImageView({super.key, this.imgList});
+  const ZoomImageView({Key? key, this.imgList}) : super(key: key);
   final List<Images>? imgList;
 
   @override

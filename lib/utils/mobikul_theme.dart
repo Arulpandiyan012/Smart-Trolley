@@ -69,11 +69,11 @@ class MobiKulTheme {
         primary: _lightPrimaryColor,
         secondary: primaryColor,
         secondaryContainer: _lightPrimaryVariantColor,
-        onSurface: MobiKulTheme.accentColor,
+        onBackground: MobiKulTheme.accentColor,
         onPrimary: Colors.black87,
       ),
       checkboxTheme: CheckboxThemeData(
-        side: WidgetStateBorderSide.resolveWith(
+        side: MaterialStateBorderSide.resolveWith(
             (states) => const BorderSide(color: accentColor)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
@@ -176,7 +176,7 @@ class MobiKulTheme {
             fontWeight: FontWeight.w700),
       ),
       checkboxTheme: CheckboxThemeData(
-        side: WidgetStateBorderSide.resolveWith(
+        side: MaterialStateBorderSide.resolveWith(
             (states) => const BorderSide(color: _darkOnPrimaryColor)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
@@ -185,8 +185,8 @@ class MobiKulTheme {
         secondary: accentColor,
         secondaryContainer: _darkPrimaryVariantColor,
         onPrimary: Colors.white,
-        onSurface: _darkOnPrimaryColor,
-        surface: Colors.black,
+        onBackground: _darkOnPrimaryColor,
+        background: Colors.black,
       ),
       iconTheme: const IconThemeData(
         color: _darkOnPrimaryColor,
@@ -273,7 +273,7 @@ class MobiKulTheme {
       dividerTheme: const DividerThemeData(color: Colors.grey),
       bottomAppBarTheme: const BottomAppBarThemeData(color: _darkOnPrimaryColor));
 
-  Color getColor(double rating) {
+  getColor(double rating) {
     if (rating <= 1.0) {
       return const Color(0xFFE51A1A);
     } else if (rating <= 2) {

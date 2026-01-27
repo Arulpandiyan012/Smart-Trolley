@@ -10,10 +10,10 @@ class ProceedView extends StatelessWidget {
   final CartScreenBloc? cartScreenBloc;
 
   const ProceedView({
-    super.key,
+    Key? key,
     required this.cartDetailsModel,
     this.cartScreenBloc,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

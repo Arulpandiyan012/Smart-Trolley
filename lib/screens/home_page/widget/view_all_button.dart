@@ -30,20 +30,20 @@ Widget viewAllButton(BuildContext context,
             }
           },
           style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color?>(
+              backgroundColor: MaterialStateProperty.all<Color?>(
                   backGroundColor
               ),
-              foregroundColor: WidgetStateProperty.all<Color?>(
+              foregroundColor: MaterialStateProperty.all<Color?>(
                   foregroundColor
               ),
-              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                   const EdgeInsets.symmetric(
                       vertical: AppSizes.spacingLarge,
                       horizontal: AppSizes.spacingLarge*2)),
-              side: WidgetStateProperty.all(const BorderSide(
+              side: MaterialStateProperty.all(const BorderSide(
                 color: MobiKulTheme.accentColor,
               )),
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppSizes.spacingLarge),
               ))),

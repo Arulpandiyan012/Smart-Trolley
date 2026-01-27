@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/screens/account/utils/index.dart';
 class ProfileImageView extends StatefulWidget {
   final Function(String? base64string)? callback;
 
-  const ProfileImageView({super.key, this.callback});
+  const ProfileImageView({Key? key, this.callback}) : super(key: key);
 
   @override
   State<ProfileImageView> createState() => _ProfileImageViewState();

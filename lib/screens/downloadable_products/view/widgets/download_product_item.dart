@@ -20,11 +20,12 @@ class DownloadProductItem extends StatelessWidget {
   final NewProducts? product;
 
   const DownloadProductItem(
-      {super.key,
+      {Key? key,
       this.linkPurchases,
       this.downloadableProductsBloc,
       required this.available,
-      this.product});
+      this.product})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -13,7 +13,7 @@
 import 'package:bagisto_app_demo/screens/compare/utils/index.dart';
 
 class CompareScreen extends StatefulWidget {
-  const CompareScreen({super.key});
+  const CompareScreen({Key? key}) : super(key: key);
 
   @override
   State<CompareScreen> createState() => _CompareScreenState();
@@ -100,7 +100,7 @@ class _CompareScreenState extends State<CompareScreen>
   }
 
   ///method to set badge value
-  Padding _cartButtonValue(int count) {
+  _cartButtonValue(int count) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingNormal),
       child: BadgeIcon(
@@ -116,7 +116,7 @@ class _CompareScreenState extends State<CompareScreen>
   }
 
   ///bloc method
-  BlocConsumer<CompareScreenBloc, CompareScreenBaseState> _compareData(BuildContext context) {
+  _compareData(BuildContext context) {
     return BlocConsumer<CompareScreenBloc, CompareScreenBaseState>(
       listener: (BuildContext context, CompareScreenBaseState state) {
         if (state is RemoveFromCompareState) {
@@ -255,7 +255,7 @@ class _CompareScreenState extends State<CompareScreen>
   }
 
   ///method for ui of whole compare screen
-  Widget _compareScreen(CompareProductsData? compareScreenModel, bool isLoading) {
+  _compareScreen(CompareProductsData? compareScreenModel, bool isLoading) {
     if (compareScreenModel == null) {
       return Center(
         child: Column(

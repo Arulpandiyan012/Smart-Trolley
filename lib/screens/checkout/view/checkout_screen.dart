@@ -29,11 +29,12 @@ class CheckoutScreenFinal extends StatefulWidget {
   final bool? isDownloadable;
   final CartModel? cartDetailsModel;
   const CheckoutScreenFinal(
-      {super.key,
+      {Key? key,
       this.total,
       this.cartScreenBloc,
       this.cartDetailsModel,
-      this.isDownloadable = false});
+      this.isDownloadable = false})
+      : super(key: key);
 
   @override
   State<CheckoutScreenFinal> createState() => _CheckoutScreenState();
@@ -95,7 +96,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
       String customerId = "0";
       try { 
         var data = appStoragePref.getCustomerId(); 
-        customerId = data.toString(); 
+        if (data != null) customerId = data.toString(); 
       } catch (_) {}
 
       var dio = Dio();
@@ -248,11 +249,8 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
                     
                     setState(() {
                       _cachedDisplayAddress = addrStr;
-                      if (type == AddressType.both || isSame) {
-                        useForShipping = true;
-                      } else {
-                        useForShipping = false;
-                      }
+                      if (type == AddressType.both || isSame) useForShipping = true;
+                      else useForShipping = false;
 
                       billingAddressId = bId;
                       shippingAddressId = sId;

@@ -21,7 +21,7 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
     return str[0].toUpperCase() + str.substring(1);
   }
 
-  const OrdersListTile({super.key, this.data, this.reload});
+  const OrdersListTile({Key? key, this.data, this.reload}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

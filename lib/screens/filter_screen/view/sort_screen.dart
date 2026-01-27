@@ -14,11 +14,12 @@ class SortBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> filters;
 
   const SortBottomSheet(
-      {super.key,
+      {Key? key,
       this.categorySlug,
       this.page,
       this.subCategoryBloc,
-      required this.filters});
+      required this.filters})
+      : super(key: key);
 
   final String? categorySlug;
 
@@ -38,7 +39,7 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
     super.initState();
   }
 
-  Future<void> getSortValue() async {
+  getSortValue() async {
     value = appStoragePref.getSortName();
   }
 

@@ -20,7 +20,8 @@ class DownloadProductSample extends StatefulWidget {
   final GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
   final  List<DownloadableSamples>? samples;
 
-  const DownloadProductSample({super.key, this.samples, this.scaffoldMessengerKey});
+  const DownloadProductSample({Key? key, this.samples, this.scaffoldMessengerKey})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() {

@@ -23,10 +23,10 @@ class BlinkitProductBody extends StatefulWidget {
   final ProductScreenBLoc? productScreenBLoc;
 
   const BlinkitProductBody({
-    super.key,
+    Key? key,
     this.productData,
     this.productScreenBLoc,
-  });
+  }) : super(key: key);
 
   @override
   State<BlinkitProductBody> createState() => _BlinkitProductBodyState();

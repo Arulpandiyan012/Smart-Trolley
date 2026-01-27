@@ -22,12 +22,13 @@ class CollectionListType extends StatefulWidget {
   List? optionArray;
 
   CollectionListType(
-      {super.key,
+      {Key? key,
       this.variation,
       this.callback,
       this.options,
       this.seletedId,
-      this.optionArray});
+      this.optionArray})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _CollectionListTypeState();

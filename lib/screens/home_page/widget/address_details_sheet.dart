@@ -6,14 +6,14 @@ enum AddressTag { home, work, hotel }
 
 class AddressDetailsSheet extends StatefulWidget {
   const AddressDetailsSheet({
-    super.key,
+    Key? key,
     this.initialArea,
     this.initialAddressLine,
     this.onChangeLocation,
     this.initialPincode,
     this.initialCity,
     this.initialState,
-  });
+  }) : super(key: key);
 
   final String? initialArea;
   final String? initialAddressLine;
@@ -82,19 +82,16 @@ class _AddressDetailsSheetState extends State<AddressDetailsSheet> {
           _areaCtrl.text = result['address'] ?? "";
           
           // Auto-fill Pincode (Check common keys)
-          if (result['pincode'] != null) {
-            _pincodeCtrl.text = result['pincode'];
-          } else if (result['postalCode'] != null) _pincodeCtrl.text = result['postalCode'];
+          if (result['pincode'] != null) _pincodeCtrl.text = result['pincode'];
+          else if (result['postalCode'] != null) _pincodeCtrl.text = result['postalCode'];
           
           // Auto-fill City (Check common keys)
-          if (result['city'] != null) {
-            _cityCtrl.text = result['city'];
-          } else if (result['locality'] != null) _cityCtrl.text = result['locality'];
+          if (result['city'] != null) _cityCtrl.text = result['city'];
+          else if (result['locality'] != null) _cityCtrl.text = result['locality'];
 
           // Auto-fill State (Check common keys)
-          if (result['state'] != null) {
-            _stateCtrl.text = result['state'];
-          } else if (result['administrativeArea'] != null) _stateCtrl.text = result['administrativeArea'];
+          if (result['state'] != null) _stateCtrl.text = result['state'];
+          else if (result['administrativeArea'] != null) _stateCtrl.text = result['administrativeArea'];
         });
       }
     }

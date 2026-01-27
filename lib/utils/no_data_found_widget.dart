@@ -13,7 +13,7 @@
 import 'package:bagisto_app_demo/utils/index.dart';
 
 class NoDataFound extends StatelessWidget {
-  const NoDataFound({super.key});
+  const NoDataFound({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -23,12 +23,13 @@ class SubCategoryScreen extends StatefulWidget {
   final String? metaDescription;
 
   const SubCategoryScreen(
-      {super.key,
+      {Key? key,
       this.title,
       this.image,
       this.categorySlug,
       this.metaDescription, 
-      this.id});
+      this.id})
+      : super(key: key);
 
   @override
   State<SubCategoryScreen> createState() => _SubCategoryScreenState();
@@ -59,7 +60,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     super.initState();
   }
 
-  void _setItemScrollListener() {
+  _setItemScrollListener() {
     if (_scrollController!.hasClients &&
         _scrollController?.position.maxScrollExtent ==
             _scrollController?.offset) {
@@ -70,7 +71,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     }
   }
 
-  bool hasMoreData() {
+  hasMoreData() {
     var total = categoriesData?.paginatorInfo?.total ?? 0;
     return (total > (categoriesData?.data?.length ?? 0) && !isLoading);
   }
@@ -83,7 +84,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
         body: _setSubCategoryData(context));
   }
 
-  BlocListener<CartScreenBloc, CartScreenBaseState> _setSubCategoryData(BuildContext context) {
+  _setSubCategoryData(BuildContext context) {
     // 🟢 FIX 2: WRAP WITH CART LISTENER (Handles +/- Updates)
     return BlocListener<CartScreenBloc, CartScreenBaseState>(
       listener: (context, state) {
@@ -205,7 +206,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     return _subCategoriesDataUI(isLoading);
   }
 
-  Widget _subCategoriesDataUI(bool isLoading) {
+  _subCategoriesDataUI(bool isLoading) {
     if (categoriesData?.data == null && isLoading) {
       return const SubCategoriesLoader();
     }

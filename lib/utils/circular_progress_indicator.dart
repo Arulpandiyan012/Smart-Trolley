@@ -11,7 +11,7 @@
 import 'package:flutter/material.dart';
 
 class CircularProgressIndicatorClass {
-  static Center circularProgressIndicator(BuildContext context) {
+  static circularProgressIndicator(BuildContext context) {
     return Center(
       child: CircularProgressIndicator(
         color: Theme.of(context).colorScheme.onPrimary,

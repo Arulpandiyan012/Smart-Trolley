@@ -4,7 +4,7 @@ import '../../data_model/currency_language_model.dart';
 import '../../main.dart';
 
 class Language extends StatefulWidget {
-  const Language({super.key});
+  const Language({Key? key}) : super(key: key);
 
   @override
   State<Language> createState() => _LanguageState();

@@ -37,19 +37,7 @@ class ProfileDetailView extends StatefulWidget {
 
 class _ProfileDetailViewState extends State<ProfileDetailView> {
   
-  // 🟢 VALIDATION LOGIC: Check for numbers in name
-  String? _validateName(String? value, String fieldName) {
-    if (value == null || value.trim().isEmpty) {
-      return "$fieldName is required";
-    }
-    // This regex checks if the string contains only letters and spaces
-    final nameRegExp = RegExp(r"^[a-zA-Z\s]+$");
-    if (!nameRegExp.hasMatch(value)) {
-      return "Please enter a valid $fieldName (letters only)";
-    }
-    return null;
-  }
-
+  // 🟢 METHOD: Show Calendar Picker
   Future<void> _showCalendar(BuildContext context) async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -59,6 +47,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     );
 
     if (picked != null) {
+      // Use setState to ensure the text field updates immediately
       setState(() {
         widget.dobController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
       });
@@ -71,13 +60,11 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     bool readOnly = false,
     VoidCallback? onTap,
     String? Function(String?)? validator,
-    TextInputType keyboardType = TextInputType.text, // Added keyboard type
   }) {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
       onTap: onTap,
-      keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: label == "Date of Birth" ? const Icon(Icons.calendar_today, size: 20) : null,
@@ -85,7 +72,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       ),
       validator: validator,
-      autovalidateMode: AutovalidateMode.onUserInteraction, // Shows error as user types
     );
   }
 
@@ -98,31 +84,13 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🟢 Name fields now use _validateName
-            _buildTextField(
-              controller: widget.firstNameController, 
-              label: "First Name", 
-              validator: (v) => _validateName(v, "First Name")
-            ),
+            _buildTextField(controller: widget.firstNameController, label: "First Name", validator: (v) => v!.isEmpty ? "Required" : null),
             const SizedBox(height: AppSizes.spacingMedium),
-            _buildTextField(
-              controller: widget.lastNameController, 
-              label: "Last Name", 
-              validator: (v) => _validateName(v, "Last Name")
-            ),
+            _buildTextField(controller: widget.lastNameController, label: "Last Name", validator: (v) => v!.isEmpty ? "Required" : null),
             const SizedBox(height: AppSizes.spacingMedium),
-            _buildTextField(
-              controller: widget.emailController, 
-              label: "Email", 
-              keyboardType: TextInputType.emailAddress,
-              validator: (v) => v!.isEmpty ? "Required" : null
-            ),
+            _buildTextField(controller: widget.emailController, label: "Email", validator: (v) => v!.isEmpty ? "Required" : null),
             const SizedBox(height: AppSizes.spacingMedium),
-            _buildTextField(
-              controller: widget.phoneController, 
-              label: "Phone Number",
-              keyboardType: TextInputType.phone
-            ),
+            _buildTextField(controller: widget.phoneController, label: "Phone Number"),
             const SizedBox(height: AppSizes.spacingMedium),
 
             _buildTextField(
@@ -169,7 +137,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? color.withValues(alpha: (0.1)) : Colors.grey[50],
+                color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: isSelected ? color : Colors.grey[300]!, width: isSelected ? 2 : 1),
               ),

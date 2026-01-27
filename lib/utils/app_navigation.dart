@@ -28,6 +28,7 @@ import 'package:bagisto_app_demo/screens/forget_password/bloc/forget_password_re
 import 'package:bagisto_app_demo/screens/forget_password/view/forget_password.dart';
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_bloc.dart';
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_repository.dart';
+import 'package:bagisto_app_demo/screens/home_page/home_page.dart';
 import 'package:bagisto_app_demo/screens/order_detail/bloc/order_detail_bloc.dart';
 import 'package:bagisto_app_demo/screens/order_detail/bloc/order_detail_repository.dart';
 import 'package:bagisto_app_demo/screens/order_detail/view/order_detail.dart';

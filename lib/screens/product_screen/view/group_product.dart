@@ -14,7 +14,8 @@ class GroupProduct extends StatefulWidget {
  final List<GroupedProducts>? groupedProducts;
  final  Function(List)? callBack;
 
-  const GroupProduct({super.key, this.groupedProducts, this.callBack});
+  const GroupProduct({Key? key, this.groupedProducts, this.callBack})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -33,7 +34,7 @@ class _GroupProductState extends State<GroupProduct> {
     super.initState();
   }
 
-  void getGroupData() {
+  getGroupData() {
     List<Data> qtyArray = [];
     for (int i = 0; i < (widget.groupedProducts?.length ?? 0); i++) {
       qtyArray.add(Data(

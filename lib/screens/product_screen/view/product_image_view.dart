@@ -18,7 +18,8 @@ class ProductImageView extends StatefulWidget {
   final ProductFlats? product;
 
   const ProductImageView(
-      {super.key, this.imgList, this.callBack, this.productData, this.product});
+      {Key? key, this.imgList, this.callBack, this.productData, this.product})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() {

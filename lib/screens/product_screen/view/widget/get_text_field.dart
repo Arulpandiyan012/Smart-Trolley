@@ -10,7 +10,7 @@
  */
 
 import '../../../../data_model/product_model/product_screen_model.dart';
-import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart' hide Options;
+import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 
 
 class GetTextField extends StatefulWidget {
@@ -20,7 +20,7 @@ class GetTextField extends StatefulWidget {
   final Function(List, String)? callback;
   final List<Attributes>? customOptions;
   final NewProducts? productData;
-  const GetTextField({super.key, this.variation, required this.index, required this.optionArray,this.callback,this.productData,this.customOptions});
+  const GetTextField({Key? key, this.variation, required this.index, required this.optionArray,this.callback,this.productData,this.customOptions}) : super(key: key);
 
   @override
   State<GetTextField> createState() => _GetTextFieldState();
@@ -78,7 +78,7 @@ class _GetTextFieldState extends State<GetTextField> {
         ));
   }
 
-  void _updateCallBack() {
+  _updateCallBack() {
     if (widget.callback != null) {
       Map<String, dynamic> dict = {};
       debugPrint("optionArray updateCallback --> ${widget.optionArray}");
@@ -87,7 +87,7 @@ class _GetTextFieldState extends State<GetTextField> {
     }
   }
 
-  List<Options> _getOptions(int index) {
+  _getOptions(int index) {
     if ((widget.customOptions?.length ?? 0) > index) {
       if (index == 0) {
         var codeList = widget.customOptions?[0].options
@@ -107,7 +107,7 @@ class _GetTextFieldState extends State<GetTextField> {
     return [];
   }
 
-  String _getId() {
+  _getId() {
     String selectedProductAttributeId = "";
     var mappedKey = true;
     for (var optionArrayKey = 0;

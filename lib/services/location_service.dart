@@ -41,7 +41,7 @@ class LocationService {
       p.locality,
       p.administrativeArea,
       p.postalCode,
-    ].where((x) => x != null && x.trim().isNotEmpty).map((e) => e!.trim());
+    ].where((x) => x != null && x!.trim().isNotEmpty).map((e) => e!.trim());
 
     return parts.join(', ');
   }

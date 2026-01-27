@@ -18,7 +18,7 @@ import '../data_model/theme_customization.dart';
 class CarousalSlider extends StatefulWidget {
   final ThemeCustomization? sliders;
 
-  const CarousalSlider({super.key, this.sliders});
+  const CarousalSlider({Key? key, this.sliders}) : super(key: key);
 
   @override
   State<CarousalSlider> createState() => _CarousalSliderState();

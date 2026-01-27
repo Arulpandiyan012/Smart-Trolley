@@ -14,7 +14,7 @@ import 'package:bagisto_app_demo/screens/drawer/utils/index.dart';
 
 class DrawerCategoryItem extends StatefulWidget {
   final HomeCategories element;
-  const DrawerCategoryItem(this.element, {super.key});
+  const DrawerCategoryItem(this.element, {Key? key}) : super(key: key);
 
   @override
   State<DrawerCategoryItem> createState() => _DrawerCategoryItemState();

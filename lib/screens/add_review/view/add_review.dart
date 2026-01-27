@@ -15,7 +15,8 @@ class AddReview extends StatefulWidget {
   final String? productId;
   final String? productName;
 
-  const AddReview({super.key, this.imageUrl, this.productId, this.productName});
+  const AddReview({Key? key, this.imageUrl, this.productId, this.productName})
+      : super(key: key);
 
   @override
   State<AddReview> createState() => _AddReviewState();
@@ -54,7 +55,7 @@ class _AddReviewState extends State<AddReview> {
   }
 
   ///Bloc Container
-  BlocConsumer<AddReviewBloc, AddReviewBaseState> _addReviewBloc(BuildContext context) {
+  _addReviewBloc(BuildContext context) {
     return BlocConsumer<AddReviewBloc, AddReviewBaseState>(
       listener: (BuildContext context, AddReviewBaseState state) {
         if (state is AddReviewFetchState) {
@@ -108,7 +109,7 @@ class _AddReviewState extends State<AddReview> {
   }
 
   /// review form
-  Stack _reviewForm() {
+  _reviewForm() {
     return Stack(
       children: [
         SafeArea(
@@ -253,7 +254,7 @@ class _AddReviewState extends State<AddReview> {
   }
 
   ///method will call on press submit review button
-  void _onPressSubmitButton() {
+  _onPressSubmitButton() {
     if (_reviewFormKey.currentState!.validate()) {
       // if (images.isNotEmpty) {
         if ((rating) > 0) {

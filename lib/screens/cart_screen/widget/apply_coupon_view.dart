@@ -11,11 +11,11 @@ class ApplyCouponView extends StatefulWidget {
   final TextEditingController discountController;
 
   const ApplyCouponView({
-    super.key,
+    Key? key,
     this.cartDetailsModel,
     this.cartScreenBloc,
     required this.discountController
-  });
+  }) : super(key: key);
 
   @override
   State<ApplyCouponView> createState() => _ApplyCouponViewState();

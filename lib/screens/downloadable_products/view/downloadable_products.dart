@@ -15,7 +15,7 @@ import '../data_model/download_product_Image_model.dart';
 import 'widgets/downloadable_order_filter.dart';
 
 class DownLoadableScreen extends StatefulWidget {
-  const DownLoadableScreen({super.key});
+  const DownLoadableScreen({Key? key}) : super(key: key);
 
   @override
   State<DownLoadableScreen> createState() => _DownLoadableScreenState();
@@ -43,7 +43,7 @@ class _DownLoadableScreenState extends State<DownLoadableScreen> {
     super.initState();
   }
 
-  void _setItemScrollListener() {
+  _setItemScrollListener() {
     if (scrollController.hasClients &&
         scrollController.position.maxScrollExtent ==
             scrollController.offset) {
@@ -59,7 +59,7 @@ class _DownLoadableScreenState extends State<DownLoadableScreen> {
     }
   }
 
-  bool hasMoreData() {
+  hasMoreData() {
     var total = productsList?.paginatorInfo?.total ?? 0;
     return (total > (productsList?.downloadableLinkPurchases?.length ?? 0) && !isLoading);
   }
@@ -104,7 +104,7 @@ class _DownLoadableScreenState extends State<DownLoadableScreen> {
   }
 
   ///Downloadable Product bloc method
-  BlocConsumer<DownloadableProductsBloc, DownloadableProductsBaseState> _downloadableProductsList() {
+  _downloadableProductsList() {
     return BlocConsumer<DownloadableProductsBloc,
         DownloadableProductsBaseState>(
       listener: (BuildContext context, DownloadableProductsBaseState state) {

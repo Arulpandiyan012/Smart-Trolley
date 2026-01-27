@@ -17,10 +17,11 @@ class DownloadButton extends StatelessWidget {
   final DownloadableLinkPurchases? linkPurchases;
 
   const DownloadButton(
-      {super.key,
+      {Key? key,
       required this.available,
       this.downloadableProductsBloc,
-      this.linkPurchases});
+      this.linkPurchases})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

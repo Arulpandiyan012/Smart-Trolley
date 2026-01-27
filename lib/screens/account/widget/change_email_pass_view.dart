@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/screens/account/bloc/account_info_bloc.dart';
 import 'package:bagisto_app_demo/screens/account/bloc/account_info_event.dart';
 
 class ChangeEmailAndPasswordView extends StatefulWidget {
-  const ChangeEmailAndPasswordView({super.key});
+  const ChangeEmailAndPasswordView({Key? key}) : super(key: key);
 
   @override
   State<ChangeEmailAndPasswordView> createState() => _ChangeEmailAndPasswordState();

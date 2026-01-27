@@ -16,7 +16,8 @@ class CheckoutHeaderView extends StatefulWidget {
  final ValueChanged<int>? didSelect;
  final BuildContext? context;
   const CheckoutHeaderView(
-      {super.key, this.curStep = 1, this.didSelect, this.total, this.context});
+      {Key? key, this.curStep = 1, this.didSelect, this.total, this.context})
+      : super(key: key);
   @override
   State<StatefulWidget> createState() {
     return _CheckoutHeaderViewState();

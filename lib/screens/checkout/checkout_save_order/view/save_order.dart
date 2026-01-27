@@ -14,7 +14,7 @@ import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 import 'package:bagisto_app_demo/screens/checkout/data_model/save_order_model.dart';
 
 class CheckOutSaveOrder extends StatefulWidget {
-  const CheckOutSaveOrder({super.key});
+  const CheckOutSaveOrder({Key? key}) : super(key: key);
 
   @override
   State<CheckOutSaveOrder> createState() => _CheckOutSaveOrderState();

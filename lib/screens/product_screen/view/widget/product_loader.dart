@@ -12,7 +12,7 @@
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 
 class ProductDetailLoader extends StatelessWidget {
-  const ProductDetailLoader({super.key});
+  const ProductDetailLoader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

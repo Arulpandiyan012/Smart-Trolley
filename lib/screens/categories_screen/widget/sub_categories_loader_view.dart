@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/screens/categories_screen/utils/index.dart';
 
 
 class SubCategoriesLoader extends StatelessWidget {
-  const SubCategoriesLoader({super.key});
+  const SubCategoriesLoader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

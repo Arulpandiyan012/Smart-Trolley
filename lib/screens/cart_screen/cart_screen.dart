@@ -18,7 +18,7 @@ class CartScreen extends StatefulWidget {
   // 🟢 NEW: Flag to check if opened from Bottom Bar
   final bool isFromBottomNav; 
   
-  const CartScreen({super.key, this.isFromBottomNav = false});
+  const CartScreen({Key? key, this.isFromBottomNav = false}) : super(key: key);
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -44,7 +44,7 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
   }
 
-  void fetchCartData() {
+  fetchCartData() {
     cartScreenBloc?.add(FetchCartDataEvent());
   }
 
@@ -210,7 +210,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
 
-  BlocConsumer<CartScreenBloc, CartScreenBaseState> _cartScreenData(BuildContext context) {
+  _cartScreenData(BuildContext context) {
     return BlocConsumer<CartScreenBloc, CartScreenBaseState>(
       listener: (BuildContext context, CartScreenBaseState state) {
         if (state is FetchCartDataState) {
@@ -281,7 +281,7 @@ class _CartScreenState extends State<CartScreen> {
     return const SizedBox();
   }
 
-  Widget _cartScreenBody(CartModel cartDetailsModel) {
+  _cartScreenBody(CartModel cartDetailsModel) {
     if (cartDetailsModel.items?.isEmpty ?? true) {
       return EmptyDataView(
         assetPath: AssetConstants.emptyCart,

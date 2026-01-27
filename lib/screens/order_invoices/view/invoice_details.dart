@@ -12,7 +12,7 @@ import 'package:bagisto_app_demo/screens/order_invoices/utils/index.dart';
 
 class InvoiceScreen extends StatefulWidget {
   final OrderDetail? orderDetailsModel;
-  const InvoiceScreen({this.orderDetailsModel, super.key});
+  const InvoiceScreen({this.orderDetailsModel, Key? key}) : super(key: key);
 
   @override
   State<InvoiceScreen> createState() => _InvoiceScreenState();
@@ -45,7 +45,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
   }
 
-  BlocConsumer<OrderInvoiceBloc, OrderInvoiceBaseState> buildContainer(BuildContext context) {
+  buildContainer(BuildContext context) {
     return BlocConsumer<OrderInvoiceBloc, OrderInvoiceBaseState>(
       listener: (BuildContext context, OrderInvoiceBaseState state) {},
       builder: (BuildContext context, OrderInvoiceBaseState state) {
@@ -73,7 +73,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ...?getInvoices(context, invoicesList?.viewInvoices),
+                        ...getInvoices(context, invoicesList?.viewInvoices),
                         const Divider(),
                         const SizedBox(
                           height: 8,
@@ -122,7 +122,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
         : EmptyDataView();
   }
 
-  Row childData(String title, String val, BuildContext context) {
+  childData(String title, String val, BuildContext context) {
     return Row(
       children: [
         Text("${title.localized()} - ",
@@ -143,7 +143,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
   }
 
-  Padding getOrdersRow(String title, String val, BuildContext context) {
+  getOrdersRow(String title, String val, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -163,7 +163,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
   }
 
-  Iterable<Padding>? getInvoices(BuildContext context, List<ViewInvoices>? invoicesItems) {
+  getInvoices(BuildContext context, List<ViewInvoices>? invoicesItems) {
     return invoicesItems?.map((ViewInvoices? invoices) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 20),

@@ -22,9 +22,9 @@ class EmptyDataView extends StatelessWidget {
   final double width;
   final bool showDescription;
   final String description;
-  const EmptyDataView({super.key, this.assetPath = AssetConstants.emptyOrders,
+  const EmptyDataView({Key? key, this.assetPath = AssetConstants.emptyOrders,
   this.message = StringConstants.emptyPageGenericLabel, this.height=200, this.width=200, this.showDescription=false,
-  this.description = StringConstants.emptyCartPageMsg});
+  this.description = StringConstants.emptyCartPageMsg}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class EmptyDataView extends StatelessWidget {
         children: [
           ColorFiltered(
             colorFilter: ColorFilter.mode(
-              Theme.of(context).colorScheme.onSurface,
+              Theme.of(context).colorScheme.onBackground,
               BlendMode.srcIn,
             ),
             child: LottieBuilder.asset(assetPath,

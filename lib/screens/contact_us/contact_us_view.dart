@@ -43,7 +43,7 @@ class _ContactUsPageState extends State<ContactUsPage> with EmailValidator {
     );
   }
 
-  BlocConsumer<ContactUsScreenBloc, ContactUsBaseState> _contactUsBloc(BuildContext context) {
+  _contactUsBloc(BuildContext context) {
     return BlocConsumer<ContactUsScreenBloc, ContactUsBaseState>(
       listener: (BuildContext context, ContactUsBaseState state) {
         if (state is ContactUsState) {
@@ -70,7 +70,7 @@ class _ContactUsPageState extends State<ContactUsPage> with EmailValidator {
     );
   }
 
-  Scaffold _reviewForm() {
+  _reviewForm() {
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(

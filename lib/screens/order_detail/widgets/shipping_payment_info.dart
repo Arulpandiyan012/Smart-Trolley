@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 class ShippingAndPaymentInfo extends StatelessWidget {
   final OrderDetail? orderDetailModel;
 
-  const ShippingAndPaymentInfo({super.key, this.orderDetailModel});
+  const ShippingAndPaymentInfo({Key? key, this.orderDetailModel}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

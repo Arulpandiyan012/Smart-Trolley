@@ -14,13 +14,13 @@ class BlinkitProductCard extends StatelessWidget {
   final CategoryBloc? subCategoryBloc;
 
   const BlinkitProductCard({
-    super.key,
+    Key? key,
     required this.data,
     this.isLoggedIn = false,
     this.subCategoryBloc,
     this.onAddToWishlist,
     this.onAddToCart, 
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

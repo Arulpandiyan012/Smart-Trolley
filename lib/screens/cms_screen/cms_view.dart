@@ -14,7 +14,8 @@ class CmsContent extends StatefulWidget {
   final String? title;
   final int? index;
   final int? id;
-  const CmsContent({super.key, this.title, this.id, this.index});
+  const CmsContent({Key? key, this.title, this.id, this.index})
+      : super(key: key);
   @override
   State<CmsContent> createState() => _CmsContentState();
 }
@@ -39,7 +40,7 @@ class _CmsContentState extends State<CmsContent> {
   }
 
   ///cms bloc method
-  BlocConsumer<CmsBloc, CmsBaseState> _setCmsContent(BuildContext context) {
+  _setCmsContent(BuildContext context) {
     return BlocConsumer<CmsBloc, CmsBaseState>(
       listener: (BuildContext context, CmsBaseState state) {},
       builder: (BuildContext context, CmsBaseState state) {
@@ -73,7 +74,7 @@ class _CmsContentState extends State<CmsContent> {
     return const SizedBox();
   }
 
-  SafeArea _cmsContent(CmsPage? cmsData) {
+  _cmsContent(CmsPage? cmsData) {
     var title = cmsData?.translations
         ?.firstWhereOrNull((e) => e.locale == GlobalData.locale);
 

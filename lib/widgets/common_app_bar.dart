@@ -19,7 +19,7 @@ import '../utils/shared_preference_helper.dart';
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final int? index;
-  const CommonAppBar(this.title, {super.key, this.index});
+  const CommonAppBar(this.title, {Key? key, this.index}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

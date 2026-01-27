@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/screens/home_page/home_page.dart'; // your existing HomeScreen
 
 class MainNavScaffold extends StatefulWidget {
-  const MainNavScaffold({super.key});
+  const MainNavScaffold({Key? key}) : super(key: key);
 
   @override
   State<MainNavScaffold> createState() => _MainNavScaffoldState();
@@ -122,7 +122,7 @@ class AccountScreen extends StatelessWidget {
 
 class _SimpleAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  const _SimpleAppBar({required this.title});
+  const _SimpleAppBar({required this.title, super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);

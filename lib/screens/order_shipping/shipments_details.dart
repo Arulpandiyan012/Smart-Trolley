@@ -2,7 +2,8 @@ import 'package:bagisto_app_demo/screens/order_shipping/utils/index.dart';
 
 class OrderShipmentsScreen extends StatefulWidget {
   final OrderDetail? orderDetailsModel;
-  const OrderShipmentsScreen({this.orderDetailsModel, super.key});
+  const OrderShipmentsScreen({this.orderDetailsModel, Key? key})
+      : super(key: key);
 
   @override
   State<OrderShipmentsScreen> createState() => _OrderShipmentsScreenState();
@@ -35,7 +36,7 @@ class _OrderShipmentsScreenState extends State<OrderShipmentsScreen> {
     );
   }
 
-  BlocConsumer<OrderShipmentsBloc, OrderShipmentsBaseState> buildContainer(BuildContext context) {
+  buildContainer(BuildContext context) {
     return BlocConsumer<OrderShipmentsBloc, OrderShipmentsBaseState>(
       listener: (BuildContext context, OrderShipmentsBaseState state) {},
       builder: (BuildContext context, OrderShipmentsBaseState state) {
@@ -65,7 +66,7 @@ class _OrderShipmentsScreenState extends State<OrderShipmentsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ...?getShipments(context, shipmentsList?.viewShipments),
+                        ...getShipments(context, shipmentsList?.viewShipments),
                         const Divider(),
                         const SizedBox(
                           height: 8,
@@ -81,7 +82,7 @@ class _OrderShipmentsScreenState extends State<OrderShipmentsScreen> {
         : EmptyDataView();
   }
 
-  Row childData(String title, String val, BuildContext context) {
+  childData(String title, String val, BuildContext context) {
     return Row(
       children: [
         Text("${title.localized()} - ",
@@ -102,7 +103,7 @@ class _OrderShipmentsScreenState extends State<OrderShipmentsScreen> {
     );
   }
 
-  Iterable<Padding>? getShipments(BuildContext context, List<ViewShipments>? shipmentModel) {
+  getShipments(BuildContext context, List<ViewShipments>? shipmentModel) {
     return shipmentModel?.map((ViewShipments? shipments) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 20),

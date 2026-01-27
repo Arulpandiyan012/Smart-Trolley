@@ -16,7 +16,8 @@ class DownloadProductOptions extends StatefulWidget {
  final Function(List)? callBack;
  final GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
 
-  const DownloadProductOptions({super.key, this.options, this.callBack, this.scaffoldMessengerKey});
+  const DownloadProductOptions({Key? key, this.options, this.callBack, this.scaffoldMessengerKey})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() {

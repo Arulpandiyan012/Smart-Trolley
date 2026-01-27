@@ -30,7 +30,7 @@ import 'package:bagisto_app_demo/screens/search_screen/view/search_screen.dart';
 import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart' hide Status; 
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Voice search
   final TextEditingController _searchController = TextEditingController();
   late stt.SpeechToText _speech;
-  final bool _isListening = false;
+  bool _isListening = false;
 
   @override
   void initState() {
@@ -174,12 +174,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> fetchHomepageData() async {
+  fetchHomepageData() async {
     homePageBloc = context.read<HomePageBloc>();
     homePageBloc?.add(FetchHomeCustomData());
   }
 
-  Future<void> fetchOfflineProductData() async {
+  fetchOfflineProductData() async {
     var offlineCategories = appStoragePref.getDrawerCategories();
     GlobalData.categoriesDrawerData = offlineCategories;
     

@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:skeleton_loader/skeleton_loader.dart';
 
 class HomePageLoader extends StatelessWidget {
-  const HomePageLoader({super.key});
+  const HomePageLoader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

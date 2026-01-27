@@ -12,10 +12,10 @@ class CartListItem extends StatelessWidget {
   final CartScreenBloc? cartScreenBloc;
 
   const CartListItem({
-    super.key,
+    Key? key,
     required this.cartDetailsModel,
     this.cartScreenBloc,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +234,7 @@ class CartListItem extends StatelessWidget {
   }
 
   // --- Helper to remove item ---
-  Future<dynamic> _onPressRemove(CartModel cartDetailsModel, int itemIndex, BuildContext context) {
+  _onPressRemove(CartModel cartDetailsModel, int itemIndex, BuildContext context) {
     return showDialog(
       barrierDismissible: false,
       context: context,

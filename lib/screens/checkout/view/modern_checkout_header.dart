@@ -5,10 +5,10 @@ class ModernCheckoutHeader extends StatelessWidget {
   final String total;
 
   const ModernCheckoutHeader({
-    super.key,
+    Key? key,
     required this.currentStep,
     required this.total,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

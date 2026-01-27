@@ -17,7 +17,7 @@ class ReviewsList extends StatefulWidget {
   ReviewData? reviewData;
   ReviewsBloc? reviewsBloc;
 
-  ReviewsList({super.key, this.reviewData, this.reviewsBloc});
+  ReviewsList({Key? key, this.reviewData, this.reviewsBloc}) : super(key: key);
 
   @override
   State<ReviewsList> createState() => _ReviewsListState();

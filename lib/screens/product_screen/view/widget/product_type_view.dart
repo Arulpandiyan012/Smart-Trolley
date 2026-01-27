@@ -34,7 +34,7 @@ class ProductTypeView extends StatefulWidget {
   dynamic configurableProductId;
 
   ProductTypeView({
-    super.key,
+    Key? key,
     this.productData,
     this.price,
     required this.scaffoldMessengerKey,
@@ -43,7 +43,7 @@ class ProductTypeView extends StatefulWidget {
     this.configurableProductId,
     required this.isLoggedIn,
     this.callback,
-  });
+  }) : super(key: key);
 
   @override
   State<ProductTypeView> createState() => _ProductTypeViewState();

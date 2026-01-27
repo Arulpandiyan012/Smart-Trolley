@@ -11,7 +11,7 @@
 import 'package:bagisto_app_demo/screens/wishList/utils/index.dart';
 
 class WishListScreen extends StatefulWidget {
-  const WishListScreen({super.key});
+  const WishListScreen({Key? key}) : super(key: key);
 
   @override
   State<WishListScreen> createState() => _WishListScreenState();
@@ -97,7 +97,7 @@ class _WishListScreenState extends State<WishListScreen> {
     );
   }
 
-  Padding _cartButtonValue(int count) {
+  _cartButtonValue(int count) {
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: BadgeIcon(
@@ -112,7 +112,7 @@ class _WishListScreenState extends State<WishListScreen> {
   }
 
   ///BLOCK CONTAINER
-  BlocConsumer<WishListBloc, WishListBaseState> _setWishListData(BuildContext context) {
+  _setWishListData(BuildContext context) {
     return BlocConsumer<WishListBloc, WishListBaseState>(
       listener: (BuildContext context, WishListBaseState state) {
         if (state is FetchDeleteAddItemState) {
@@ -227,7 +227,7 @@ class _WishListScreenState extends State<WishListScreen> {
   }
 
   ///show wishlist data
-  Widget _showWishList(
+  _showWishList(
       WishListData? wishListData, BuildContext context, bool isLoading) {
     var wishListItems = wishListData?.data;
     return (wishListItems != null && wishListItems.isNotEmpty)

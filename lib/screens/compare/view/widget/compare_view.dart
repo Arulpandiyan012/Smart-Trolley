@@ -15,7 +15,8 @@ class CompareView extends StatelessWidget {
   final CompareScreenBloc? compareScreenBloc;
 
   const CompareView(
-      {super.key, required this.compareScreenModel, this.compareScreenBloc});
+      {Key? key, required this.compareScreenModel, this.compareScreenBloc})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

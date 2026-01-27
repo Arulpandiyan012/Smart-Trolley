@@ -102,7 +102,7 @@ class PushNotificationsManager {
     return await _firebaseMessaging.getToken();
   }
 
-  void subscribeToTopic() {
+  subscribeToTopic() {
     if (Platform.isIOS) {
       _firebaseMessaging.subscribeToTopic("Bagisto_mobikul");
     } else {

@@ -23,12 +23,13 @@ class ImageView extends StatelessWidget {
   final String? placeHolder;
 
   const ImageView(
-      {super.key,
+      {Key? key,
       this.url,
       this.width = 0.0,
       this.height = 0.0,
         this.placeHolder,
-      this.fit=BoxFit.fill });
+      this.fit=BoxFit.fill })
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

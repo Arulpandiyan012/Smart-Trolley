@@ -6,11 +6,11 @@ import 'package:geocoding/geocoding.dart';
 
 class LocationMapPage extends StatefulWidget {
   const LocationMapPage({
-    super.key,
+    Key? key,
     required this.initialLat,
     required this.initialLng,
     this.initialLabel,
-  });
+  }) : super(key: key);
 
   final double initialLat;
   final double initialLng;

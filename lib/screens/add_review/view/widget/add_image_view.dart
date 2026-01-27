@@ -24,9 +24,9 @@ class AddImageView extends StatefulWidget {
   final AddReviewBloc? addReviewBloc;
 
   const AddImageView({
-    super.key,
+    Key? key,
     this.addReviewBloc,
-  });
+  }) : super(key: key);
 
   @override
   State<AddImageView> createState() => _AddImageViewState();
@@ -68,14 +68,14 @@ class _AddImageViewState extends State<AddImageView> {
           height: AppSizes.buttonHeight,
           width: MediaQuery.of(context).size.width,
           child: OutlinedButton(
-            style: OutlinedButton.styleFrom(side:  BorderSide(color: Theme.of(context).colorScheme.onSurface)),
+            style: OutlinedButton.styleFrom(side:  BorderSide(color: Theme.of(context).colorScheme.onBackground)),
             child: Text(
               imageFile == null
                   ? StringConstants.addImage.localized().toUpperCase()
                   : StringConstants.replaceImage.localized().toUpperCase(),
               style:  TextStyle(
                 fontSize: AppSizes.spacingLarge,
-                  color: Theme.of(context).colorScheme.onSurface
+                  color: Theme.of(context).colorScheme.onBackground
               ),
             ),
             onPressed: () {
@@ -92,7 +92,7 @@ class _AddImageViewState extends State<AddImageView> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: Theme.of(context).colorScheme.background,
             title: Text(
               StringConstants.pleaseChoose.localized(),
             ),

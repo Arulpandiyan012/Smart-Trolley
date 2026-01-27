@@ -15,7 +15,8 @@ class ButtonView extends StatelessWidget {
   final CartScreenBloc? cartScreenBloc;
   final List<Map<dynamic, String>> selectedItems;
 
-  const ButtonView({super.key, this.cartScreenBloc, required this.selectedItems});
+  const ButtonView({Key? key, this.cartScreenBloc, required this.selectedItems})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +154,7 @@ class ButtonView extends StatelessWidget {
     );
   }
 
-  Future<dynamic> _onPressAllRemove(BuildContext context) {
+  _onPressAllRemove(BuildContext context) {
     return showDialog(
       barrierDismissible: false,
       context: context,

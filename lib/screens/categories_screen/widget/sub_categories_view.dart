@@ -30,7 +30,8 @@ class SubCategoriesView extends StatefulWidget {
       this.categoriesData,
       this.isLoggedIn,
       this.data, this.filters, this.isPreCatching,
-      {super.key});
+      {Key? key})
+      : super(key: key);
 
   @override
   State<SubCategoriesView> createState() => _SubCategoriesViewState();

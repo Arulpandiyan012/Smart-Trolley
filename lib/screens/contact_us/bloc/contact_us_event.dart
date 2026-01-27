@@ -12,6 +12,7 @@
 // ignore_for_file: file_names
 
 
+import 'package:bagisto_app_demo/screens/compare/utils/index.dart';
 
 abstract class ContactUsBaseEvent{}
 

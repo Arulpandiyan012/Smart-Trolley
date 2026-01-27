@@ -8,8 +8,11 @@
  * @link https://store.webkul.com/license.html
  */
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
 
 // 🟢 1. Import Global Utils to access 'appStoragePref'
+import 'package:bagisto_app_demo/utils/index.dart';
 
 import 'package:bagisto_app_demo/screens/sign_in/utils/index.dart';
 
@@ -33,14 +36,14 @@ class SignInBloc extends Bloc<SignInBaseEvent, SignInBaseState> {
           // 🟢 2. FORCE SAVE TOKEN & LOGIN STATUS
           // This is the critical fix for "Unauthenticated" errors
           if (signInModel.token != null) {
-            appStoragePref.setCustomerToken(signInModel.token!);
+            await appStoragePref.setCustomerToken(signInModel.token!);
             print("✅ Token Saved: ${signInModel.token}"); 
           } else {
             print("⚠️ Warning: Token is NULL in response!");
           }
 
-          appStoragePref.setCustomerLoggedIn(true);
-          appStoragePref.setCustomerEmail(event.email ?? "");
+          await appStoragePref.setCustomerLoggedIn(true);
+          await appStoragePref.setCustomerEmail(event.email ?? "");
 
           emit(FetchSignInState.success(
               signInModel: signInModel, 
@@ -72,9 +75,9 @@ class SignInBloc extends Bloc<SignInBaseEvent, SignInBaseState> {
         if (signUpResponseModel?.status == true) {
           // 🟢 3. Force Save for Social Login too
           if (signUpResponseModel?.token != null) {
-            appStoragePref.setCustomerToken(signUpResponseModel!.token!);
+            await appStoragePref.setCustomerToken(signUpResponseModel!.token!);
           }
-          appStoragePref.setCustomerLoggedIn(true);
+          await appStoragePref.setCustomerLoggedIn(true);
           
           emit(SocialLoginState.success(signInModel: signUpResponseModel));
         } else {

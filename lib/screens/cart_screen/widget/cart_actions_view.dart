@@ -3,7 +3,7 @@ import '../utils/cart_index.dart';
 class CartActionsView extends StatelessWidget {
   final CartScreenBloc? cartScreenBloc;
 
-  const CartActionsView({super.key, this.cartScreenBloc});
+  const CartActionsView({Key? key, this.cartScreenBloc}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,7 @@ class CartActionsView extends StatelessWidget {
   }
 
   // Confirmation Dialog for Empty Cart
-  Future<dynamic> _onPressAllRemove(BuildContext context) {
+  _onPressAllRemove(BuildContext context) {
     return showDialog(
       barrierDismissible: false,
       context: context,

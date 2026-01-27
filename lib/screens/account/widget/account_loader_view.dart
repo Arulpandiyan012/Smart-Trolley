@@ -11,7 +11,7 @@ import 'package:bagisto_app_demo/screens/account/utils/index.dart';
 
 
 class AccountLoaderView extends StatelessWidget {
-  const AccountLoaderView({super.key});
+  const AccountLoaderView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

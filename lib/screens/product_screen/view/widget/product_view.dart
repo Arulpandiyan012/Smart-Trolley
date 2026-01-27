@@ -35,7 +35,7 @@ class ProductView extends StatefulWidget {
       )? callback;
 
   ProductView(
-      {super.key,
+      {Key? key,
       required this.productData,
       required this.isLoading,
       this.productScreenBLoc,
@@ -44,7 +44,8 @@ class ProductView extends StatefulWidget {
       required this.scaffoldMessengerKey,
       this.configurableProductId,
       this.productId, this.callback,
-      this.scrollController});
+      this.scrollController})
+      : super(key: key);
 
   @override
   State<ProductView> createState() => _ProductViewState();
@@ -60,7 +61,7 @@ class _ProductViewState extends State<ProductView> {
   List selectParam = [];
 
   dynamic productFlats;
-  dynamic callback(){
+  callback(){
     return
       widget.callback!(
         configurableParams,

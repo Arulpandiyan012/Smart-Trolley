@@ -14,7 +14,7 @@ import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 class CheckoutAddressList extends StatefulWidget {
   final  AddressModel addressModel;
 
-  const CheckoutAddressList({super.key, required this.addressModel});
+  const CheckoutAddressList({Key? key, required this.addressModel}) : super(key: key);
 
   @override
   State<CheckoutAddressList> createState() => _CheckoutAddressListState();
@@ -45,7 +45,7 @@ class _CheckoutAddressListState extends State<CheckoutAddressList> {
     );
   }
 
-  BlocBuilder<CheckOutBloc, CheckOutBaseState> _getAddressList() {
+  _getAddressList() {
     return BlocBuilder<CheckOutBloc, CheckOutBaseState>(builder: (context, state){
       if(state is CheckOutLoaderState){
         loading = true;
@@ -122,7 +122,7 @@ class _CheckoutAddressListState extends State<CheckoutAddressList> {
     });
   }
 
-  Padding _getFormattedAddress(AddressModel addressModel, int index) {
+  _getFormattedAddress(AddressModel addressModel, int index) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium, 0, 0, 0),
       child: Text(

@@ -37,8 +37,8 @@ class CheckboxGroup extends StatefulWidget {
   final bool showText;
   final GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
 
-  const CheckboxGroup(
-      {super.key,
+  CheckboxGroup(
+      {Key? key,
       required this.labels,
       this.checked,
       this.onChange,
@@ -51,7 +51,8 @@ class CheckboxGroup extends StatefulWidget {
       this.margin = const EdgeInsets.all(0.0),
       this.data,
       this.showText = false,
-      this.scaffoldMessengerKey});
+      this.scaffoldMessengerKey})
+      : super(key: key);
 
   @override
   State<CheckboxGroup> createState() => _CheckboxGroupState();

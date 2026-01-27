@@ -14,7 +14,7 @@ import 'package:bagisto_app_demo/screens/address_list/utils/index.dart';
 import 'package:bagisto_app_demo/screens/categories_screen/utils/index.dart';
 
 class AddressScreen extends StatefulWidget {
-  const AddressScreen({super.key, this.isFromDashboard});
+  const AddressScreen({Key? key, this.isFromDashboard}) : super(key: key);
   final bool? isFromDashboard;
 
   @override
@@ -60,7 +60,7 @@ class _AddressScreenState extends State<AddressScreen> {
   }
 
   ///ADDRESS BLOC CONTAINER///
-  BlocConsumer<AddressBloc, AddressBaseState> _addressBloc(BuildContext context) {
+  _addressBloc(BuildContext context) {
     return BlocConsumer<AddressBloc, AddressBaseState>(
       listener: (BuildContext context, AddressBaseState state) {
         if (state is FetchAddressState) {
@@ -128,7 +128,7 @@ class _AddressScreenState extends State<AddressScreen> {
   }
 
   /// 🟢 MODERN ADDRESS LIST
-  StatelessWidget _addressList(AddressModel? addressModel) {
+  _addressList(AddressModel? addressModel) {
     if (addressModel == null) {
       appStoragePref.setAddressData(true);
       return const EmptyDataView(assetPath: AssetConstants.emptyAddress);
@@ -339,7 +339,7 @@ class _AddressScreenState extends State<AddressScreen> {
     );
   }
 
-  Future<void> fetchAddressData() async {
+  fetchAddressData() async {
     AddressBloc addressBloc = context.read<AddressBloc>();
     addressBloc.add(FetchAddressEvent());
   }

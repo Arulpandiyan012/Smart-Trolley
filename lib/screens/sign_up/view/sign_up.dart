@@ -16,7 +16,7 @@ import '../widgets/news_letter_checkbox.dart';
 class SignUpScreen extends StatefulWidget {
   final bool? addShopSlug;
 
-  const SignUpScreen({super.key, this.addShopSlug});
+  const SignUpScreen({Key? key, this.addShopSlug}) : super(key: key);
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -67,7 +67,7 @@ class _SignUpScreenState extends State<SignUpScreen> with EmailValidator {
   }
 
   ///SIGN_Up BLOC CONTAINER///
-  BlocConsumer<SignUpBloc, SignUpBaseState> _signInBloc(BuildContext context) {
+  _signInBloc(BuildContext context) {
     return BlocConsumer<SignUpBloc, SignUpBaseState>(
       listener: (BuildContext context, SignUpBaseState state) {
         if (state is FetchSignUpState) {
@@ -119,7 +119,7 @@ class _SignUpScreenState extends State<SignUpScreen> with EmailValidator {
   }
 
   ///Sign up ui form
-  SingleChildScrollView _form() {
+  _form() {
     return SingleChildScrollView(
       child: SafeArea(
         child: Container(
@@ -305,7 +305,7 @@ class _SignUpScreenState extends State<SignUpScreen> with EmailValidator {
   }
 
   ///on press sign up button
-  void _onPressCreateAccount() {
+  _onPressCreateAccount() {
     if (_signUpFormKey.currentState!.validate()) {
       showDialog(
           context: context,

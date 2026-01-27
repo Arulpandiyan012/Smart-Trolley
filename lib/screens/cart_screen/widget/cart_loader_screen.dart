@@ -11,7 +11,7 @@
 import '../utils/cart_index.dart';
 
 class CartLoaderView extends StatelessWidget {
-  const CartLoaderView({super.key});
+  const CartLoaderView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

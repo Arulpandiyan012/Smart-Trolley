@@ -16,8 +16,8 @@ class SavedAddressList extends StatelessWidget {
   final VoidCallback? reload;
   final bool isFromDashboard;
   final AddressBloc? addressBloc;
-  const SavedAddressList({super.key, this.addressModel, this.reload, this.isFromDashboard = false,
-    this.addressBloc});
+  const SavedAddressList({Key? key, this.addressModel, this.reload, this.isFromDashboard = false,
+    this.addressBloc}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +193,7 @@ class SavedAddressList extends StatelessWidget {
     );
   }
 
-  Future<dynamic> _onPressRemove(BuildContext context, AddressBloc addressBloc) {
+  _onPressRemove(BuildContext context, AddressBloc addressBloc) {
     return showDialog(
       barrierDismissible: false,
       context: context,
@@ -228,7 +228,7 @@ class SavedAddressList extends StatelessWidget {
   }
 
   ///this method is used to format address
-  Padding _getFormattedAddress(AddressData? addressModel) {
+  _getFormattedAddress(AddressData? addressModel) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSizes.spacingMedium, 0, 0, 0),
       child: Text(

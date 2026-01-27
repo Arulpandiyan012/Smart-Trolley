@@ -10,7 +10,8 @@ class GuestCheckoutView extends StatelessWidget {
   final CartScreenBloc? cartScreenBloc;
 
   const GuestCheckoutView(
-      {super.key, required this.cartDetailsModel, required this.cartScreenBloc});
+      {Key? key, required this.cartDetailsModel, required this.cartScreenBloc})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

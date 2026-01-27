@@ -21,8 +21,8 @@ class ApplyCouponCode extends StatefulWidget {
   final CartScreenBloc? cartScreenBloc;
   final CartModel? cartDetailsModel;
   final Function? callback;
-  const ApplyCouponCode({super.key, required this.savePaymentModel, this.cartScreenBloc, this.cartDetailsModel,
-  this.callback});
+  const ApplyCouponCode({Key? key, required this.savePaymentModel, this.cartScreenBloc, this.cartDetailsModel,
+  this.callback}) : super(key: key);
 
   @override
   State<ApplyCouponCode> createState() => _ApplyCouponCodeState();
@@ -249,7 +249,7 @@ class _ApplyCouponCodeState extends State<ApplyCouponCode> {
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                         Text(
-                          widget.savePaymentModel.cart?.formattedPrice?.taxTotal?.toString() ?? "",
+                          "${widget.savePaymentModel.cart?.formattedPrice?.taxTotal?.toString() ?? ""}",
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -268,11 +268,11 @@ class _ApplyCouponCodeState extends State<ApplyCouponCode> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        taxRate.taxName.trim(),
+                                        "${taxRate.taxName.trim()}",
                                         style: const TextStyle(fontWeight: FontWeight.normal),
                                       ),
                                       Text(
-                                        taxRate.totalAmount,
+                                        "${taxRate.totalAmount}",
                                         style: const TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                     ],
@@ -280,7 +280,7 @@ class _ApplyCouponCodeState extends State<ApplyCouponCode> {
 
                                 ],
                               );
-                            }),
+                            }).toList(),
                           ],
                         ),
                       ),

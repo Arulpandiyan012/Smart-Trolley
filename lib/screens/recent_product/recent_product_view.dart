@@ -15,7 +15,7 @@ import 'package:hive/hive.dart';
 class RecentView extends StatefulWidget {
   final bool? isLogin;
 
-  const RecentView({super.key, this.isLogin});
+  const RecentView({Key? key, this.isLogin}) : super(key: key);
 
   @override
   State<RecentView> createState() => _RecentViewState();

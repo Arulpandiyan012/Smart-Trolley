@@ -20,10 +20,10 @@ class GetAddressForm extends StatelessWidget  with PhoneNumberValidator, EmailVa
   final TextEditingController vatIdController;
   final TextEditingController emailController;
 
-   GetAddressForm({super.key,required this.firstNameController, required this.lastNameController,
+   GetAddressForm({Key? key,required this.firstNameController, required this.lastNameController,
      required this.companyController, required this.street1Controller, required this.zipCodeController,
      required this.phoneController, required this.vatIdController, this.isCheckout,
-     required this.emailController});
+     required this.emailController}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
