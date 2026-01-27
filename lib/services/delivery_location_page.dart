@@ -1,11 +1,9 @@
-import 'dart:async'; // Required for Timer (debounce)
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Keep this as is
-import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as places; // Add "as places"
+import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as sdk;
 
 class DeliveryLocationPage extends StatefulWidget {
   const DeliveryLocationPage({Key? key}) : super(key: key);
@@ -34,16 +32,15 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
   final List<String> _dropdownItems = const ['Open map'];
 
   // --- Google Places SDK ---
-  late final FlutterGooglePlacesSdk _places;
-  List<AutocompletePrediction> _predictions = []; // Stores search results
-  Timer? _debounce; // Delays search to prevent API spam
+  late final sdk.FlutterGooglePlacesSdk _places;
+  List<sdk.AutocompletePrediction> _predictions = [];
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-
-    // 1. Initialize SDK
-    _places = FlutterGooglePlacesSdk("YOUR_GOOGLE_PLACES_API_KEY");
+    // 1. Initialize SDK (Replace with your actual API Key)
+    _places = sdk.FlutterGooglePlacesSdk("YOUR_GOOGLE_PLACES_API_KEY");
 
     // 2. Initialize Location
     _initCurrentLocation();
@@ -65,18 +62,13 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
   Future<void> _initCurrentLocation() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        throw 'Location services are disabled';
-      }
+      if (!serviceEnabled) throw 'Location services are disabled';
 
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied || 
-          permission == LocationPermission.deniedForever) {
-        throw 'Location permission denied';
-      }
+      if (permission == LocationPermission.deniedForever) throw 'Location permission denied';
 
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -104,7 +96,7 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
       if (marks.isNotEmpty) {
         final p = marks.first;
         final parts = [
-          p.street, // Often useful for delivery
+          p.street,
           p.subLocality,
           p.locality,
           p.postalCode,
@@ -112,9 +104,7 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
         
         setState(() => _address = parts.join(', '));
       }
-    } catch (_) {
-      // ignore errors
-    }
+    } catch (_) {}
   }
 
   // --- Places Search Logic ---
@@ -136,18 +126,18 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
     });
   }
 
-  Future<void> _onPredictionSelected(AutocompletePrediction prediction) async {
-    // 1. Clear predictions and set text
+  Future<void> _onPredictionSelected(sdk.AutocompletePrediction prediction) async {
+    FocusScope.of(context).unfocus(); // Close keyboard
+    
     setState(() {
       _predictions = [];
       _searchCtrl.text = prediction.primaryText;
-      _address = prediction.fullText; // Use the clean address from Google
+      _address = prediction.fullText;
     });
 
-    // 2. Fetch Lat/Lng for this place
     final details = await _places.fetchPlace(
       prediction.placeId, 
-      fields: [PlaceField.Location],
+      fields: [sdk.PlaceField.Location],
     );
 
     final latLng = details.place?.latLng;
@@ -155,11 +145,10 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
     if (latLng != null) {
       final newPos = LatLng(latLng.lat, latLng.lng);
       
-      // 3. Move map and update pin
       setState(() {
         _pinLatLng = newPos;
-        _mapVisible = true; // Force show map
-        _dropdownValue = 'Open map'; // Sync dropdown
+        _mapVisible = true;
+        _dropdownValue = 'Open map';
       });
       
       _mapController?.animateCamera(CameraUpdate.newLatLngZoom(newPos, 16));
@@ -188,9 +177,6 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-    if (_pinLatLng != null) {
-      _mapController!.animateCamera(CameraUpdate.newLatLngZoom(_pinLatLng!, 16));
-    }
   }
 
   // --- UI Construction ---
@@ -198,7 +184,7 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // Prevents map squishing when keyboard opens
+      resizeToAvoidBottomInset: false, 
       appBar: AppBar(title: const Text('Select location')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -242,7 +228,7 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
                               ),
                             ),
 
-                            // PREDICTIONS LIST (Only shows when typing)
+                            // PREDICTIONS LIST
                             if (_predictions.isNotEmpty)
                               Container(
                                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -296,7 +282,7 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
                             // MAP SECTION
                             if (_mapVisible) 
                               SizedBox(
-                                height: 400, // Fixed height for map
+                                height: 400, 
                                 child: _buildMapSection(),
                               ),
                           ],
@@ -365,7 +351,11 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
             top: 10, left: 10, right: 10,
             child: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black26)]),
+              decoration: BoxDecoration(
+                color: Colors.white, 
+                borderRadius: BorderRadius.circular(8), 
+                boxShadow: const [BoxShadow(blurRadius: 5, color: Colors.black26)]
+              ),
               child: Text(_address!, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),

@@ -13,8 +13,9 @@ part 'address_model.g.dart';
 @JsonSerializable()
 class AddressModel extends BaseModel {
   @JsonKey(name: "data")
-  List<AddressData>? addressData = [];
+  List<AddressData>? addressData;
   CountriesData? countryData;
+
   AddressModel({this.addressData});
 
   factory AddressModel.fromJson(Map<String, dynamic> json) =>
@@ -27,23 +28,40 @@ class AddressModel extends BaseModel {
 @JsonSerializable()
 class AddressData {
   String? id;
+  @JsonKey(name: "first_name") // Automatically maps snake_case to camelCase
   String? firstName;
+  @JsonKey(name: "last_name")
   String? lastName;
   String? email;
+  @JsonKey(name: "company_name")
   String? companyName;
+  @JsonKey(name: "vat_id")
   String? vatId;
+  
+  // Use a custom converter for the Address field if it's sometimes a List
+  @JsonKey(name: "address1", fromJson: _addressFromJson) 
   String? address1; 
-  String? country;
+  
+  @JsonKey(name: "country_name")
   String? countryName;
+  String? country;
+  @JsonKey(name: "state_name")
   String? stateName;
   String? state;
   String? city;
   String? postcode;
   String? phone;
+  
+  @JsonKey(name: "is_default")
   bool? isDefault;
+  
+  @JsonKey(name: "created_at")
   String? createdAt;
+  @JsonKey(name: "updated_at")
   String? updatedAt;
+  @JsonKey(name: "address_type")
   String? addressType;
+  
   int? billingAddressId;
   int? shippingAddressId;
 
@@ -70,44 +88,15 @@ class AddressData {
     this.email
   });
 
-  // 🟢 MANUAL PARSER: This fixes the "List vs String" crash
-  factory AddressData.fromJson(Map<String, dynamic> json) {
-    
-    // Helper to extract String from either String or List
-    String? getString(String key) {
-      var val = json[key];
-      if (val == null) return null;
-      if (val is List) return val.join(", "); // <--- THE FIX
-      return val.toString();
-    }
-
-    return AddressData(
-      id: getString('id'),
-      firstName: getString('first_name') ?? getString('firstName'),
-      lastName: getString('last_name') ?? getString('lastName'),
-      email: getString('email'),
-      companyName: getString('company_name'),
-      vatId: getString('vat_id'),
-      
-      // Check both 'address1' (Server) and 'address' (App)
-      address1: getString('address1') ?? getString('address'),
-      
-      country: getString('country'),
-      countryName: getString('country_name'),
-      stateName: getString('state_name'),
-      state: getString('state'),
-      city: getString('city'),
-      postcode: getString('postcode'),
-      phone: getString('phone'),
-      
-      // Handle different boolean keys
-      isDefault: json['default_address'] == true || json['is_default'] == true,
-      
-      addressType: getString('address_type'),
-      updatedAt: getString('updated_at'),
-      createdAt: getString('created_at'),
-    );
-  }
+  // 1. Connect back to generated code to remove the "unreferenced" warning
+  factory AddressData.fromJson(Map<String, dynamic> json) => _$AddressDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$AddressDataToJson(this);
+
+  // 2. 🟢 THE SAFETY FIX: Handles the "List vs String" logic during generation
+  static String? _addressFromJson(dynamic value) {
+    if (value == null) return null;
+    if (value is List) return value.join(", ");
+    return value.toString();
+  }
 }
