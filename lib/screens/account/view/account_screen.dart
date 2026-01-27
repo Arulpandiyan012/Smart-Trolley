@@ -151,7 +151,7 @@ class _AccountScreenState extends State<AccountScreen>
           lastNameController.text = _accountInfoDetails!.lastName ?? "";
           emailController.text = _accountInfoDetails!.email ?? "";
           phoneController.text = _accountInfoDetails!.phone ?? "";
-          dobController.text = _accountInfoDetails!.dateOfBirth ?? "";
+          dobController.text = _formatDateToUI(_accountInfoDetails!.dateOfBirth ?? "");
           subscribeNewsletter = _accountInfoDetails!.subscribedToNewsLetter ?? false;
           
           // 🟢 FIX: Removed gender check because the field is missing in Model
@@ -181,6 +181,11 @@ class _AccountScreenState extends State<AccountScreen>
             subscribeNewsletter = value;
           });
         },
+        onGenderChanged: (value) {
+          setState(() {
+            currentGenderValue = value;
+          });
+        },
       ),
     );
   }
@@ -194,13 +199,39 @@ class _AccountScreenState extends State<AccountScreen>
           lastName: lastNameController.text,
           gender: genderValues?[currentGenderValue] ?? "Male",
           email: emailController.text,
-          dob: dobController.text,
+          // Convert UI date (dd-mm-yyyy) back to Backend format (YYYY-MM-DD)
+          dob: _formatDateToBackend(dobController.text),
           phone: phoneController.text,
           oldPassword: "", 
           password: "",
           confirmPassword: "",
           avatar: base64string ?? "",
           subscribedToNewsLetter: subscribeNewsletter));
+    }
+  }
+
+  // Helper: YYYY-MM-DD -> dd-mm-yyyy
+  String _formatDateToUI(String date) {
+    if (date.isEmpty) return "";
+    try {
+      DateTime dt = DateTime.parse(date);
+      return "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+    } catch (e) {
+      return date; // Return original if parse fails
+    }
+  }
+
+  // Helper: dd-mm-yyyy -> YYYY-MM-DD
+  String _formatDateToBackend(String date) {
+    if (date.isEmpty) return "";
+    try {
+      List<String> parts = date.split('-');
+      if (parts.length == 3) {
+        return "${parts[2]}-${parts[1]}-${parts[0]}";
+      }
+      return date;
+    } catch (e) {
+      return date;
     }
   }
 
