@@ -220,26 +220,16 @@ class CartListItem extends StatelessWidget {
     cartScreenBloc?.add(UpdateCartEvent(updateItem));
   }
 
-  // Helper to format price (2 decimals)
+  // Helper to format price (1 decimal)
   String _formatPrice(dynamic price) {
     if (price == null) return "";
     String priceStr = price.toString();
-    
-    // If no decimal point, add .00
-    if (!priceStr.contains('.')) {
-      return "$priceStr.00";
-    }
-    
-    // Split to handle decimals
-    var parts = priceStr.split('.');
-    if (parts.length == 2) {
-      if (parts[1].length == 1) {
-        return "${priceStr}0"; // "150.0" -> "150.00"
-      } else if (parts[1].length >= 2) {
-        return "${parts[0]}.${parts[1].substring(0, 2)}"; // "150.005" -> "150.00"
+    if (priceStr.contains('.')) {
+      int dotIndex = priceStr.indexOf('.');
+      if (dotIndex + 2 <= priceStr.length) {
+        return priceStr.substring(0, dotIndex + 2); 
       }
     }
-    
     return priceStr;
   }
 
