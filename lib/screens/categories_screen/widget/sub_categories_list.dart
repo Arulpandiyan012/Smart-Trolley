@@ -21,8 +21,7 @@ class SubCategoriesList extends StatelessWidget {
   CategoryBloc? subCategoryBloc;
 
   SubCategoriesList(
-      {Key? key, this.isLogin, required this.data, this.subCategoryBloc})
-      : super(key: key);
+      {super.key, this.isLogin, required this.data, this.subCategoryBloc});
 
   @override
   Widget build(BuildContext context) {

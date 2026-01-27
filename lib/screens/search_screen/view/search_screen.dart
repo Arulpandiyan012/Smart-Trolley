@@ -22,7 +22,7 @@ import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments;
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  const SearchScreen({super.key});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -347,7 +347,7 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   /// App Bar View
-  _setAppBarView(BuildContext context) {
+  PreferredSize _setAppBarView(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60.0),
       child: AppBar(
@@ -425,7 +425,7 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  _getSearchData(NewProductsModel? model) {
+  Widget _getSearchData(NewProductsModel? model) {
     var productList = model?.data;
     return (productList != null && productList.isNotEmpty)
         ? ProductList(model: model!)

@@ -16,8 +16,7 @@ import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 class OrderSummary extends StatelessWidget {
   final SavePayment savePaymentModel;
 
-  const OrderSummary({Key? key, required this.savePaymentModel})
-      : super(key: key);
+  const OrderSummary({super.key, required this.savePaymentModel});
 
   @override
   Widget build(BuildContext context) {

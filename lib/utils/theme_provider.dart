@@ -31,7 +31,7 @@ class ThemeProvider extends ChangeNotifier {
 
   /// Getting the theme from shared preferences and setting the theme to the theme provider.
   /// If the theme is not set in the shared preferences, Function to toggle theme between light and dark
-  getPreferences() async {
+  Future<void> getPreferences() async {
     _isDark = appStoragePref.getTheme();
     notifyListeners();
     if (_isDark == "") {

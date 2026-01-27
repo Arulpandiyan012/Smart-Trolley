@@ -8,13 +8,13 @@ class SmartAddButton extends StatelessWidget {
   final VoidCallback onDecrease;
 
   const SmartAddButton({
-    Key? key,
+    super.key,
     required this.qty,
     this.isLoading = false,
     required this.onAdd,
     required this.onIncrease,
     required this.onDecrease,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

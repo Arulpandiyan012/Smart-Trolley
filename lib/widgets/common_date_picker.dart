@@ -22,14 +22,13 @@ class CommonDatePicker extends StatefulWidget {
   final int? save;
 
   const CommonDatePicker(
-      {Key? key,
+      {super.key,
         this.controller,
         this.save,
         this.hintText,
         this.labelText,
         this.helperText,
-        this.isRequired = false})
-      : super(key: key);
+        this.isRequired = false});
 
   @override
   State<CommonDatePicker> createState() => _CommonDatePickerState();

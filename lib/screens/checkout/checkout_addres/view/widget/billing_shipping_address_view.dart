@@ -49,14 +49,13 @@ class BillingAndShippingAddressView extends StatefulWidget {
       bool isShippingSame)? callBack;
       
   BillingAndShippingAddressView(
-      {Key? key,
+      {super.key,
       this.address,
       this.addressModel,
       this.title,
       this.callBack,
       this.shippingAddress,
-      this.billingAddress, required this.addressSetCallback, this.isShippingSame = false})
-      : super(key: key);
+      this.billingAddress, required this.addressSetCallback, this.isShippingSame = false});
 
   @override
   State<BillingAndShippingAddressView> createState() =>
@@ -254,7 +253,7 @@ class _BillingAndShippingAddressViewState
       }
   }
 
-  _getFormattedAddress(AddressData? addressModel) {
+  Padding _getFormattedAddress(AddressData? addressModel) {
     String addr1 = addressModel?.address1 ?? "";
     addr1 = addr1.replaceAll("[", "").replaceAll("]", "").replaceAll("\"", "");
     

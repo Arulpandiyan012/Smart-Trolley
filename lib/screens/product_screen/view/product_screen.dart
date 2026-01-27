@@ -21,8 +21,7 @@ class ProductScreen extends StatefulWidget {
   final String? title;
   final String? urlKey;
 
-  const ProductScreen({Key? key, this.title, this.productId, this.urlKey})
-      : super(key: key);
+  const ProductScreen({super.key, this.title, this.productId, this.urlKey});
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -157,7 +156,7 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   /// Product bloc method
-  _setProductData(BuildContext context) {
+  BlocConsumer<ProductScreenBLoc, ProductBaseState> _setProductData(BuildContext context) {
     return BlocConsumer<ProductScreenBLoc, ProductBaseState>(
       listener: (BuildContext context, ProductBaseState state) {
         if (state is AddToCartProductState) {

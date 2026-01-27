@@ -9,7 +9,7 @@
  */
 // ignore_for_file: file_names, must_be_immutable, must_call_super
 
-import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
+import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart' hide Options;
 import '../../../data_model/product_model/product_screen_model.dart';
 
 class CustomOptionsView extends StatefulWidget {
@@ -19,12 +19,11 @@ class CustomOptionsView extends StatefulWidget {
   final NewProducts? productData;
 
   const CustomOptionsView(
-      {Key? key,
+      {super.key,
       this.productData,
       this.customOptions,
       this.variants,
-      this.callback})
-      : super(key: key);
+      this.callback});
 
   @override
   State<StatefulWidget> createState() {
@@ -260,7 +259,7 @@ class _CustomOptionsViewState extends State<CustomOptionsView> {
         ));
   }
 
-  _getOptions(int index) {
+  List<Options> _getOptions(int index) {
     if ((widget.customOptions?.length ?? 0) > index) {
       if (index == 0) {
         var codeList = widget.customOptions?[0].options
@@ -279,7 +278,7 @@ class _CustomOptionsViewState extends State<CustomOptionsView> {
     }
     return [];
   }
-  _getId() {
+  String _getId() {
     String selectedProductAttributeId = "";
     var mappedKey = true;
     for (var optionArrayKey = 0;
@@ -317,7 +316,7 @@ class _CustomOptionsViewState extends State<CustomOptionsView> {
     }
     return selectedProductAttributeId;
   }
-  _updateCallBack() {
+  void _updateCallBack() {
     if (widget.callback != null) {
       Map<String, dynamic> dict = {};
       dict["superAttribute"] = optionArray;

@@ -25,7 +25,7 @@ class DrawerListView extends StatefulWidget {
   final Function? loginCallback;
 
   DrawerListView({
-    Key? key,
+    super.key,
     required this.isLoggedIn,
     required this.customerUserName,
     required this.image,
@@ -34,7 +34,7 @@ class DrawerListView extends StatefulWidget {
     required this.customerCurrency,
     this.customerDetails,
     this.loginCallback
-  }) : super(key: key);
+  });
 
   @override
   State<DrawerListView> createState() => _DrawerListViewState();
@@ -301,7 +301,7 @@ class _DrawerListViewState extends State<DrawerListView> {
         ));
   }
 
-  _fetchSharedPreferenceData() async {
+  Future<void> _fetchSharedPreferenceData() async {
     bool isLogged = appStoragePref.getCustomerLoggedIn();
       if(widget.loginCallback != null){
         widget.loginCallback!(isLogged);

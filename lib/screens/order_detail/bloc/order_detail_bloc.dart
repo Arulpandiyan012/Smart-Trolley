@@ -4,10 +4,6 @@
  * @Category Mobikul
  */
 
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart';
-import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import '../../cart_screen/cart_model/add_to_cart_model.dart';
 

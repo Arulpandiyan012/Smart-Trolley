@@ -28,8 +28,7 @@ class RatingBar extends StatefulWidget {
         this.isCenter = true,
         this.onRatingChanged,
         this.color,
-        Key? key, this.size})
-      : super(key: key);
+        super.key, this.size});
 
   @override
   State<RatingBar> createState() => _RatingBarState();

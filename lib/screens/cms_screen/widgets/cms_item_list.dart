@@ -25,7 +25,7 @@ class CmsItemsList extends StatefulWidget {
   final String? title;
   final CmsData? cmsData;
 
-  const CmsItemsList({Key? key, this.title, this.cmsData}) : super(key: key);
+  const CmsItemsList({super.key, this.title, this.cmsData});
 
   @override
   State<CmsItemsList> createState() => _CmsItemsListState();
@@ -45,7 +45,7 @@ class _CmsItemsListState extends State<CmsItemsList> {
     return _cmsDataList(widget.cmsData!);
   }
 
-  _cmsDataList(
+  SingleChildScrollView _cmsDataList(
     CmsData cmsData,
   ) {
     return SingleChildScrollView(

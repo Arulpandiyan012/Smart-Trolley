@@ -15,8 +15,7 @@ class BundleOptionsView extends StatefulWidget {
   final Function(List)? callBack;
   final List<BundleOptions>? options;
 
-  const BundleOptionsView({Key? key, this.options, this.callBack})
-      : super(key: key);
+  const BundleOptionsView({super.key, this.options, this.callBack});
 
   @override
   State<StatefulWidget> createState() {
@@ -341,13 +340,13 @@ class _BundleOptionsViewState extends State<BundleOptionsView> {
     BundleOptionProducts? defaultItem;
     String? defaultProductName = "";
     String? dropDownName;
-    var product;
+    BundleOptionProducts? product;
     if(!dropDownChange){
       dropDownName = "";
     }
 
     String selectedProductAmount = '';
-    var bundleOption;
+    BundleOptionProducts? bundleOption;
 
     option?.bundleOptionProducts
             ?.map((e) => {
@@ -427,12 +426,12 @@ class _BundleOptionsViewState extends State<BundleOptionsView> {
 
                 double selectedAmount =
                     ((selectedProductQty.containsKey(selectedProductName)
-                            ? selectedProductQty[selectedProductName]
-                            : product?.qty ?? 1) *
+                            ? (selectedProductQty[selectedProductName] ?? 1)
+                            : (product?.qty ?? 1)) *
                         double.parse(
                             product?.product?.priceHtml?.finalPrice ?? "0"));
 
-                addDataToMap(option?.id?.toString() ?? "", product.productId ?? "0",
+                addDataToMap(option?.id?.toString() ?? "", product?.productId ?? "0",
                     selectedAmount, product?.qty ?? 1);
 
                 selectedProductAmount = selectedAmount.toString();
@@ -461,7 +460,7 @@ class _BundleOptionsViewState extends State<BundleOptionsView> {
                           ?.toString() ??
                       '',
               callBack: (qty) {
-                print("Ggr ${selectedProductName} * ${dropDownName}");
+                print("Ggr $selectedProductName * $dropDownName");
                 print("Ggr $qty $defaultProductName, $selectedProductQty");
 
                 double selectedAmount = ((qty) *
@@ -485,7 +484,7 @@ class _BundleOptionsViewState extends State<BundleOptionsView> {
         ]));
   }
 
-  _updateOptions(int id, int productId, int removeId, bool isReplace, {required String qty}) {
+  void _updateOptions(int id, int productId, int removeId, bool isReplace, {required String qty}) {
     if (bundleData['bundleOptions'] != null) {
 
       selectedQuantity[id.toString()] = qty;
@@ -540,7 +539,7 @@ class _BundleOptionsViewState extends State<BundleOptionsView> {
     }
   }
 
-  _updateQtyValue(int id, dynamic qty) {
+  void _updateQtyValue(int id, dynamic qty) {
     selectedQuantity[id.toString()] = qty.toString();
     if (bundleData['bundleOptionQuantity'] != null) {
       (bundleData['bundleOptionQuantity']

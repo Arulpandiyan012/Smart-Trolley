@@ -3,7 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class InternetMonitor extends StatefulWidget {
   final Widget child;
-  const InternetMonitor({Key? key, required this.child}) : super(key: key);
+  const InternetMonitor({super.key, required this.child});
 
   @override
   State<InternetMonitor> createState() => _InternetMonitorState();

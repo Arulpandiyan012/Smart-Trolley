@@ -7,11 +7,11 @@ class BlinkitProductCard extends StatelessWidget {
   final CategoryBloc? subCategoryBloc;
 
   const BlinkitProductCard({
-    Key? key,
+    super.key,
     required this.data,
     this.isLoggedIn = false,
     this.subCategoryBloc,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

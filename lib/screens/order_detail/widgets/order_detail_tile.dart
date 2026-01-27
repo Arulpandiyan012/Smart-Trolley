@@ -17,13 +17,13 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
   final VoidCallback? onCancelOrder;
 
   OrderDetailTile({
-    Key? key,
+    super.key,
     this.orderDetailModel,
     this.orderId,
     this.orderDetailBloc,
     this.isLoading,
     this.onCancelOrder, 
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

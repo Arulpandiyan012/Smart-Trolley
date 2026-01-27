@@ -18,13 +18,13 @@ class CheckoutOrderReviewView extends StatefulWidget {
   final String? displayAddress; // 🟢 Address from parent
 
   CheckoutOrderReviewView({
-    Key? key,
+    super.key,
     this.paymentId,
     this.callBack,
     this.cartDetailsModel,
     this.cartScreenBloc,
     this.displayAddress, 
-  }) : super(key: key);
+  });
 
   @override
   State<CheckoutOrderReviewView> createState() => _CheckoutOrderReviewViewState();
@@ -228,7 +228,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
     );
   }
 
-  reload(){
+  void reload(){
     checkOutReviewBloc?.add(CheckOutReviewSavePaymentEvent(paymentMethod: widget.paymentId));
   }
 }

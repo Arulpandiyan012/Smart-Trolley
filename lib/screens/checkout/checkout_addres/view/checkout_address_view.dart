@@ -32,7 +32,7 @@ class CheckoutAddressView extends StatefulWidget {
       AddressType addressType, bool isShippingSame
       )? callBack;
 
-  const CheckoutAddressView({Key? key, this.callBack}) : super(key: key);
+  const CheckoutAddressView({super.key, this.callBack});
 
   @override
   State<CheckoutAddressView> createState() => _CheckoutAddressViewState();
@@ -75,9 +75,7 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
                 }
 
                 // 2. If no selection, try Default
-                if (selectedAddress == null) {
-                  selectedAddress = _addressModel?.addressData?.firstWhereOrNull((e) => e.isDefault == true);
-                }
+                selectedAddress ??= _addressModel?.addressData?.firstWhereOrNull((e) => e.isDefault == true);
 
                 // 3. Fallback to First Address (Safe Default)
                 selectedAddress ??= _addressModel?.addressData?.first;

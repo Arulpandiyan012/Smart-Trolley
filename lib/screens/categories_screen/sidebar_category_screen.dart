@@ -16,7 +16,7 @@ import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_state.dart
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart'; // For CartStatus
 
 class SidebarCategoryScreen extends StatefulWidget {
-  const SidebarCategoryScreen({Key? key}) : super(key: key);
+  const SidebarCategoryScreen({super.key});
 
   @override
   State<SidebarCategoryScreen> createState() => _SidebarCategoryScreenState();

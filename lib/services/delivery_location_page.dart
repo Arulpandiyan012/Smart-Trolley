@@ -6,7 +6,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as sdk;
 
 class DeliveryLocationPage extends StatefulWidget {
-  const DeliveryLocationPage({Key? key}) : super(key: key);
+  const DeliveryLocationPage({super.key});
 
   @override
   State<DeliveryLocationPage> createState() => _DeliveryLocationPageState();
@@ -259,7 +259,7 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: DropdownButtonFormField<String>(
-                                value: _dropdownValue,
+                                initialValue: _dropdownValue,
                                 items: _dropdownItems.map((it) => 
                                   DropdownMenuItem(value: it, child: Text(it))
                                 ).toList(),

@@ -90,10 +90,10 @@ Future<void> hiveRegisterAdapter() async {
 }
 
 class RestartWidget extends StatefulWidget {
-  const RestartWidget({Key? key, required this.child}) : super(key: key);
+  const RestartWidget({super.key, required this.child});
   final Widget child;
 
-  static restartApp(BuildContext context) {
+  static void restartApp(BuildContext context) {
     context.findAncestorStateOfType<_RestartWidgetState>()?.restartApp();
   }
 
@@ -123,8 +123,8 @@ class _RestartWidgetState extends State<RestartWidget> {
 class BagistoApp extends StatefulWidget {
   const BagistoApp(
     this.selectedLanguage, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final String? selectedLanguage;
   @override

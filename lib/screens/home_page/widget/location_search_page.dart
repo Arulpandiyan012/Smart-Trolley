@@ -3,7 +3,7 @@ import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as pla
 import 'package:bagisto_app_demo/screens/home_page/widget/location_map_page.dart';
 
 class LocationSearchPage extends StatefulWidget {
-  const LocationSearchPage({Key? key}) : super(key: key);
+  const LocationSearchPage({super.key});
 
   @override
   State<LocationSearchPage> createState() => _LocationSearchPageState();
@@ -148,7 +148,7 @@ class _LocationSearchPageState extends State<LocationSearchPage> {
                       return ListTile(
                         leading: const Icon(Icons.place_outlined),
                         title: Text(pred.primaryText),
-                        subtitle: pred.secondaryText != null ? Text(pred.secondaryText!) : null,
+                        subtitle: Text(pred.secondaryText!),
                         onTap: () => _openMapForPrediction(pred),
                       );
                     },

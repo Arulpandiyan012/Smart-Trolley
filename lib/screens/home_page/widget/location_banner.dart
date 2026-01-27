@@ -7,7 +7,7 @@ import 'package:bagisto_app_demo/screens/home_page/widget/delivery_location_page
 
 
 class LocationBanner extends StatefulWidget {
-  const LocationBanner({Key? key}) : super(key: key);
+  const LocationBanner({super.key});
 
   @override
   State<LocationBanner> createState() => _LocationBannerState();

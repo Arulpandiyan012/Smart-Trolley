@@ -11,7 +11,7 @@
 import 'package:bagisto_app_demo/screens/review/utils/index.dart';
 
 class ReviewsScreen extends StatefulWidget {
-  const ReviewsScreen({Key? key, this.isFromDashboard}) : super(key: key);
+  const ReviewsScreen({super.key, this.isFromDashboard});
   final bool? isFromDashboard;
 
   @override
@@ -54,7 +54,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   ///Reviews Bloc container
-  _reviewsBloc(BuildContext context) {
+  BlocConsumer<ReviewsBloc, ReviewsBaseState> _reviewsBloc(BuildContext context) {
     return BlocConsumer<ReviewsBloc, ReviewsBaseState>(
       listener: (BuildContext context, ReviewsBaseState state) {
         if (state is FetchReviewState) {
@@ -93,7 +93,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   ///method use to show review list
-  _reviewsList(ReviewModel? reviewModel) {
+  Widget _reviewsList(ReviewModel? reviewModel) {
     if (reviewModel == null) {
       return const NoDataFound();
     } else {

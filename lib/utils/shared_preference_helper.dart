@@ -22,11 +22,11 @@ class SharedPreferenceHelper {
     return configurationStorage.read(date) ?? "";
   }
 
-  setDate(String setDate) {
+  void setDate(String setDate) {
     configurationStorage.write(date, setDate);
   }
 
-  setLanguageName(String customerLanguage) {
+  void setLanguageName(String customerLanguage) {
     configurationStorage.write(language, customerLanguage);
   }
 
@@ -34,7 +34,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(language) ?? defaultLanguageName;
   }
 
-  setSortName(String selectedSort) {
+  void setSortName(String selectedSort) {
     configurationStorage.write(sort, selectedSort);
   }
 
@@ -42,7 +42,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(sort) ?? "";
   }
 
-  setCurrencyLabel(String currencyLabel) {
+  void setCurrencyLabel(String currencyLabel) {
     configurationStorage.write(configCurrencyLabel, currencyLabel);
   }
 
@@ -50,7 +50,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(configCurrencyLabel) ?? defaultCurrencyName;
   }
 
-  onUserLogout() {
+  void onUserLogout() {
     configurationStorage.write(customerLoggedIn, false);
     configurationStorage.write(customerCartCount, 0);
     configurationStorage.write(customerName, StringConstants.welcomeGuest);
@@ -65,7 +65,7 @@ class SharedPreferenceHelper {
     configurationStorage.remove(customerDetails);
   }
 
-  setAddressData(bool isAddressData) {
+  void setAddressData(bool isAddressData) {
     configurationStorage.write(addressData, isAddressData);
   }
 
@@ -73,7 +73,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(addressData) ?? false;
   }
 
-  setCartCount(int cartCount) {
+  void setCartCount(int cartCount) {
     configurationStorage.write(customerCartCount, cartCount);
   }
 
@@ -81,7 +81,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerCartCount) ?? 0;
   }
 
-  setCustomerId(int customerIdNew) {
+  void setCustomerId(int customerIdNew) {
     configurationStorage.write(customerId, customerIdNew);
   }
 
@@ -89,7 +89,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerId) ?? 0;
   }
 
-  setCustomerToken(String customerTokenValue) {
+  void setCustomerToken(String customerTokenValue) {
     configurationStorage.write(customerToken, customerTokenValue);
   }
 
@@ -97,7 +97,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerToken) ?? "0";
   }
 
-  setCustomerEmail(String customerEmailNew) {
+  void setCustomerEmail(String customerEmailNew) {
     configurationStorage.write(customerEmail, customerEmailNew);
   }
 
@@ -106,7 +106,7 @@ class SharedPreferenceHelper {
   }
   
   // 🟢 NEW: Set Customer Phone
-  setCustomerPhone(String phone) {
+  void setCustomerPhone(String phone) {
     configurationStorage.write("customerPhone", phone);
   }
 
@@ -115,7 +115,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read("customerPhone") ?? "";
   }
 
-  setCustomerImage(String customerImageValue) {
+  void setCustomerImage(String customerImageValue) {
     configurationStorage.write(customerImage, customerImageValue);
   }
 
@@ -123,7 +123,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerImage) ?? "";
   }
 
-  setCustomerName(String customerNameValue) {
+  void setCustomerName(String customerNameValue) {
     configurationStorage.write(customerName, customerNameValue);
   }
 
@@ -135,11 +135,11 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerLoggedIn) ?? false;
   }
 
-  setCustomerLoggedIn(bool isLoggedIn) {
+  void setCustomerLoggedIn(bool isLoggedIn) {
     configurationStorage.write(customerLoggedIn, isLoggedIn);
   }
 
-  setFingerPrintUser(String savedKey) {
+  void setFingerPrintUser(String savedKey) {
     configurationStorage.write(fingerPrintUSer, savedKey);
   }
 
@@ -147,7 +147,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(fingerPrintUSer) ?? "";
   }
 
-  setFingerPrintPassword(String savedKey) {
+  void setFingerPrintPassword(String savedKey) {
     configurationStorage.write(fingerPrintPassword, savedKey);
   }
 
@@ -155,7 +155,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(fingerPrintPassword) ?? "";
   }
 
-  setTheme(String value) {
+  void setTheme(String value) {
     configurationStorage.write(themeKey, value);
   }
 
@@ -163,7 +163,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(themeKey) ?? "";
   }
 
-  setCurrencySymbol(String currencySymbol) {
+  void setCurrencySymbol(String currencySymbol) {
     configurationStorage.write(configCurrencySymbol, currencySymbol);
   }
 
@@ -171,7 +171,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(configCurrencySymbol) ?? "\$";
   }
 
-  setCookieGet(String cookieData) {
+  void setCookieGet(String cookieData) {
     configurationStorage.write(cookie, cookieData);
   }
 
@@ -179,7 +179,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(cookie) ?? "";
   }
 
-  setCustomerLanguage(String languageCode) {
+  void setCustomerLanguage(String languageCode) {
     configurationStorage.write(customerLanguage, languageCode);
   }
 
@@ -187,7 +187,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerLanguage) ?? defaultStoreCode;
   }
 
-  setCurrencyCode(String currencyCode) {
+  void setCurrencyCode(String currencyCode) {
     configurationStorage.write(configCurrencyCode, currencyCode);
   }
 
@@ -199,11 +199,11 @@ class SharedPreferenceHelper {
     return configurationStorage.read(customerDetails);
   }
 
-  setCustomerDetails(AccountInfoModel? details) {
+  Future<void> setCustomerDetails(AccountInfoModel? details) {
     return configurationStorage.write(customerDetails, details);
   }
 
-  setDrawerCategories(GetDrawerCategoriesData? data) {
+  Future<void> setDrawerCategories(GetDrawerCategoriesData? data) {
     return configurationStorage.write(drawerCatData, data);
   }
 
@@ -217,7 +217,7 @@ class SharedPreferenceHelper {
     return drawerData;
   }
 
-  setCartId(String id) {
+  void setCartId(String id) {
     configurationStorage.write("cartId", id);
   }
 

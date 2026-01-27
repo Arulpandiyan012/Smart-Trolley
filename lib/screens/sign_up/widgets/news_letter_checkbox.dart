@@ -17,8 +17,8 @@ class NewsLetterCheckbox extends StatefulWidget {
       this.initialSelection, {
         this.showError = false,
         this.errorText = '',
-        Key? key,
-      }) : super(key: key);
+        super.key,
+      });
 
   @override
   State<StatefulWidget> createState() {

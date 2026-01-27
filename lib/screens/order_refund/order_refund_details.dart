@@ -2,7 +2,7 @@ import 'package:bagisto_app_demo/screens/order_refund/utils/index.dart';
 
 class OrderRefundScreen extends StatefulWidget {
   final OrderDetail? orderDetailsModel;
-  const OrderRefundScreen({this.orderDetailsModel, Key? key}) : super(key: key);
+  const OrderRefundScreen({this.orderDetailsModel, super.key});
 
   @override
   State<OrderRefundScreen> createState() => _OrderRefundScreenState();
@@ -35,7 +35,7 @@ class _OrderRefundScreenState extends State<OrderRefundScreen> {
     );
   }
 
-  buildContainer(BuildContext context) {
+  BlocConsumer<OrderRefundBloc, OrderRefundBaseState> buildContainer(BuildContext context) {
     return BlocConsumer<OrderRefundBloc, OrderRefundBaseState>(
       listener: (BuildContext context, OrderRefundBaseState state) {},
       builder: (BuildContext context, OrderRefundBaseState state) {
@@ -65,7 +65,7 @@ class _OrderRefundScreenState extends State<OrderRefundScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ...getRefunds(context, refundList?.viewRefunds),
+                        ...?getRefunds(context, refundList?.viewRefunds),
                         const Divider(),
                         const SizedBox(
                           height: 8,
@@ -121,7 +121,7 @@ class _OrderRefundScreenState extends State<OrderRefundScreen> {
         : EmptyDataView();
   }
 
-  childData(String title, String val, BuildContext context) {
+  Row childData(String title, String val, BuildContext context) {
     return Row(
       children: [
         Text("${title.localized()} - ",
@@ -137,7 +137,7 @@ class _OrderRefundScreenState extends State<OrderRefundScreen> {
     );
   }
 
-  getRefunds(BuildContext context, List<ViewRefunds>? refundModel) {
+  Iterable<Padding>? getRefunds(BuildContext context, List<ViewRefunds>? refundModel) {
     return refundModel?.map((ViewRefunds? refunds) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 20),
@@ -196,7 +196,7 @@ class _OrderRefundScreenState extends State<OrderRefundScreen> {
     });
   }
 
-  getOrdersRow(String title, String val, BuildContext context) {
+  Padding getOrdersRow(String title, String val, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(

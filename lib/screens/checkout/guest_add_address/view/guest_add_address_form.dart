@@ -36,7 +36,7 @@ class GuestAddAddressForm extends StatefulWidget {
       String? shippingPostCode,
       String? shippingPhone)? callBack;
 
-  GuestAddAddressForm({this.callBack, Key? key}) : super(key: key);
+  GuestAddAddressForm({this.callBack, super.key});
 
   @override
   State<GuestAddAddressForm> createState() => _GuestAddAddressFormState();

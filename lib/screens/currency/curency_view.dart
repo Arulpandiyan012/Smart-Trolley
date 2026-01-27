@@ -15,7 +15,7 @@ import '../../data_model/currency_language_model.dart';
 import '../../main.dart';
 
 class CurrencyScreen extends StatefulWidget {
-  const CurrencyScreen({Key? key}) : super(key: key);
+  const CurrencyScreen({super.key});
 
   @override
   State<CurrencyScreen> createState() => _CurrencyScreenState();
@@ -44,7 +44,7 @@ class _CurrencyScreenState extends State<CurrencyScreen> {
     );
   }
 
-  _currency(CurrencyLanguageList? currencyLanguageList){
+  ListView _currency(CurrencyLanguageList? currencyLanguageList){
     return ListView.builder(
       itemBuilder: (context, itemIndex) {
         return GestureDetector(
@@ -80,7 +80,7 @@ class _CurrencyScreenState extends State<CurrencyScreen> {
   }
 
 
-  _onTapCurrency(index,CurrencyLanguageList? currencyLanguageList) async {
+  Future<void> _onTapCurrency(index,CurrencyLanguageList? currencyLanguageList) async {
     if (_selectedIndex == index) {
       appStoragePref.setCurrencyCode(_currentCurrencyCode??"USD");
       Navigator.pop(context, _currentCurrencyCode);
@@ -98,14 +98,14 @@ class _CurrencyScreenState extends State<CurrencyScreen> {
     }
   }
 
-  _closeThisPage() {
+  void _closeThisPage() {
     appStoragePref.setCurrencyCode(_currentCurrencyCode??"US Dollar");
     Hive.deleteBoxFromDisk("getCategoriesDrawerData");
     RestartWidget.restartApp(context);
     Navigator.pushNamedAndRemoveUntil(context, splash, (route) => false);
   }
 
-  _fetchSharedPreferenceData(CurrencyLanguageList? currencyLanguageList) {
+  void _fetchSharedPreferenceData(CurrencyLanguageList? currencyLanguageList) {
     String? currencyCode = appStoragePref.getCurrencyCode();
       String? code= currencyCode;
       currencyLanguageList?.currencies?.forEach((currencyChild) {

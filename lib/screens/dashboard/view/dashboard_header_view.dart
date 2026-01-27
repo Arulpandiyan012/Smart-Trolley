@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bagisto_app_demo/screens/dashboard/utils/index.dart';
 
 class DashboardHeaderView extends StatefulWidget {
-  const DashboardHeaderView({Key? key}) : super(key: key);
+  const DashboardHeaderView({super.key});
 
   @override
   State<DashboardHeaderView> createState() => _DashboardHeaderViewState();

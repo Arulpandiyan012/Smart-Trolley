@@ -16,7 +16,7 @@ import 'app_constants.dart';
 
 
 class DialogHelper {
-  static networkErrorDialog(BuildContext context, {VoidCallback? onConfirm}) {
+  static void networkErrorDialog(BuildContext context, {VoidCallback? onConfirm}) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -53,7 +53,7 @@ class DialogHelper {
     Navigator.of(context).pop();
   }
 
-  static searchDialog(BuildContext context, GestureTapCallback onImageTap,
+  static void searchDialog(BuildContext context, GestureTapCallback onImageTap,
       GestureTapCallback onTextTap) {
     showDialog(
       useSafeArea: true,
