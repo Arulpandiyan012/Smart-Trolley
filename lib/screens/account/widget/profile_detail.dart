@@ -1,3 +1,9 @@
+/*
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ */
+
 import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/utils/app_constants.dart';
 import 'package:bagisto_app_demo/utils/string_constants.dart';
@@ -7,14 +13,16 @@ class ProfileDetailView extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final bool? subsNewsLetter;
   final ValueChanged<dynamic>? onChanged;
+  
+  // Controllers
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
   final TextEditingController emailController;
   final TextEditingController phoneController;
   final TextEditingController dobController;
+  
   final List<String>? genderValues;
   final int? currentGenderValue;
-  final Function(int)? onGenderChanged;
 
   const ProfileDetailView({
     Key? key,
@@ -26,7 +34,6 @@ class ProfileDetailView extends StatefulWidget {
     required this.dobController,
     this.genderValues,
     this.currentGenderValue,
-    this.onGenderChanged,
     this.subsNewsLetter,
     this.onChanged,
   }) : super(key: key);
@@ -37,37 +44,18 @@ class ProfileDetailView extends StatefulWidget {
 
 class _ProfileDetailViewState extends State<ProfileDetailView> {
   
-  // 🟢 METHOD: Show Calendar Picker
-  Future<void> _showCalendar(BuildContext context) async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      // Use setState to ensure the text field updates immediately
-      setState(() {
-        widget.dobController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-      });
-    }
-  }
-
+  // Helper to build Text Fields safely
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    bool readOnly = false,
-    VoidCallback? onTap,
     String? Function(String?)? validator,
+    String? hint,
   }) {
     return TextFormField(
       controller: controller,
-      readOnly: readOnly,
-      onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: label == "Date of Birth" ? const Icon(Icons.calendar_today, size: 20) : null,
+        hintText: hint,
         border: const OutlineInputBorder(),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       ),
@@ -84,74 +72,82 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField(controller: widget.firstNameController, label: "First Name", validator: (v) => v!.isEmpty ? "Required" : null),
+            _buildTextField(
+              controller: widget.firstNameController,
+              label: StringConstants.firstNameLabel.localized(),
+              // 🟢 FIX: Use hardcoded string if constant is missing
+              validator: (v) => (v?.isEmpty ?? true) ? "This field is required" : null,
+            ),
             const SizedBox(height: AppSizes.spacingMedium),
-            _buildTextField(controller: widget.lastNameController, label: "Last Name", validator: (v) => v!.isEmpty ? "Required" : null),
-            const SizedBox(height: AppSizes.spacingMedium),
-            _buildTextField(controller: widget.emailController, label: "Email", validator: (v) => v!.isEmpty ? "Required" : null),
-            const SizedBox(height: AppSizes.spacingMedium),
-            _buildTextField(controller: widget.phoneController, label: "Phone Number"),
+            
+            _buildTextField(
+              controller: widget.lastNameController,
+              label: StringConstants.lastNameLabel.localized(),
+              validator: (v) => (v?.isEmpty ?? true) ? "This field is required" : null,
+            ),
             const SizedBox(height: AppSizes.spacingMedium),
 
             _buildTextField(
-              controller: widget.dobController, 
-              label: "Date of Birth", 
-              readOnly: true, 
-              onTap: () => _showCalendar(context)
+              controller: widget.emailController,
+              // 🟢 FIX: Use hardcoded string to avoid 'emailLabel' error
+              label: "Email",
+              validator: (v) => (v?.isEmpty ?? true) ? "This field is required" : null,
             ),
-            
-            const SizedBox(height: AppSizes.spacingLarge),
-            const Text("Gender", style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-
-            _buildGenderChips(),
-
             const SizedBox(height: AppSizes.spacingMedium),
+
+            _buildTextField(
+              controller: widget.phoneController,
+              // 🟢 FIX: Use hardcoded string
+              label: "Phone Number",
+            ),
+            const SizedBox(height: AppSizes.spacingMedium),
+
+            _buildTextField(
+              controller: widget.dobController,
+              // 🟢 FIX: Use hardcoded string
+              label: "Date of Birth",
+              hint: "YYYY-MM-DD",
+            ),
+            const SizedBox(height: AppSizes.spacingMedium),
+
+            // Gender Dropdown
+            if (widget.genderValues != null && widget.genderValues!.isNotEmpty)
+              DropdownButtonFormField<String>(
+                value: widget.genderValues!.length > (widget.currentGenderValue ?? 0) 
+                    ? widget.genderValues![widget.currentGenderValue ?? 0] 
+                    : widget.genderValues![0],
+                items: widget.genderValues!.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (_) {}, 
+                decoration: const InputDecoration(
+                  // 🟢 FIX: Use hardcoded string
+                  labelText: "Gender",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              
+            const SizedBox(height: AppSizes.spacingMedium),
+
+            // Newsletter Switch
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(StringConstants.subscribeToNewsletter.localized()),
                 Switch(
                   value: widget.subsNewsLetter ?? false,
-                  onChanged: (val) { if (widget.onChanged != null) widget.onChanged!(val); },
+                  onChanged: (val) {
+                    if (widget.onChanged != null) widget.onChanged!(val);
+                  },
                 )
               ],
             )
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildGenderChips() {
-    if (widget.genderValues == null) return const SizedBox();
-    return Row(
-      children: List.generate(widget.genderValues!.length, (index) {
-        bool isSelected = widget.currentGenderValue == index;
-        Color color = index == 0 ? Colors.blue : index == 1 ? Colors.pink : Colors.purple;
-        
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => widget.onGenderChanged?.call(index),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: isSelected ? color : Colors.grey[300]!, width: isSelected ? 2 : 1),
-              ),
-              child: Column(
-                children: [
-                  Icon(index == 0 ? Icons.male : index == 1 ? Icons.female : Icons.transgender, 
-                       color: isSelected ? color : Colors.grey),
-                  Text(widget.genderValues![index], style: TextStyle(color: isSelected ? color : Colors.black54)),
-                ],
-              ),
-            ),
-          ),
-        );
-      }),
     );
   }
 }

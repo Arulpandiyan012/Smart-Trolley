@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/categories_screen/utils/index.dart';
 import 'package:bagisto_app_demo/utils/app_global_data.dart';
-//import 'package:bagisto_app_demo/utils/app_constants.dart';
+import 'package:bagisto_app_demo/utils/app_constants.dart';
 import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'widget/blinkit_product_card.dart'; 

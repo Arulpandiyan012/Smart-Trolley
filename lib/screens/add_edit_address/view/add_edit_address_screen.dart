@@ -88,10 +88,7 @@ class _AddNewAddressState extends State<AddNewAddress> {
     widget.isEdit ?? false
         ? editCountryName = widget.addressModel?.countryName ?? ""
         : "";
-        
-    //widget.isEdit ?? false ? stateName = stateNameController.text ?? "" : null;
-
-    if (widget.isEdit ?? false) {stateName = stateNameController.text;}
+    widget.isEdit ?? false ? stateName = stateNameController.text ?? "" : null;
     widget.isEdit ?? false
         ? countryCode = widget.addressModel?.country ?? ""
         : "";

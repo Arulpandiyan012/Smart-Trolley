@@ -9,7 +9,7 @@
  */
 
 import 'package:json_annotation/json_annotation.dart';
-//import '../../cart_screen/cart_model/cart_data_model.dart';
+import '../../cart_screen/cart_model/cart_data_model.dart';
 
 part 'save_order_model.g.dart';
 

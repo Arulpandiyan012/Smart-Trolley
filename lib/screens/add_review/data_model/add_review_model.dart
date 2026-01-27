@@ -14,14 +14,14 @@
 // ignore_for_file: file_names, prefer_typing_uninitialized_variables
 import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
 import 'package:json_annotation/json_annotation.dart';
-//import '../../../data_model/graphql_base_error_model.dart';
+import '../../../data_model/graphql_base_error_model.dart';
 
 
 part 'add_review_model.g.dart';
 
 @JsonSerializable()
 class AddReviewModel extends BaseModel{
-  
+  @override
   // String? success;
   Review? review;
 
@@ -57,7 +57,7 @@ class Review {
 class Product {
   String? id;
   String? type;
-  dynamic attributeFamilyId;
+  var attributeFamilyId;
   String? sku;
   String? parentId;
   String? createdAt;
@@ -81,7 +81,7 @@ class ProductFlats {
   bool? featured;
   bool? status;
   bool? visibleIndividually;
-  num? price;
+  var price;
   int? color;
   String? colorLabel;
   int? size;
@@ -89,8 +89,8 @@ class ProductFlats {
   String? locale;
   String? channel;
   String? productId;
-  num? minPrice;
- num? maxPrice;
+  var minPrice;
+ var maxPrice;
   String? metaTitle;
   String? metaKeywords;
   String? metaDescription;

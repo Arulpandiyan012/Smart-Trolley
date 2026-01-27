@@ -59,8 +59,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _saveCartAddress(String addressId) async {
       try {
-        // Change this:String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
-        String customerId = appStoragePref.getCustomerId().toString();
+        String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
         String cartId = _cartDetailsModel?.id?.toString() ?? "0";
 
         var dio = Dio();

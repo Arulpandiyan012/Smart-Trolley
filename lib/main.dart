@@ -23,6 +23,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
+import 'package:bagisto_app_demo/screens/root/bottom_nav_scaffold.dart';
 import 'data_model/product_model/product_screen_model.dart';
 import 'package:flutter/services.dart'; 
 import 'package:google_fonts/google_fonts.dart';
@@ -165,6 +166,7 @@ class _BagistoAppState extends State<BagistoApp> {
             // 🟢 MULTI BLOC PROVIDER WRAPPER
             return MultiBlocProvider(
               providers: [
+                // Global Cart Provider
                 BlocProvider<CartScreenBloc>(
                   create: (context) => CartScreenBloc(CartScreenRepositoryImp()),
                 ),
@@ -219,18 +221,19 @@ class _BagistoAppState extends State<BagistoApp> {
                 },
                 locale: _locale,
                 builder: (context, child) {
-                  // 🟢 FIXED BUILDER: Wrap everything in InternetMonitor
-                  return InternetMonitor(
-                    child: MediaQuery(
-                      data: MediaQuery.of(context).copyWith(
-                        // Updated from textScaleFactor to textScaler for modern Flutter
-                        textScaler: const TextScaler.linear(1.0),
-                      ),
-                      child: child ?? const SizedBox(),
-                    ),
+                  return MediaQuery(
+                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                    child: child ?? const SizedBox(),
                   );
+                  return InternetMonitor(
+    // 2. Keep your existing MediaQuery logic inside
+    child: MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+      child: child ?? const SizedBox(),
+    ),
+  );
                 },
-              ),
+                       ),
             );
           },
         ),
