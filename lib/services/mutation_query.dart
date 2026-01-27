@@ -1172,12 +1172,6 @@ String cartDetails() {
                     url
                     productId
                 }
-                cacheGalleryImages {
-                    smallImageUrl
-                    mediumImageUrl
-                    largeImageUrl
-                    originalImageUrl
-                }
             }
         }
         payment {
