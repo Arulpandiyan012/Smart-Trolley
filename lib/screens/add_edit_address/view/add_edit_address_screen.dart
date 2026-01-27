@@ -26,7 +26,7 @@ class AddNewAddress extends StatefulWidget {
 
 class _AddNewAddressState extends State<AddNewAddress> {
   final _formKey = GlobalKey<FormState>();
-  bool _autoValidate =
+  final bool _autoValidate =
       false; //this bool value is used to decide when to validate form
   Data? selectedCountry;
   final firstNameController = TextEditingController();
@@ -412,7 +412,7 @@ class _AddNewAddressState extends State<AddNewAddress> {
                   return null;
                 },
               ),
-               SaveAddressButton(
+              SaveAddressButton(
                 isEdit: widget.isEdit,
                 addEditAddressBloc: addEditAddressBloc,
                 countryCode: countryCode,
@@ -432,11 +432,6 @@ class _AddNewAddressState extends State<AddNewAddress> {
                 cityController: cityController,
                 stateNameController: stateNameController,
                 emailController: emailController,
-                onChangeAutoValidate: () {
-                  setState(() {
-                    _autoValidate = true;
-                  });
-                },
               )
             ],
           ),

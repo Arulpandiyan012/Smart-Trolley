@@ -15,7 +15,7 @@ import '../utils/index.dart';
 
 abstract class AccountInfoBaseState {}
 
-enum AccountStatus { success, fail, loading }
+enum AccountStatus { success, fail }
 
 class InitialAccountState extends AccountInfoBaseState {
   List<Object> get props => [];
@@ -46,9 +46,6 @@ class AccountInfoUpdateState extends AccountInfoBaseState {
       : status = AccountStatus.success;
 
   AccountInfoUpdateState.fail({this.error}) : status = AccountStatus.fail;
-  
-  AccountInfoUpdateState.loading() : status = AccountStatus.loading;
-
   List<Object> get props => [if (accountUpdate != null) accountUpdate! else ""];
 }
 

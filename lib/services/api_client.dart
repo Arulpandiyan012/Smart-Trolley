@@ -231,11 +231,6 @@ Future<OrderDetail?> getOrderDetail(int id) async {
              innerData = jsonResponse['data'];
         }
 
-        // 🟢 DEBUG: Print raw items to find the image field
-        if (innerData != null && innerData['items'] != null) {
-          debugPrint("📦 ORDER ITEMS RAW JSON: ${jsonEncode(innerData['items'])}");
-        }
-
         if (innerData is Map) {
             Map<String, dynamic> safeData = Map<String, dynamic>.from(innerData);
 
