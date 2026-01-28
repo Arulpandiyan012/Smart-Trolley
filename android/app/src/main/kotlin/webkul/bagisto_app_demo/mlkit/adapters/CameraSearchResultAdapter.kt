@@ -18,8 +18,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
-import  com.example.bagisto_app_demo.R
-import  com.example.bagisto_app_demo.databinding.CameraSimpleSpinnerItemBinding
+import  webkul.bagisto_app_demo.R
+import  webkul.bagisto_app_demo.databinding.CameraSimpleSpinnerItemBinding
 import webkul.bagisto_app_demo.mlkit.activities.CameraSearchActivity
 
 class CameraSearchResultAdapter(
