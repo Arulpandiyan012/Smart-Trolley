@@ -10,41 +10,35 @@ import 'package:bagisto_app_demo/data_model/account_models/account_update_model.
 import 'package:bagisto_app_demo/data_model/account_models/account_info_details.dart';
 import 'package:bagisto_app_demo/screens/account/utils/index.dart';
 import 'package:bagisto_app_demo/utils/shared_preference_helper.dart'; 
-import 'package:bagisto_app_demo/utils/app_global_data.dart';
 import 'package:bagisto_app_demo/utils/string_constants.dart';
 import 'package:bagisto_app_demo/utils/index.dart'; 
 import 'package:bagisto_app_demo/screens/account/widget/profile_detail.dart';
 import 'package:bagisto_app_demo/screens/account/widget/account_loader_view.dart';
-import 'package:bagisto_app_demo/widgets/common_widgets.dart';
+//import 'package:bagisto_app_demo/widgets/common_widgets.dart';
 
-// 🟢 FIX: Global Key definition (Required for ContactUsView)
 GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({Key? key}) : super(key: key);
+  const AccountScreen({super.key});
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _AccountScreenState extends State<AccountScreen>
-    with EmailValidator, PhoneNumberValidator {
+class _AccountScreenState extends State<AccountScreen> with EmailValidator, PhoneNumberValidator {
   
-  // Controllers
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final dobController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   
-  String? customerUserName;
   bool isLoggedIn = false;
-  List<String>? genderValues = ["Male", "Female", "Other"];
+  List<String> genderValues = ["Male", "Female", "Other"];
   int currentGenderValue = 0;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   
   AccountInfoModel? _accountInfoDetails;
-  AccountUpdate? _accountUpdate;
   bool isLoad = true;
   String? base64string;
   AccountInfoBloc? accountInfoBloc;
@@ -53,25 +47,21 @@ class _AccountScreenState extends State<AccountScreen>
   @override
   void initState() {
     super.initState();
-    isLoad = true;
     accountInfoBloc = context.read<AccountInfoBloc>();
     accountInfoBloc?.add(AccountInfoDetailsEvent());
-    
     _loadAccountData();
   }
 
   void _loadAccountData() {
     isLoggedIn = appStoragePref.getCustomerLoggedIn();
     if (isLoggedIn) {
-      String fullName = appStoragePref.getCustomerName() ?? "";
+      String fullName = appStoragePref.getCustomerName(); 
       List<String> names = fullName.split(" ");
-      
       firstNameController.text = names.isNotEmpty ? names.first : "";
       if (names.length > 1) {
         lastNameController.text = names.sublist(1).join(" ");
       }
-      
-      emailController.text = appStoragePref.getCustomerEmail() ?? "";
+      emailController.text = appStoragePref.getCustomerEmail(); 
     }
   }
 
@@ -80,63 +70,103 @@ class _AccountScreenState extends State<AccountScreen>
     return ScaffoldMessenger(
       key: scaffoldMessengerKey,
       child: Scaffold(
-        appBar: AppBar(
+        // 🟢 FIXED: Changed 'app_bar' to 'appBar'
+        appBar: AppBar( 
           centerTitle: false,
-          title: Text(StringConstants.accountInfo.localized()),
+          elevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text(
+            StringConstants.accountInfo.localized(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         body: _profileBloc(context),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                vertical: AppSizes.spacingMedium,
-                horizontal: AppSizes.spacingMedium),
-            child: MaterialButton(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.spacingNormal)),
-              elevation: 2.0,
-              height: AppSizes.buttonHeight,
-              minWidth: MediaQuery.of(context).size.width,
-              color: Theme.of(context).colorScheme.onBackground,
-              onPressed: () {
-                _onPressSaveButton();
-              },
-              child: Text(
-                StringConstants.save.localized().toUpperCase(),
-                style: TextStyle(
-                    fontSize: AppSizes.spacingLarge,
-                    color: Theme.of(context).colorScheme.secondaryContainer),
+        
+        bottomNavigationBar: BlocBuilder<AccountInfoBloc, AccountInfoBaseState>(
+          builder: (context, state) {
+            // Check if we are currently saving/loading
+            bool isLoading = (state is AccountInfoUpdateState && 
+                              state.status != AccountStatus.success && 
+                              state.status != AccountStatus.fail);
+
+            return Container(
+              padding: const EdgeInsets.all(AppSizes.spacingMedium),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    offset: const Offset(0, -4),
+                    blurRadius: 10,
+                  ),
+                ],
               ),
-            ),
-          ),
+              child: Container(
+                height: 55,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _onPressSaveButton,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 24, width: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          StringConstants.save.localized().toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold, 
+                            color: Colors.white, letterSpacing: 1.1,
+                          ),
+                        ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  _profileBloc(BuildContext context) {
+  Widget _profileBloc(BuildContext context) {
     return BlocConsumer<AccountInfoBloc, AccountInfoBaseState>(
-      listener: (BuildContext context, AccountInfoBaseState state) {
+      listener: (context, state) {
         if (state is AccountInfoUpdateState) {
-          if (state.status == AccountStatus.fail) {
+          if (state.status == AccountStatus.success && state.accountUpdate?.status == true) {
+            ShowMessage.successNotification(state.accountUpdate?.message ?? "", context);
+            _updateSharedPreferences(state.accountUpdate!);
+            Navigator.pop(context, true);
+          } 
+          // 🟢 FIXED: Changed .error to .fail
+          else if (state.status == AccountStatus.fail) {
             ShowMessage.errorNotification(
-                StringConstants.invalidData.localized(), context);
-          } else if (state.status == AccountStatus.success) {
-            if (state.accountUpdate?.status == true) {
-              ShowMessage.successNotification(
-                  state.accountUpdate?.message ?? "", context);
-              
-              _updateSharedPreferences(state.accountUpdate!);
-              Navigator.pop(context, true);
-            } else {
-              ShowMessage.errorNotification(
-                  state.accountUpdate?.graphqlErrors ?? "", context);
-            }
+              state.accountUpdate?.graphqlErrors ?? StringConstants.invalidData.localized(), 
+              context
+            );
           }
         }
       },
-      builder: (BuildContext context, AccountInfoBaseState state) {
-        return buildUI(context, state);
-      },
+      builder: (context, state) => buildUI(context, state),
     );
   }
 
@@ -145,25 +175,19 @@ class _AccountScreenState extends State<AccountScreen>
       if (isLoad) {
         isLoad = false;
         _accountInfoDetails = state.accountInfoDetails;
-        
         if (_accountInfoDetails != null) {
           firstNameController.text = _accountInfoDetails!.firstName ?? "";
           lastNameController.text = _accountInfoDetails!.lastName ?? "";
           emailController.text = _accountInfoDetails!.email ?? "";
           phoneController.text = _accountInfoDetails!.phone ?? "";
-          dobController.text = _formatDateToUI(_accountInfoDetails!.dateOfBirth ?? "");
+          dobController.text = _accountInfoDetails!.dateOfBirth ?? "";
           subscribeNewsletter = _accountInfoDetails!.subscribedToNewsLetter ?? false;
-          
-          // 🟢 FIX: Removed gender check because the field is missing in Model
-          // Defaulting to Male (0) or you can fetch it if you find the correct field name
           currentGenderValue = 0; 
         }
       }
     }
 
-    if (state is InitialAccountState) {
-      return const AccountLoaderView();
-    }
+    if (state is InitialAccountState) return const AccountLoaderView();
 
     return SafeArea(
       child: ProfileDetailView(
@@ -176,68 +200,41 @@ class _AccountScreenState extends State<AccountScreen>
         subsNewsLetter: subscribeNewsletter,
         genderValues: genderValues,
         currentGenderValue: currentGenderValue,
+        onGenderChanged: (index) {
+          setState(() {
+            currentGenderValue = index;
+          });
+        },
         onChanged: (value) {
           setState(() {
             subscribeNewsletter = value;
-          });
-        },
-        onGenderChanged: (value) {
-          setState(() {
-            currentGenderValue = value;
           });
         },
       ),
     );
   }
 
-  _onPressSaveButton() {
+  void _onPressSaveButton() {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
-      
       accountInfoBloc?.add(AccountInfoUpdateEvent(
-          firstName: firstNameController.text,
-          lastName: lastNameController.text,
-          gender: genderValues?[currentGenderValue] ?? "Male",
-          email: emailController.text,
-          // Convert UI date (dd-mm-yyyy) back to Backend format (YYYY-MM-DD)
-          dob: _formatDateToBackend(dobController.text),
-          phone: phoneController.text,
-          oldPassword: "", 
-          password: "",
-          confirmPassword: "",
-          avatar: base64string ?? "",
-          subscribedToNewsLetter: subscribeNewsletter));
+        firstName: firstNameController.text,
+        lastName: lastNameController.text,
+        gender: genderValues[currentGenderValue],
+        email: emailController.text,
+        dob: dobController.text,
+        phone: phoneController.text,
+        oldPassword: "", 
+        password: "",
+        confirmPassword: "",
+        avatar: base64string ?? "",
+        subscribedToNewsLetter: subscribeNewsletter
+      ));
     }
   }
 
-  // Helper: YYYY-MM-DD -> dd-mm-yyyy
-  String _formatDateToUI(String date) {
-    if (date.isEmpty) return "";
-    try {
-      DateTime dt = DateTime.parse(date);
-      return "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
-    } catch (e) {
-      return date; // Return original if parse fails
-    }
-  }
-
-  // Helper: dd-mm-yyyy -> YYYY-MM-DD
-  String _formatDateToBackend(String date) {
-    if (date.isEmpty) return "";
-    try {
-      List<String> parts = date.split('-');
-      if (parts.length == 3) {
-        return "${parts[2]}-${parts[1]}-${parts[0]}";
-      }
-      return date;
-    } catch (e) {
-      return date;
-    }
-  }
-
-  _updateSharedPreferences(AccountUpdate accountUpdate) {
+  void _updateSharedPreferences(AccountUpdate accountUpdate) {
     appStoragePref.setCustomerLoggedIn(true);
-    // Access data safely
     var data = accountUpdate.data;
     if (data != null) {
       String fName = data.firstName ?? "";
