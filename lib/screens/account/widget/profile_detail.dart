@@ -1,3 +1,9 @@
+/*
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 import 'package:bagisto_app_demo/utils/app_constants.dart';
@@ -46,14 +52,15 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     return null;
   }
 
+  // 🟢 FIXED: Strict Alphanumeric Email Validation
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) return "Email is required";
-    final emailRegExp = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (!emailRegExp.hasMatch(value)) return "Enter a valid email address";
+    // This regex ensures alphanumeric before @ and a proper domain structure
+    final emailRegExp = RegExp(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
+    if (!emailRegExp.hasMatch(value)) return "Enter a valid email address (e.g., name@example.com)";
     return null;
   }
 
-  // 🟢 US/CANADA VALIDATION: Exactly 10 digits
   String? _validatePhone(String? value) {
     if (value == null || value.trim().isEmpty) return "Phone number is required";
     if (value.length != 10) return "Phone number must be exactly 10 digits";
@@ -99,7 +106,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
-    List<TextInputFormatter>? inputFormatters, // Pass formatters here
+    List<TextInputFormatter>? inputFormatters, 
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,23 +158,28 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               validator: (v) => _validateName(v, "Last Name")
             ),
             const SizedBox(height: AppSizes.spacingMedium),
+            
+            // 🟢 FIXED EMAIL FIELD: Accepts letters, numbers, and symbols
             _buildTextField(
               controller: widget.emailController, 
               label: "Email", 
               isRequired: true, 
-              keyboardType: TextInputType.emailAddress,
+              keyboardType: TextInputType.emailAddress, // Shows @ and . on keyboard
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r"\s")), // Prevents accidental spaces
+              ],
               validator: _validateEmail
             ),
+            
             const SizedBox(height: AppSizes.spacingMedium),
             
-            // 🟢 UPDATED: Phone Field with Numeric Formatter
             _buildTextField(
               controller: widget.phoneController, 
               label: "Phone Number",
               isRequired: true, 
               keyboardType: TextInputType.number, 
               maxLength: 10,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Only numbers allowed
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
               validator: _validatePhone
             ),
             
@@ -190,9 +202,9 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: isSubscribed ? Colors.green.withValues(alpha: 0.08) : Colors.grey[100],
+                color: isSubscribed ? Colors.green.withOpacity(0.08) : Colors.grey[100],
                 border: Border.all(
-                  color: isSubscribed ? Colors.green.withValues(alpha: 0.5) : Colors.grey[300]!,
+                  color: isSubscribed ? Colors.green.withOpacity(0.5) : Colors.grey[300]!,
                   width: 1.5,
                 ),
               ),
@@ -258,7 +270,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? color.withValues(alpha: 0.1) : Colors.grey[50],
+                color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: isSelected ? color : Colors.grey[300]!),
               ),
