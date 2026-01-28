@@ -90,4 +90,4 @@ dependencies {
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
     implementation 'commons-io:commons-io:2.15.1'
-}
+    }
