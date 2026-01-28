@@ -49,7 +49,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   Widget _buildGenderCard(int index, String label, IconData icon) {
     bool isSelected = (widget.currentGenderValue == index);
     Color color = isSelected ? Colors.blue : Colors.grey;
-    Color bgColor = isSelected ? Colors.blue.withOpacity(0.05) : const Color(0xFFF5F5F5);
+    Color bgColor = isSelected ? Colors.blue.withValues(alpha:0.05) : const Color(0xFFF5F5F5);
     // Use Hex color for safety
     Color borderColor = isSelected ? Colors.blue : const Color(0xFFE0E0E0); 
 
@@ -111,7 +111,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               if (isRequired)
                 const TextSpan(
                   text: ' *',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
                 ),
             ],
           ),
