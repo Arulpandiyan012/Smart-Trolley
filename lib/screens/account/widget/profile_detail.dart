@@ -45,6 +45,8 @@ class ProfileDetailView extends StatefulWidget {
 
 class _ProfileDetailViewState extends State<ProfileDetailView> {
   
+  // --- Validation Logic ---
+
   String? _validateName(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) return "$fieldName is required";
     final nameRegExp = RegExp(r"^[a-zA-Z\s]+$");
@@ -52,12 +54,10 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     return null;
   }
 
-  // 🟢 FIXED: Strict Alphanumeric Email Validation
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) return "Email is required";
-    // This regex ensures alphanumeric before @ and a proper domain structure
     final emailRegExp = RegExp(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
-    if (!emailRegExp.hasMatch(value)) return "Enter a valid email address (e.g., name@example.com)";
+    if (!emailRegExp.hasMatch(value)) return "Enter a valid email address";
     return null;
   }
 
@@ -80,6 +80,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
       });
     }
   }
+
+  // --- UI Helpers ---
 
   Widget _buildFieldLabel(String label, bool isRequired) {
     return RichText(
@@ -158,21 +160,15 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               validator: (v) => _validateName(v, "Last Name")
             ),
             const SizedBox(height: AppSizes.spacingMedium),
-            
-            // 🟢 FIXED EMAIL FIELD: Accepts letters, numbers, and symbols
             _buildTextField(
               controller: widget.emailController, 
               label: "Email", 
               isRequired: true, 
-              keyboardType: TextInputType.emailAddress, // Shows @ and . on keyboard
-              inputFormatters: [
-                FilteringTextInputFormatter.deny(RegExp(r"\s")), // Prevents accidental spaces
-              ],
+              keyboardType: TextInputType.emailAddress,
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r"\s"))],
               validator: _validateEmail
             ),
-            
             const SizedBox(height: AppSizes.spacingMedium),
-            
             _buildTextField(
               controller: widget.phoneController, 
               label: "Phone Number",
@@ -182,7 +178,6 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
               validator: _validatePhone
             ),
-            
             const SizedBox(height: AppSizes.spacingMedium),
             _buildTextField(
               controller: widget.dobController, 
@@ -196,7 +191,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
             _buildGenderChips(),
             const SizedBox(height: AppSizes.spacingLarge),
             
-            // TRENDY NEWSLETTER SECTION
+            // 🟢 UPDATED NEWSLETTER SECTION (High Contrast)
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -213,7 +208,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSubscribed ? Colors.green : Colors.grey[300],
+                      color: isSubscribed ? Colors.green : Colors.grey[400],
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -242,8 +237,12 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
                       ],
                     ),
                   ),
-                  Switch(
+                  // 🟢 Switch with High Visibility Grey path
+                  Switch.adaptive(
                     activeColor: Colors.greenAccent[700],
+                    activeTrackColor: Colors.green[200],
+                    inactiveThumbColor: Colors.grey[100], // Visible light grey knob
+                    inactiveTrackColor: Colors.grey[400], // Clearly visible grey path
                     value: isSubscribed,
                     onChanged: (val) { if (widget.onChanged != null) widget.onChanged!(val); },
                   ),

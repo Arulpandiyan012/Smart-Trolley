@@ -24,9 +24,25 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
       ProductScreenBaseEvent event, Emitter<ProductBaseState> emit) async {
     if (event is FetchProductEvent) {
       try {
-        NewProductsModel? productData = await repository?.getProductDetails([
-          {"key": '"url_key"', "value": '"${event.sku}"'}
-        ]);
+        List<Map<String, dynamic>> filters = [];
+        
+        // If productId is available, use it; otherwise use url_key
+        if (event.productId != null && event.productId! > 0) {
+          filters = [
+            {"key": '"id"', "value": '"${event.productId}"'}
+          ];
+          debugPrint("🔵 Fetching product by ID: ${event.productId}");
+        } else if (event.sku.isNotEmpty) {
+          filters = [
+            {"key": '"url_key"', "value": '"${event.sku}"'}
+          ];
+          debugPrint("🔵 Fetching product by URL Key: ${event.sku}");
+        } else {
+          emit(FetchProductState.fail(error: "No product identifier provided"));
+          return;
+        }
+        
+        NewProductsModel? productData = await repository?.getProductDetails(filters);
         emit(FetchProductState.success(productData: productData?.data?.firstOrNull));
       } catch (e) {
         emit(FetchProductState.fail(error: e.toString()));
