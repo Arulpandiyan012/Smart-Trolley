@@ -21,7 +21,8 @@ import 'package:bagisto_app_demo/screens/checkout/checkout_shipping/bloc/checkou
 
 import 'package:bagisto_app_demo/services/api_client.dart'; 
 import 'package:bagisto_app_demo/screens/checkout/data_model/save_order_model.dart';
-import 'package:dio/dio.dart'; 
+import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; 
 
 class CheckoutScreenFinal extends StatefulWidget {
   final CartScreenBloc? cartScreenBloc;
@@ -123,9 +124,25 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
        String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
        
        var dio = Dio();
+       
+       // 🟢 SEND PHONE NUMBER SO BACKEND CAN SEND SMS/WHATSAPP
+       String phoneToSend = billingPhone ?? shippingPhone ?? "";
+       debugPrint("📞 Sending Phone to Backend: $phoneToSend");
+
+       // 🟢 FETCH FCM TOKEN FOR PUSH NOTIFICATION
+       String? fcmToken;
+       try {
+         fcmToken = await FirebaseMessaging.instance.getToken();
+         debugPrint("🔥 FCM Token: $fcmToken");
+       } catch (e) {
+         debugPrint("⚠️ Failed to get FCM token: $e");
+       }
+
        var formData = FormData.fromMap({
          'cart_id': _latestCartId ?? "0",
-         'customer_id': customerId 
+         'customer_id': customerId,
+         'telephone': phoneToSend,
+         'fcm_token': fcmToken ?? "" // 🟢 SEND TO BACKEND
        });
 
        var response = await dio.post(
