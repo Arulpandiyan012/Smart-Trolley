@@ -48,7 +48,13 @@ class _CartScreenState extends State<CartScreen> {
       debugPrint("🟢 CartScreen: Received Update Event. Waiting 500ms...");
       await Future.delayed(const Duration(milliseconds: 500)); // Wait for backend
       debugPrint("🟢 CartScreen: Fetching Data now...");
-      fetchCartData();
+      if (mounted) fetchCartData();
+    });
+
+    // 🟢 FORCE REFRESH: Ensure shipping fees are loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+       await Future.delayed(const Duration(milliseconds: 500));
+       if (mounted) fetchCartData();
     });
 
     super.initState();
@@ -250,15 +256,43 @@ class _CartScreenState extends State<CartScreen> {
           }
         }
 
-        if (state is UpdateCartState) {
+            if (state is UpdateCartState) {
           if (state.status == CartStatus.success) {
             setState(() => quantityChanged = false);
-            fetchCartData(); 
+
+            if (state.cartDetailsModel?.cart?.formattedPrice != null) {
+               // 🟢 OPTIMIZATION: Use returned cart data directly!
+               _cartDetailsModel = state.cartDetailsModel?.cart;
+               GlobalData.cartCountController.sink.add(_cartDetailsModel?.itemsQty ?? 0);
+               setState(() {});
+               debugPrint("🟢 CartScreen: Updated from API Response (Fast Path)");
+            } else {
+               // Fallback if backend didn't return cart
+               debugPrint("🟠 API missed data. Using Fallback...");
+               Future.delayed(const Duration(milliseconds: 800), () {
+                  fetchCartData();
+               });
+            }
           } else if (state.status == CartStatus.fail) {
             ShowMessage.errorNotification(state.error ?? "", context);
           }
         }
         
+        if (state is RemoveAllCartItemState) {
+          if (state.status == CartStatus.success) {
+            
+            // 🟢 OPTIMIZATION: Immediate Clear (No Re-fetch needed)
+            debugPrint("🟢 CartScreen: Empty Cart Command Success. Clearing UI...");
+            _cartDetailsModel = null;
+            GlobalData.cartCountController.sink.add(0);
+            setState(() {});
+            ShowMessage.successNotification(state.limitMsg ?? "", context);
+
+          } else if (state.status == CartStatus.fail) {
+            ShowMessage.errorNotification(state.error ?? "", context);
+          }
+        }
+
         if (state is AddCouponState) {
            if (state.status == CartStatus.success) {
              fetchCartData(); 

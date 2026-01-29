@@ -41,6 +41,46 @@ class PriceDetailView extends StatelessWidget {
           if (cartDetailsModel.taxTotal > 0)
              _buildRow(StringConstants.tax.localized(), cartDetailsModel.formattedPrice?.taxTotal.toString() ?? ""),
 
+          // 🟢 FIX: Delivery Charges (Robust Calculation)
+          Builder(builder: (context) {
+             String ship = cartDetailsModel.formattedPrice?.shippingAmount ?? "0";
+             
+             // 1. Try direct field
+             if (ship != "₹0.00" && ship != "0" && ship != "") {
+                return _buildRow("Delivery Charges", ship);
+             }
+
+             // 2. Try selected rate
+             var rate = cartDetailsModel.selectedShippingRate?.formattedPrice?.price;
+             if (rate != null && rate.toString() != "₹0.00" && rate.toString() != "0") {
+                return _buildRow("Delivery Charges", rate.toString());
+             }
+
+             // 3. Fallback: Calculate Difference (Grand - (Sub + Tax - Discount))
+             try {
+                double parsePrice(dynamic p) {
+                   if (p == null) return 0.0;
+                   String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); // Remove ₹, args
+                   return double.tryParse(s) ?? 0.0;
+                }
+
+                double grand = parsePrice(cartDetailsModel.formattedPrice?.grandTotal);
+                double sub = parsePrice(cartDetailsModel.formattedPrice?.subTotal);
+                double tax = parsePrice(cartDetailsModel.formattedPrice?.taxAmount ?? cartDetailsModel.taxTotal);
+                double discount = parsePrice(cartDetailsModel.formattedPrice?.discountAmount);
+
+                double calculatedDiff = grand - (sub + tax - discount);
+
+                if (calculatedDiff > 0.5) { // Tolerance for rounding
+                   return _buildRow("Delivery Charges", "₹${calculatedDiff.toStringAsFixed(2)}");
+                }
+             } catch (e) {
+                debugPrint("Price Calc Error: $e");
+             }
+
+             return const SizedBox();
+          }),
+
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12.0),
             child: Divider(height: 1),
