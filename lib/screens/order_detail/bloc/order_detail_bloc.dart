@@ -24,6 +24,11 @@ class OrderDetailBloc extends Bloc<OrderDetailBaseEvent, OrderDetailBaseState> {
       try {
         OrderDetail orderDetailModel = await repository!.getOrderDetails(event.orderId ?? 1);
         
+        // Debug: Confirm that order API only returns 'url' field (which is broken on backend)
+        print('🔍 ORDER DETAIL DEBUG - Order ID: ${event.orderId}');
+        print('   ⚠️ Note: Order API returns urls pointing to /storage/product/ which returns HTTP 500');
+        print('   Solution: Images will show placeholder "No Image" until backend fixes image endpoint');
+        
         bool isSuccess = false;
         if (orderDetailModel.responseStatus is bool) {
           isSuccess = orderDetailModel.responseStatus == true;

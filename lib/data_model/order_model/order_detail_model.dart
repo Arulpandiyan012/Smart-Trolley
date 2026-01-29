@@ -191,15 +191,17 @@ class OrderProduct {
   String? id;
   String? sku;
   String? name;
+  String? urlKey;
   List<Images>? images;
 
-  OrderProduct({this.id, this.sku, this.name, this.images});
+  OrderProduct({this.id, this.sku, this.name, this.urlKey, this.images});
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
      var op = OrderProduct(
        id: json['id']?.toString(),
        sku: json['sku']?.toString(),
        name: json['name']?.toString(),
+       urlKey: json['urlKey']?.toString() ?? json['url_key']?.toString(),
      );
      
      if (json['images'] != null && json['images'] is List) {
@@ -207,6 +209,7 @@ class OrderProduct {
            .map((i) => Images.fromJson(Map<String, dynamic>.from(i)))
            .toList();
      }
+     
      return op;
   }
 
@@ -216,6 +219,7 @@ class OrderProduct {
       'id': id,
       'sku': sku,
       'name': name,
+      'urlKey': urlKey,
       'images': images?.map((i) => i.toJson()).toList(),
     };
   }
@@ -224,13 +228,21 @@ class OrderProduct {
 class Images {
   String? url;
   String? path;
+  String? smallImageUrl;
+  String? mediumImageUrl;
+  String? largeImageUrl;
+  String? originalImageUrl;
 
-  Images({this.url, this.path});
+  Images({this.url, this.path, this.smallImageUrl, this.mediumImageUrl, this.largeImageUrl, this.originalImageUrl});
 
   factory Images.fromJson(Map<String, dynamic> json) {
     return Images(
       url: json['url']?.toString(),
       path: json['path']?.toString(),
+      smallImageUrl: json['smallImageUrl']?.toString() ?? json['small_image_url']?.toString(),
+      mediumImageUrl: json['mediumImageUrl']?.toString() ?? json['medium_image_url']?.toString(),
+      largeImageUrl: json['largeImageUrl']?.toString() ?? json['large_image_url']?.toString(),
+      originalImageUrl: json['originalImageUrl']?.toString() ?? json['original_image_url']?.toString(),
     );
   }
 
@@ -239,6 +251,10 @@ class Images {
     return {
       'url': url,
       'path': path,
+      'smallImageUrl': smallImageUrl,
+      'mediumImageUrl': mediumImageUrl,
+      'largeImageUrl': largeImageUrl,
+      'originalImageUrl': originalImageUrl,
     };
   }
 }
