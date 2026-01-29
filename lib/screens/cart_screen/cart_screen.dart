@@ -15,7 +15,6 @@ import 'package:bagisto_app_demo/screens/sign_in/view/sign_in_screen.dart';
 import 'package:dio/dio.dart'; 
 
 class CartScreen extends StatefulWidget {
-  // 🟢 NEW: Flag to check if opened from Bottom Bar
   final bool isFromBottomNav; 
   
   const CartScreen({Key? key, this.isFromBottomNav = false}) : super(key: key);
@@ -27,14 +26,13 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final TextEditingController _discountController = TextEditingController();
   CartModel? _cartDetailsModel;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   CartScreenBloc? cartScreenBloc;
   bool quantityChanged = false;
   
   String? _deliveryAddress;
   String? _userName;
-  StreamSubscription? _cartSubscription; // 🟢 NEW: Subscription for cart updates
+  StreamSubscription? _cartSubscription;
 
   @override
   void initState() {
@@ -43,15 +41,11 @@ class _CartScreenState extends State<CartScreen> {
     _deliveryAddress = CurrentLocationManager.address;
     _fetchUserName();
     
-    // 🟢 NEW: Listen for global cart updates
     _cartSubscription = GlobalData.cartUpdateStream.stream.listen((_) async {
-      debugPrint("🟢 CartScreen: Received Update Event. Waiting 500ms...");
-      await Future.delayed(const Duration(milliseconds: 500)); // Wait for backend
-      debugPrint("🟢 CartScreen: Fetching Data now...");
+      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) fetchCartData();
     });
 
-    // 🟢 FORCE REFRESH: Ensure shipping fees are loaded
     WidgetsBinding.instance.addPostFrameCallback((_) async {
        await Future.delayed(const Duration(milliseconds: 500));
        if (mounted) fetchCartData();
@@ -60,7 +54,6 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
   }
 
-  // 🟢 NEW: Dispose the subscription
   @override
   void dispose() {
     _cartSubscription?.cancel();
@@ -80,26 +73,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  Future<void> _saveCartAddress(String addressId) async {
-      try {
-        String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
-        String cartId = _cartDetailsModel?.id?.toString() ?? "0";
-
-        var dio = Dio();
-        var formData = FormData.fromMap({
-          'customer_id': customerId,
-          'cart_id': cartId,
-          'address_id': addressId
-        });
-        await dio.post(
-          'https://ecom.thesmartedgetech.com/mobikul-save-checkout-address.php', 
-          data: formData
-        );
-      } catch (e) {
-        debugPrint("Failed to save address: $e");
-      }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ScaffoldMessenger(
@@ -110,10 +83,9 @@ class _CartScreenState extends State<CartScreen> {
           backgroundColor: Colors.white,
           elevation: 0.5,
           centerTitle: false,
-          // 🟢 FIXED: Only show back button if NOT from bottom nav
           automaticallyImplyLeading: false,
           leading: widget.isFromBottomNav 
-              ? null // No back button if it's a tab
+              ? null 
               : IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
                   onPressed: () => Navigator.pop(context),
@@ -124,8 +96,6 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         body: _cartScreenData(context),
-        
-        // This bottom bar (Proceed to Pay) will sit ABOVE the main App Bottom Bar
         bottomNavigationBar: (_cartDetailsModel?.items?.isNotEmpty ?? false)
             ? BlinkitBottomCartBar(
                 currentAddress: _deliveryAddress,
@@ -134,26 +104,19 @@ class _CartScreenState extends State<CartScreen> {
                 quantityChanged: quantityChanged,
                 onChangeAddressTap: _handleAddressChange,
                 onProceedTap: _handleProceedTap,
-                buttonText: appStoragePref.getCustomerLoggedIn() 
-                    ? "Proceed to Pay" 
-                    : "Login Required", 
+                buttonText: appStoragePref.getCustomerLoggedIn() ? "Proceed to Pay" : "Login Required", 
               )
             : null,
       ),
     );
   }
 
+  // Logic handlers (Addresses and Proceed)
   void _handleAddressChange() async {
     bool isLogged = appStoragePref.getCustomerLoggedIn();
-    
     if (!isLogged) {
-      final mapResult = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const DeliveryLocationPage()),
-      );
-      if (mapResult != null && mapResult is Map) {
-         _openAddressForm(mapResult['address']);
-      }
+      final mapResult = await Navigator.push(context, MaterialPageRoute(builder: (_) => const DeliveryLocationPage()));
+      if (mapResult != null && mapResult is Map) _openAddressForm(mapResult['address']);
     } else {
       showModalBottomSheet(
         context: context,
@@ -165,7 +128,6 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ).then((selectedAddress) {
         if (selectedAddress != null && selectedAddress is AddressData) {
-           _saveCartAddress(selectedAddress.id.toString());
            setState(() {
              _deliveryAddress = "${selectedAddress.address1}, ${selectedAddress.city}";
              CurrentLocationManager.address = _deliveryAddress;
@@ -186,93 +148,60 @@ class _CartScreenState extends State<CartScreen> {
           child: AddressDetailsSheet(initialArea: initialAddress),
         ),
       ).then((value) {
-         if (value != null && value is Map) {
-            setState(() {
-               _deliveryAddress = "${value['flatHouseBuilding']}, ${value['area']}";
-               _userName = value['firstName'];
-            });
-         }
+          if (value != null && value is Map) {
+             setState(() {
+                _deliveryAddress = "${value['flatHouseBuilding']}, ${value['area']}";
+                _userName = value['firstName'];
+             });
+          }
       });
   }
 
   void _handleProceedTap() {
-    bool isLogged = appStoragePref.getCustomerLoggedIn();
-
-    if (!isLogged) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SignInScreen()),
-      ).then((_) {
+    if (!appStoragePref.getCustomerLoggedIn()) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const SignInScreen())).then((_) {
         fetchCartData();
         _fetchUserName();
-        setState(() {}); 
       });
       return; 
     }
-
     if (quantityChanged) {
       ShowMessage.warningNotification("Please wait, updating cart...", context);
       return;
     }
-
     if (_deliveryAddress == null) {
       ShowMessage.errorNotification("Please select a delivery address", context);
       return;
     }
-
-    Navigator.pushNamed(
-      context, 
-      checkoutScreen, 
-      arguments: CartNavigationData(
+    Navigator.pushNamed(context, checkoutScreen, arguments: CartNavigationData(
         total: _cartDetailsModel?.formattedPrice?.grandTotal.toString() ?? "0",
         cartDetailsModel: _cartDetailsModel!,
         cartScreenBloc: cartScreenBloc,
-      )
-    );
+    ));
   }
-
 
   _cartScreenData(BuildContext context) {
     return BlocConsumer<CartScreenBloc, CartScreenBaseState>(
       listener: (BuildContext context, CartScreenBaseState state) {
-        if (state is FetchCartDataState) {
-          if (state.status == CartStatus.success) {
+        if (state is FetchCartDataState && state.status == CartStatus.success) {
             _cartDetailsModel = state.cartDetailsModel;
             setState(() {}); 
-          }
         }
 
         if (state is RemoveCartItemState) {
           if (state.status == CartStatus.success) {
             ShowMessage.successNotification(state.removeCartProductModel?.message ?? "", context);
-            GlobalData.cartCountController.sink.add(state.removeCartProductModel?.cart?.itemsQty ?? 0);
-            
-            if (_cartDetailsModel != null) {
-               _cartDetailsModel!.items!.removeWhere((element) => element.id == state.productDeletedId);
-               fetchCartData(); 
-            }
+            fetchCartData(); 
           } else if (state.status == CartStatus.fail) {
              ShowMessage.errorNotification(state.error ?? "", context);
           }
         }
 
-            if (state is UpdateCartState) {
+        if (state is UpdateCartState) {
           if (state.status == CartStatus.success) {
             setState(() => quantityChanged = false);
-
-            if (state.cartDetailsModel?.cart?.formattedPrice != null) {
-               // 🟢 OPTIMIZATION: Use returned cart data directly!
-               _cartDetailsModel = state.cartDetailsModel?.cart;
-               GlobalData.cartCountController.sink.add(_cartDetailsModel?.itemsQty ?? 0);
-               setState(() {});
-               debugPrint("🟢 CartScreen: Updated from API Response (Fast Path)");
-            } else {
-               // Fallback if backend didn't return cart
-               debugPrint("🟠 API missed data. Using Fallback...");
-               Future.delayed(const Duration(milliseconds: 800), () {
-                  fetchCartData();
-               });
-            }
+            _cartDetailsModel = state.cartDetailsModel?.cart;
+            setState(() {});
           } else if (state.status == CartStatus.fail) {
             ShowMessage.errorNotification(state.error ?? "", context);
           }
@@ -280,33 +209,13 @@ class _CartScreenState extends State<CartScreen> {
         
         if (state is RemoveAllCartItemState) {
           if (state.status == CartStatus.success) {
-            
-            // 🟢 OPTIMIZATION: Immediate Clear (No Re-fetch needed)
-            debugPrint("🟢 CartScreen: Empty Cart Command Success. Clearing UI...");
-            _cartDetailsModel = null;
+            _cartDetailsModel = null; // 🟢 Force clear UI
             GlobalData.cartCountController.sink.add(0);
             setState(() {});
-            ShowMessage.successNotification(state.limitMsg ?? "", context);
-
+            ShowMessage.successNotification(state.limitMsg ?? "Cart cleared", context); // 🟢 Uses your new field
           } else if (state.status == CartStatus.fail) {
             ShowMessage.errorNotification(state.error ?? "", context);
           }
-        }
-
-        if (state is AddCouponState) {
-           if (state.status == CartStatus.success) {
-             fetchCartData(); 
-           } else if (state.status == CartStatus.fail) {
-             ShowMessage.errorNotification(state.error ?? "", context);
-           }
-        }
-
-        if (state is RemoveCouponCartState) {
-           if (state.status == CartStatus.success) {
-             fetchCartData(); 
-           } else if (state.status == CartStatus.fail) {
-             ShowMessage.errorNotification(state.error ?? "", context);
-           }
         }
       },
       builder: (BuildContext context, CartScreenBaseState state) {
@@ -315,32 +224,22 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // 🟢 FIXED: This method now handles the "White Screen" by checking for empty data
   Widget buildContainer(BuildContext context, CartScreenBaseState state) {
     if (state is ShowLoaderCartState) return const CartLoaderView();
 
-    if (state is FetchCartDataState && state.status == CartStatus.success) {
-       _cartDetailsModel = state.cartDetailsModel;
-    }
-    
-    if (_cartDetailsModel != null) {
-        _discountController.text = _cartDetailsModel?.couponCode ?? "";
-        GlobalData.cartCountController.sink.add(_cartDetailsModel?.itemsQty ?? 0);
-        return _cartScreenBody(_cartDetailsModel!);
-    }
-
-    return const SizedBox();
-  }
-
-  _cartScreenBody(CartModel cartDetailsModel) {
-    if (cartDetailsModel.items?.isEmpty ?? true) {
+    // 1. If we have no model or the items list is empty, show the Empty View
+    if (_cartDetailsModel == null || (_cartDetailsModel?.items?.isEmpty ?? true)) {
       return EmptyDataView(
         assetPath: AssetConstants.emptyCart,
-        message: StringConstants.emptyCartPageLabel,
+        message: StringConstants.emptyCartPageLabel.localized(),
         showDescription: true,
         width: MediaQuery.of(context).size.width / 1.5,
       );
     }
-    
+
+    // 2. Otherwise, we have data, show the list
+    _discountController.text = _cartDetailsModel?.couponCode ?? "";
     return RefreshIndicator(
       onRefresh: () async => fetchCartData(),
       child: SingleChildScrollView(
@@ -350,17 +249,17 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(
             children: [
               CartListItem(
-                  cartDetailsModel: cartDetailsModel,
+                  cartDetailsModel: _cartDetailsModel!,
                   cartScreenBloc: cartScreenBloc,
               ),
               const SizedBox(height: 16),
               ApplyCouponView(
                 discountController: _discountController,
                 cartScreenBloc: cartScreenBloc,
-                cartDetailsModel: cartDetailsModel,
+                cartDetailsModel: _cartDetailsModel!,
               ),
               const SizedBox(height: 16),
-              PriceDetailView(cartDetailsModel: cartDetailsModel),
+              PriceDetailView(cartDetailsModel: _cartDetailsModel!),
               const SizedBox(height: 20),
               CartActionsView(cartScreenBloc: cartScreenBloc),
               const SizedBox(height: 180), 
