@@ -142,52 +142,53 @@ class CartListItem extends StatelessWidget {
                      const SizedBox(height: 12),
                      
                      // Green Counter Button
-                     Container(
-                       height: 32,
-                       decoration: BoxDecoration(
-                         color: const Color(0xFF0C831F), // Blinkit Green
-                         borderRadius: BorderRadius.circular(6),
-                       ),
-                       child: Row(
-                         mainAxisSize: MainAxisSize.min,
-                         children: [
-                           // Minus
-                           InkWell(
-                             onTap: () {
-                               int currentQty = item?.quantity ?? 1;
-                               if (currentQty > 1) {
-                                 _updateQty(item, currentQty - 1);
-                               } else {
-                                 _onPressRemove(cartDetailsModel, itemIndex, context);
-                               }
-                             },
-                             child: const Padding(
-                               padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
-                               child: Icon(Icons.remove, color: Colors.white, size: 16),
+                     Material(
+                       color: const Color(0xFF0C831F), // Blinkit Green
+                       borderRadius: BorderRadius.circular(6),
+                       clipBehavior: Clip.hardEdge,
+                       child: SizedBox(
+                         height: 32,
+                         child: Row(
+                           mainAxisSize: MainAxisSize.min,
+                           children: [
+                             // Minus
+                             InkWell(
+                               onTap: () {
+                                 int currentQty = item?.quantity ?? 1;
+                                 if (currentQty > 1) {
+                                   _updateQty(item, currentQty - 1);
+                                 } else {
+                                   _onPressRemove(cartDetailsModel, itemIndex, context);
+                                 }
+                               },
+                               child: const Padding(
+                                 padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
+                                 child: Icon(Icons.remove, color: Colors.white, size: 16),
+                               ),
                              ),
-                           ),
-                           
-                           // Qty Text
-                           Padding(
-                             padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                             child: Text(
-                               item?.quantity?.toString() ?? "1",
-                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                             
+                             // Qty Text
+                             Padding(
+                               padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                               child: Text(
+                                 item?.quantity?.toString() ?? "1",
+                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                               ),
                              ),
-                           ),
-                           
-                           // Plus
-                           InkWell(
-                             onTap: () {
-                               int currentQty = item?.quantity ?? 1;
-                               _updateQty(item, currentQty + 1);
-                             },
-                             child: const Padding(
-                               padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
-                               child: Icon(Icons.add, color: Colors.white, size: 16),
+                             
+                             // Plus
+                             InkWell(
+                               onTap: () {
+                                 int currentQty = item?.quantity ?? 1;
+                                 _updateQty(item, currentQty + 1);
+                               },
+                               child: const Padding(
+                                 padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
+                                 child: Icon(Icons.add, color: Colors.white, size: 16),
+                               ),
                              ),
-                           ),
-                         ],
+                           ],
+                         ),
                        ),
                      ),
                      

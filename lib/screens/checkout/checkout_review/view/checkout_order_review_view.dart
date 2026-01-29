@@ -172,6 +172,47 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
                    _buildRow("Taxes", cart?.formattedPrice?.taxAmount ?? ""),
                 if ((cart?.formattedPrice?.discountAmount ?? "0") != "₹0.00")
                    _buildRow("Discount", "- ${cart?.formattedPrice?.discountAmount}", isGreen: true),
+                
+                // 🟢 FIX: Delivery Charges (Robust Calculation)
+                Builder(builder: (context) {
+                   String ship = cart?.formattedPrice?.shippingAmount ?? "0";
+                   
+                   // 1. Try direct field
+                   if (ship != "₹0.00" && ship != "0" && ship != "") {
+                      return _buildRow("Delivery Fees", ship);
+                   }
+
+                   // 2. Try selected rate
+                   var rate = cart?.selectedShippingRate?.formattedPrice?.price;
+                   if (rate != null && rate.toString() != "₹0.00" && rate.toString() != "0") {
+                      return _buildRow("Delivery Fees", rate.toString());
+                   }
+
+                   // 3. Fallback: Calculate Difference (Grand - (Sub + Tax - Discount))
+                   try {
+                      double parsePrice(dynamic p) {
+                         if (p == null) return 0.0;
+                         String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
+                         return double.tryParse(s) ?? 0.0;
+                      }
+
+                      double grand = parsePrice(cart?.formattedPrice?.grandTotal);
+                      double sub = parsePrice(cart?.formattedPrice?.subTotal);
+                      double tax = parsePrice(cart?.formattedPrice?.taxAmount);
+                      double discount = parsePrice(cart?.formattedPrice?.discountAmount);
+
+                      double calculatedDiff = grand - (sub + tax - discount);
+
+                      if (calculatedDiff > 0.5) { // Tolerance for rounding
+                         return _buildRow("Delivery Fees", "₹${calculatedDiff.toStringAsFixed(2)}");
+                      }
+                   } catch (e) {
+                      debugPrint("Price Calc Error: $e");
+                   }
+
+                   return const SizedBox();
+                }),
+                
                 const Divider(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

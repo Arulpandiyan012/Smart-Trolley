@@ -139,6 +139,22 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
 
        if (response.data['success'] == true) {
            var orderId = response.data['order_id'];
+           
+           // 🟢 FIX: Clear Local Cart State
+           GlobalData.cartCountController.sink.add(0);
+           
+           // 🟢 FIX: Notify CartScreen to refresh (it will see empty cart)
+           GlobalData.cartUpdateStream.sink.add(true); 
+
+           // 🟢 FIX: FORCE BACKEND TO CLEAR CART ITEMS
+           // Even if PHP creates order, sometimes items linger in the quote.
+           try {
+              await ApiClient().removeAllCartItem();
+              debugPrint("✅ Forces Backend Cart Clear");
+           } catch (e) {
+              debugPrint("⚠️ Backend Clear Warning: $e");
+           }
+
            if (mounted) {
              Navigator.pushNamedAndRemoveUntil(
                context,

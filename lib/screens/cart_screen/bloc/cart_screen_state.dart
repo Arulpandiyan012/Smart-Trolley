@@ -1,17 +1,14 @@
 /*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
+ * Webkul Software.
+ * @package Mobikul Application Code.
+ * @Category Mobikul
+ * @author Webkul <support@webkul.com>
+ * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
+ * @license https://store.webkul.com/license.html
+ * @link https://store.webkul.com/license.html
  */
 
-
-
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
-
 
 abstract class CartScreenBaseState {}
 enum CartStatus { success, fail }
@@ -28,42 +25,39 @@ class AddCouponState extends CartScreenBaseState {
       : status = CartStatus.success;
 
   AddCouponState.fail({this.error}) : status = CartStatus.fail;
-
 }
 
 class RemoveCouponCartState extends CartScreenBaseState {
-
   CartStatus? status;
   String? error;
   ApplyCoupon? baseModel;
-  String?successMsg;
+  String? successMsg;
 
-  RemoveCouponCartState.success({this.baseModel,this.successMsg}) : status = CartStatus.success;
+  RemoveCouponCartState.success({this.baseModel, this.successMsg}) : status = CartStatus.success;
   RemoveCouponCartState.fail({this.error}) : status = CartStatus.fail;
-
 }
 
-
 class RemoveCartItemState extends CartScreenBaseState {
-
   CartStatus? status;
   String? error;
   AddToCartModel? removeCartProductModel;
   dynamic productDeletedId;
 
-  RemoveCartItemState.success({this.removeCartProductModel,this.productDeletedId}) : status = CartStatus.success;
+  RemoveCartItemState.success({this.removeCartProductModel, this.productDeletedId}) : status = CartStatus.success;
   RemoveCartItemState.fail({this.error}) : status = CartStatus.fail;
-
 }
-class RemoveAllCartItemState extends CartScreenBaseState {
 
+// 🟢 REVISED: Added limitMsg to prevent the getter error
+class RemoveAllCartItemState extends CartScreenBaseState {
   CartStatus? status;
   String? error;
   BaseModel? removeAllCartProductModel;
+  String? limitMsg; // Added this field
 
-  RemoveAllCartItemState.success({this.removeAllCartProductModel}) : status = CartStatus.success;
+  RemoveAllCartItemState.success({this.removeAllCartProductModel, this.limitMsg}) 
+      : status = CartStatus.success;
+
   RemoveAllCartItemState.fail({this.error}) : status = CartStatus.fail;
-
 }
 
 class FetchCartDataState extends CartScreenBaseState {
@@ -76,8 +70,6 @@ class FetchCartDataState extends CartScreenBaseState {
       : status = CartStatus.success;
 
   FetchCartDataState.fail({this.error}) : status = CartStatus.fail;
-
-
 }
 
 class MoveToCartState extends CartScreenBaseState {
@@ -92,7 +84,6 @@ class MoveToCartState extends CartScreenBaseState {
   }) : status = CartStatus.success;
 
   MoveToCartState.fail({this.error}) : status = CartStatus.fail;
-
 }
 
 class UpdateCartState extends CartScreenBaseState {
@@ -105,5 +96,4 @@ class UpdateCartState extends CartScreenBaseState {
       : status = CartStatus.success;
 
   UpdateCartState.fail({this.error}) : status = CartStatus.fail;
-
 }

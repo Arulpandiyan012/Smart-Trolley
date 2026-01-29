@@ -6,8 +6,33 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
-import 'package:bagisto_app_demo/utils/index.dart'; 
+import 'package:bagisto_app_demo/utils/index.dart';
+import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
+import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_bloc.dart';
+import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_event.dart';
+import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_state.dart';
+import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_repository.dart';
+
+// Cache for product images to avoid repeated API calls
+class _ProductImageCache {
+  static final Map<String, String?> _cache = {};
+  
+  static Future<String?> getProductImage(int productId) async {
+    final key = 'product_$productId';
+    if (_cache.containsKey(key)) {
+      return _cache[key];
+    }
+    // Mark as loading to prevent duplicate requests
+    _cache[key] = '';
+    return null;
+  }
+  
+  static void setProductImage(int productId, String? imageUrl) {
+    _cache['product_$productId'] = imageUrl;
+  }
+} 
 
 class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
   final OrderDetail? orderDetailModel;
@@ -129,15 +154,22 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         // 2. ITEMS ORDERED
                         const Text("Items Ordered", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                         const SizedBox(height: 12),
-                        ListView.separated(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: orderDetailModel?.items?.length ?? 0,
-                          separatorBuilder: (context, index) => const Divider(height: 20),
-                          itemBuilder: (context, index) {
-                            return _buildProductItem(orderDetailModel?.items?[index]);
-                          },
-                        ),
+                        if ((orderDetailModel?.items?.length ?? 0) == 0)
+                          const Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Text('No items in this order', style: TextStyle(color: Colors.grey)),
+                          )
+                        else
+                          ListView.separated(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: orderDetailModel?.items?.length ?? 0,
+                            separatorBuilder: (context, index) => const Divider(height: 20),
+                            itemBuilder: (buildContext, index) {
+                              final item = orderDetailModel?.items?[index];
+                              return _buildProductItem(item, buildContext);
+                            },
+                          ),
 
                         const SizedBox(height: 16),
                         const Divider(thickness: 1, height: 1),
@@ -349,43 +381,129 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     );
   }
 
-  Widget _buildProductItem(var item) {
+  Widget _buildProductItem(var item, BuildContext buildContext) {
     if (item == null) return const SizedBox();
-    String imageUrl = "";
-    if ((item.product?.images ?? []).isNotEmpty) {
-        imageUrl = item.product?.images?[0].url ?? "";
-    }
+    
+    final hasProductId = item.product?.id != null && item.product!.id!.isNotEmpty;
+    final hasUrlKey = item.product?.urlKey != null && item.product!.urlKey!.isNotEmpty;
+    final canNavigate = hasProductId || hasUrlKey;
+    final productId = hasProductId ? int.tryParse(item.product?.id ?? "") : null;
 
-    return Row(
-      children: [
-        Container(
-          width: 48, height: 48,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[200]!),
-            image: imageUrl.isNotEmpty 
-              ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-              : null
-          ),
-          child: imageUrl.isEmpty ? const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.grey) : null,
+    return GestureDetector(
+      onTap: () {
+        if (canNavigate) {
+          String? urlKeyToUse = hasUrlKey ? item.product?.urlKey : null;
+          int? productIdToUse = productId;
+          
+          print('✅ NAVIGATION - Product: ${item.product?.name}, ID: ${item.product?.id}, Parsed ID: $productIdToUse, URLKey: $urlKeyToUse');
+          
+          Navigator.pushNamed(buildContext, productScreen,
+            arguments: PassProductData(
+              title: item.product?.name,
+              urlKey: urlKeyToUse,
+              productId: productIdToUse ?? 0
+            )
+          );
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[50],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.name ?? "", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), maxLines: 2),
-              const SizedBox(height: 2),
-              Text("x${item.qtyOrdered}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
-            ],
-          ),
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            // Product Image - Fetch from API instead of broken order endpoint
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[200]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2)
+                  )
+                ]
+              ),
+              child: productId != null && productId > 0
+                ? _ProductImageWidget(productId: productId)
+                : Container(
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: Icon(Icons.shopping_bag_outlined, size: 32, color: Colors.grey)
+                    ),
+                  ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name ?? "", 
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), 
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "SKU: ${item.sku ?? 'N/A'}", 
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: Colors.black54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "x${item.qtyOrdered}", 
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue)
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  item.formattedPrice?.price ?? "", 
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: canNavigate ? Colors.green[50] : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: canNavigate ? Colors.green[200]! : Colors.grey[300]!, 
+                      width: 0.5
+                    )
+                  ),
+                  child: Text(
+                    canNavigate ? "View" : "N/A",
+                    style: TextStyle(
+                      fontSize: 10, 
+                      fontWeight: FontWeight.bold, 
+                      color: canNavigate ? Colors.green : Colors.grey
+                    )
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        Text(
-          item.formattedPrice?.price ?? "", 
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)
-        ),
-      ],
+      ),
     );
   }
 
@@ -429,5 +547,147 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     if (postcode.isNotEmpty) parts.add(postcode);
 
     return parts.join(", ");
+  }
+}
+
+// Separate widget to fetch and cache product images from GraphQL API
+class _ProductImageWidget extends StatefulWidget {
+  final int productId;
+
+  const _ProductImageWidget({required this.productId});
+
+  @override
+  State<_ProductImageWidget> createState() => _ProductImageWidgetState();
+}
+
+class _ProductImageWidgetState extends State<_ProductImageWidget> {
+  String? _cachedImageUrl;
+  bool _isLoading = true;
+  bool _hasFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProductImage();
+  }
+
+  Future<void> _loadProductImage() async {
+    try {
+      // Try to get from cache first
+      final cachedUrl = await _ProductImageCache.getProductImage(widget.productId);
+      if (cachedUrl != null && cachedUrl.isNotEmpty) {
+        setState(() {
+          _cachedImageUrl = cachedUrl;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Fetch product details using the product API
+      // Create a temporary bloc instance to fetch product
+      final productsBloc = ProductScreenBLoc(ProductScreenRepo());
+      productsBloc.add(FetchProductEvent("", productId: widget.productId));
+
+      // Wait for the result
+      await for (final state in productsBloc.stream) {
+        if (state is FetchProductState) {
+          if (state.productData?.images != null && state.productData!.images!.isNotEmpty) {
+            final imageUrl = state.productData!.images![0].url;
+            _ProductImageCache.setProductImage(widget.productId, imageUrl);
+            if (mounted) {
+              setState(() {
+                _cachedImageUrl = imageUrl;
+                _isLoading = false;
+              });
+            }
+          } else {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _hasFailed = true;
+              });
+            }
+          }
+          break;
+        }
+      }
+      productsBloc.close();
+    } catch (e) {
+      print('Error loading product image: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasFailed = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        color: Colors.grey[200],
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.grey[600],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Loading...',
+                style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_hasFailed || _cachedImageUrl == null || _cachedImageUrl!.isEmpty) {
+      return Container(
+        color: Colors.amber[50],
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.broken_image_outlined, size: 32, color: Colors.amber[700]),
+              const SizedBox(height: 2),
+              Text(
+                'No Image',
+                style: TextStyle(fontSize: 9, color: Colors.amber[700]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(7),
+      child: CachedNetworkImage(
+        imageUrl: _cachedImageUrl!,
+        fit: BoxFit.cover,
+        maxHeightDiskCache: 200,
+        maxWidthDiskCache: 200,
+        placeholder: (context, url) => Container(
+          color: Colors.grey[200],
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 1.5),
+          ),
+        ),
+        errorWidget: (context, url, error) {
+          return Container(
+            color: Colors.amber[50],
+            child: Center(
+              child: Icon(Icons.broken_image_outlined, size: 28, color: Colors.amber[700]),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

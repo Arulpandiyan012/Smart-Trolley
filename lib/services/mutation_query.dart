@@ -368,6 +368,60 @@ String cartDetails() {
     }) {
         success
         message
+        cart {
+            id
+            itemsCount
+            itemsQty
+            couponCode
+            taxTotal
+            shippingAddress {
+                firstName
+                lastName
+                address1: address
+                city
+                state
+                country
+                postcode
+                phone
+            }
+            billingAddress {
+                firstName
+                lastName
+                address1: address
+                city
+                state
+                country
+                postcode
+                phone
+            }
+            formattedPrice {
+                grandTotal
+                baseGrandTotal
+                subTotal
+                taxTotal
+                discountAmount
+                discountedSubTotal
+                shippingAmount
+            }
+            selectedShippingRate {
+                methodTitle
+                formattedPrice {
+                    price
+                }
+            }
+            items {
+                id
+                quantity
+                type
+                name
+                formattedPrice {
+                    price
+                    total
+                    taxAmount
+                    discountAmount
+                }
+            }
+        }
       }
     }""";
   }
@@ -378,6 +432,60 @@ String cartDetails() {
     removeCartItem(id: $id) {
         success
         message
+        cart {
+            id
+            itemsCount
+            itemsQty
+            couponCode
+            taxTotal
+            shippingAddress {
+                firstName
+                lastName
+                address1: address
+                city
+                state
+                country
+                postcode
+                phone
+            }
+            billingAddress {
+                firstName
+                lastName
+                address1: address
+                city
+                state
+                country
+                postcode
+                phone
+            }
+            formattedPrice {
+                grandTotal
+                baseGrandTotal
+                subTotal
+                taxTotal
+                discountAmount
+                discountedSubTotal
+                shippingAmount
+            }
+            selectedShippingRate {
+                methodTitle
+                formattedPrice {
+                    price
+                }
+            }
+            items {
+                id
+                quantity
+                type
+                name
+                formattedPrice {
+                    price
+                    total
+                    taxAmount
+                    discountAmount
+                }
+            }
+        }
       }
     }""";
   }
