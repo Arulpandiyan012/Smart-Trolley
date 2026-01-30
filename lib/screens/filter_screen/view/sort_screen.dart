@@ -71,82 +71,84 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Sort By",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                if (value != null && value!.isNotEmpty)
-                  TextButton(
-                    onPressed: () {
-                      _applySort("");
-                    },
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text("Clear", style: TextStyle(fontWeight: FontWeight.w600)),
+      child: SafeArea( // 🟢 Added SafeArea
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Sort By",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          const SizedBox(height: 10),
-
-          // Sort Options List
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: data?.length ?? 0,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (ctx, index) {
-                var itemLabel = data?[index].title ?? "";
-                var itemValue = data?[index].value;
-                bool isSelected = value == itemLabel;
-
-                return InkWell(
-                  onTap: () => _applySort(itemLabel, itemValue),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFF0FDF4) : Colors.white, // Light Green tint if selected
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF16A34A) : Colors.grey.shade300,
-                        width: isSelected ? 1.5 : 1,
-                      ),
+                  if (value != null && value!.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        _applySort("");
+                      },
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text("Clear", style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            itemLabel,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? const Color(0xFF16A34A) : Colors.black87,
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            const SizedBox(height: 10),
+
+            // Sort Options List
+            Flexible( // Changed from Expanded to Flexible for safer bottom sheet behavior
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: data?.length ?? 0,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (ctx, index) {
+                  var itemLabel = data?[index].title ?? "";
+                  var itemValue = data?[index].value;
+                  bool isSelected = value == itemLabel;
+
+                  return InkWell(
+                    onTap: () => _applySort(itemLabel, itemValue),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFF0FDF4) : Colors.white, 
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF16A34A) : Colors.grey.shade300,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              itemLabel,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected ? const Color(0xFF16A34A) : Colors.black87,
+                              ),
                             ),
                           ),
-                        ),
-                        if (isSelected)
-                          const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 20)
-                        else
-                          Icon(Icons.radio_button_off, color: Colors.grey.shade400, size: 20),
-                      ],
+                          if (isSelected)
+                            const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 20)
+                          else
+                            Icon(Icons.radio_button_off, color: Colors.grey.shade400, size: 20),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

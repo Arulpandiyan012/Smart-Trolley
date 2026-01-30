@@ -63,14 +63,16 @@ class _DownloadableOrderFiltersState extends State<DownloadableOrderFilters> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
+    return SafeArea(
+      bottom: true,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
                 mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -265,6 +267,7 @@ class _DownloadableOrderFiltersState extends State<DownloadableOrderFilters> {
           )
         ],
       ),
+    ),
     );
   }
 
@@ -375,4 +378,5 @@ class _DownloadableOrderFiltersState extends State<DownloadableOrderFilters> {
     toDate = formattedDateTo;
   }
 
-}
+
+  }
