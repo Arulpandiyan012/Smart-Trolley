@@ -5,14 +5,13 @@ class OtpExplanationScreen extends StatelessWidget {
   const OtpExplanationScreen({super.key});
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light grey background
       body: Column(
         children: [
-          // ---------------------------------------------------------
           // 1. GREEN HEADER
-          // ---------------------------------------------------------
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -29,7 +28,7 @@ class OtpExplanationScreen extends StatelessWidget {
                 bottomRight: Radius.circular(30),
               ),
             ),
-            padding: const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30), // Dynamic height with padding
+            padding: const EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 20), // Reduced Padding
             child: Column(
               children: [
                  Row(
@@ -47,108 +46,105 @@ class OtpExplanationScreen extends StatelessWidget {
                      ),
                    ],
                  ),
-                 const SizedBox(height: 10), // Reduced spacing
-                 const Icon(Icons.verified_user_outlined, size: 50, color: Colors.white), // Reduced icon size
-                 const SizedBox(height: 10), // Reduced spacing
+                 const SizedBox(height: 5), // Reduced Spacing
+                 const Icon(Icons.verified_user_outlined, size: 40, color: Colors.white), // Reduced Icon Size
+                 const SizedBox(height: 5), // Reduced Spacing
                  const Text(
                    "OTP Verification",
                    style: TextStyle(
                      color: Colors.white,
-                     fontSize: 24,
+                     fontSize: 22, // Slightly Reduced Font
                      fontWeight: FontWeight.bold,
                    ),
                  ),
-                 const SizedBox(height: 8),
+                 const SizedBox(height: 5), // Reduced Spacing
                  Text(
                    "Secure & Fast Login Guide",
                    style: TextStyle(
                      color: Colors.white.withOpacity(0.9),
-                     fontSize: 14,
+                     fontSize: 13, // Slightly Reduced Font
                    ),
                  ),
               ],
             ),
           ),
 
-          // ---------------------------------------------------------
           // 2. SCROLLABLE CONTENT (STEPS)
-          // ---------------------------------------------------------
           Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  _buildStepCard(
+                    context,
+                    step: "01",
+                    icon: Icons.dialpad,
+                    iconColor: Colors.blue,
+                    iconBg: Colors.blue.withOpacity(0.1),
+                    title: "Enter Mobile Number",
+                    subtitle: "Enter your 10-digit number on the login screen.",
+                  ),
+                  const SizedBox(height: 10),
+                  _buildStepCard(
+                    context,
+                    step: "02",
+                    icon: Icons.chat_bubble_outline,
+                    iconColor: Colors.orange,
+                    iconBg: Colors.orange.withOpacity(0.1),
+                    title: "Receive SMS Code",
+                    subtitle: "You will receive a 6-digit OTP via SMS.",
+                  ),
+                  const SizedBox(height: 10),
+                  _buildStepCard(
+                    context,
+                    step: "03",
+                    icon: Icons.lock_outline,
+                    iconColor: Colors.green,
+                    iconBg: Colors.green.withOpacity(0.1),
+                    title: "Enter Verification Code",
+                    subtitle: "Type the code to verify your identity instantly.",
+                  ),
+                  const SizedBox(height: 10),
+                   _buildStepCard(
+                    context,
+                    step: "04",
+                    icon: Icons.support_agent,
+                    iconColor: Colors.purple,
+                    iconBg: Colors.purple.withOpacity(0.1),
+                    title: "Need Help?",
+                    subtitle: "Didn't get it? Wait 30s and tap 'Resend'.",
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+
+          // 3. BOTTOM BUTTON (Pinned)
+          Container(
+            padding: const EdgeInsets.all(20),
+            color: Colors.white, // Ensure visibility over background
             child: SafeArea(
               top: false,
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(), // Scroll only if needed to avoid crash
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Column(
-                  children: [
-                    _buildStepCard(
-                      context,
-                      step: "01",
-                      icon: Icons.dialpad,
-                      iconColor: Colors.blue,
-                      iconBg: Colors.blue.withOpacity(0.1),
-                      title: "Enter Mobile Number",
-                      subtitle: "Enter your 10-digit number on the login screen.",
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B5E20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 10),
-                    _buildStepCard(
-                      context,
-                      step: "02",
-                      icon: Icons.chat_bubble_outline,
-                      iconColor: Colors.orange,
-                      iconBg: Colors.orange.withOpacity(0.1),
-                      title: "Receive SMS Code",
-                      subtitle: "You will receive a 6-digit OTP via SMS.",
+                  ),
+                  child: const Text(
+                    "Got it!",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                    const SizedBox(height: 10),
-                    _buildStepCard(
-                      context,
-                      step: "03",
-                      icon: Icons.lock_outline,
-                      iconColor: Colors.green,
-                      iconBg: Colors.green.withOpacity(0.1),
-                      title: "Enter Verification Code",
-                      subtitle: "Type the code to verify your identity instantly.",
-                    ),
-                    const SizedBox(height: 10),
-                     _buildStepCard(
-                      context,
-                      step: "04",
-                      icon: Icons.support_agent,
-                      iconColor: Colors.purple,
-                      iconBg: Colors.purple.withOpacity(0.1),
-                      title: "Need Help?",
-                      subtitle: "Didn't get it? Wait 30s and tap 'Resend'.",
-                    ),
-                    
-                    const SizedBox(height: 20),
-
-                    // ---------------------------------------------------------
-                    // 3. BOTTOM BUTTON
-                    // ---------------------------------------------------------
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B5E20), // Dark Green
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Got it!",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -167,7 +163,7 @@ class OtpExplanationScreen extends StatelessWidget {
     required String subtitle,
   }) {
     return Container(
-      padding: const EdgeInsets.all(10), // Reduced from 12
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -198,14 +194,19 @@ class OtpExplanationScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    Expanded( // 🟢 FIX: Prevent Overflow
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1, // Optional: Limit lines if needed
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8), // Spacing
                     Text(
                       step,
                       style: TextStyle(

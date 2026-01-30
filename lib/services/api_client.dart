@@ -642,8 +642,20 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     try {
       var url = Uri.parse("$baseDomain/mobikul-orders-api.php");
       String customerId = appStoragePref.getCustomerId().toString();
-      debugPrint("🚀 FETCHING ORDERS (PHP) - Customer: $customerId, Page: $page");
-      var response = await http.post(url, body: {"customer_id": customerId, "page": page.toString()});
+      debugPrint("🚀 FETCHING ORDERS (PHP) - Customer: $customerId, Page: $page, Status: $status");
+      
+      Map<String, String> bodyParams = {
+        "customer_id": customerId,
+        "page": page.toString()
+      };
+
+      if (status != null && status.isNotEmpty) bodyParams["status"] = status;
+      if (id != null && id.isNotEmpty) bodyParams["order_id"] = id;
+      if (startDate != null && startDate.isNotEmpty) bodyParams["from_date"] = startDate;
+      if (endDate != null && endDate.isNotEmpty) bodyParams["to_date"] = endDate;
+      if (total != null && total > 0) bodyParams["total"] = total.toString();
+
+      var response = await http.post(url, body: bodyParams);
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         if (jsonResponse['success'] == true && jsonResponse['data'] != null) {

@@ -185,23 +185,8 @@ class _DrawerListViewState extends State<DrawerListView> {
     ));
     }
 
-    if(widget.isLoggedIn) {
-      drawerList.add(DrawerAddItemList(
-      onTap: () {
-        checkInternetConnection().then((value) {
-          if (value) {
-            Navigator.pushNamed(context, downloadableProductScreen);
-          } else {
-            ShowMessage.showNotification(StringConstants.failed.localized(),
-                StringConstants.internetIssue.localized(),
-                Colors.red, const Icon(Icons.cancel_outlined));
-          }
-        });
-      },
-      icon: Icons.download_outlined,
-      subTitle: StringConstants.downloadableProductsList,
-    ));
-    }
+    // 🔴 REMOVED: Downloadable Products Link
+
 
     if(widget.isLoggedIn) {
       drawerList.add(DrawerAddItemList(

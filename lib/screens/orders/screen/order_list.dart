@@ -51,8 +51,18 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
       StringConstants.pendingPayment.localized(),
       StringConstants.fraud.localized()
     ];
+
+    _quickFilters = [
+      {"label": StringConstants.all.localized(), "value": ""},
+      {"label": StringConstants.pending.localized(), "value": "pending"},
+      {"label": "Delivered", "value": "completed"},
+      {"label": StringConstants.canceled.localized(), "value": "canceled"},
+    ];
     super.initState();
   }
+
+  int _selectedTabIndex = 0;
+  List<Map<String, dynamic>> _quickFilters = [];
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +131,66 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                   )
                 ],
               ),
-        body: _orderList(context));
+        body: Column(
+          children: [
+            if (widget.isFromDashboard != true) _buildTopStatusTabs(),
+            Expanded(child: _orderList(context)),
+          ],
+        ));
+  }
+
+  Widget _buildTopStatusTabs() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: List.generate(_quickFilters.length, (index) {
+            bool isSelected = _selectedTabIndex == index;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedTabIndex = index;
+                  page = 1; // Reset page
+                });
+                _fetchOrdersByStatus(_quickFilters[index]['value']);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF0C831F) : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF0C831F) : Colors.transparent
+                  )
+                ),
+                child: Text(
+                  _quickFilters[index]['label'],
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  void _fetchOrdersByStatus(String statusKey) {
+     orderListBloc?.add(FetchOrderListEvent(
+          id: "",
+          status: statusKey,
+          startDate: "",
+          endDate: "",
+          total: 0,
+          page: 1));
   }
 
   ///bloc method
@@ -164,7 +233,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
       page++;
       orderListBloc?.add(FetchOrderListEvent(
           id: "",
-          status: "",
+          status: _quickFilters[_selectedTabIndex]['value'],
           startDate: "",
           endDate: "",
           total: 0,
@@ -185,7 +254,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
           return Future.delayed(const Duration(seconds: 1), () {
             orderListBloc?.add(FetchOrderListEvent(
                 id: "",
-                status: "",
+                status: _quickFilters[_selectedTabIndex]['value'],
                 startDate: "",
                 endDate: "",
                 total: 0,
@@ -467,6 +536,6 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
 
   fetchOrder() async {
     orderListBloc?.add(FetchOrderListEvent(
-        id: "", status: "", startDate: "", endDate: "", total: 0, page: 1));
+        id: "", status: _quickFilters[_selectedTabIndex]['value'], startDate: "", endDate: "", total: 0, page: 1));
   }
 }
