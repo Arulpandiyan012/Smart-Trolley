@@ -194,79 +194,19 @@ class _ProductViewState extends State<ProductView> {
                     productData: widget.productData,
                     isLoggedIn: widget.isLoggedIn,
                   ),
-                  if ((widget.productData?.reviews?.length ?? 0) > 0)
-                    Card(
-                      child: ExpansionTile(
-                        iconColor: Theme.of(context).colorScheme.onPrimary,
-                        title: Text(
-                          StringConstants.reviews.localized(),
-                          style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w600,fontSize: AppSizes.spacingLarge),
-                        ),
-                        initiallyExpanded: true,
-                        children: [
-                          SizedBox(
-                            child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: widget.productData?.reviews?.length ?? 0,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16.0, vertical: 4),
-                                        child: Text(
-                                          widget.productData?.reviews?[index].title ??
-                                              "",
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: AppSizes.spacingMedium),
-                                        child: RatingBar(
-                                          starCount: 5,
-                                          isCenter: false,
-                                          size:AppSizes.spacingLarge,
-                                          color: Theme.of(context).colorScheme.onPrimary,
-                                          rating: num.tryParse(
-                                              widget.productData
-                                                  ?.reviews?[index]
-                                                  .rating
-                                                  .toString() ??
-                                                  '0.0')
-                                              ?.toDouble() ??
-                                              0.0,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: AppSizes.spacingLarge, vertical: AppSizes.spacingSmall),
-                                        child: Text(widget.productData
-                                                ?.reviews?[index].comment ??
-                                            ""),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16.0, vertical: 4),
-                                        child: Text("${StringConstants.reviewBy.localized()} ${widget.productData?.reviews?[index].customerName ?? ""} , ${widget.productData?.reviews?[index].createdAt ?? ""}"),
-                                      ),
-                                      const SizedBox(
-                                        height: 8,
-                                      )
-                                    ],
-                                  );
-                                }),
-                          ),
-                        ],
-                      ),
-                    ),
+                  // 🟢 UPDATED: Use Unified Review Summary View
+                  if (widget.productData != null)
+                   ProductReviewSummaryView(
+                     review: widget.productData!.reviews,
+                     productId: widget.productData!.id,
+                     averageRating: widget.productData!.averageRating,
+                     percentage: widget.productData!.percentageRating,
+                     productName: widget.productData!.name,
+                     productImage: (widget.productData!.images?.isNotEmpty ?? false) 
+                        ? widget.productData!.images![0].url 
+                        : "",
+                     isLogin: appStoragePref.getCustomerLoggedIn(),
+                   ),
                 ],
               ),
             ),

@@ -849,8 +849,48 @@ Future<BaseModel?> cancelOrder(int orderId) async {
   }
 
   Future<AddReviewModel?> addReview(String name, String title, int rating, String comment, int productId, List<Map<String, String>> attachments) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.addReview(name = name, title = title, rating = rating, comment = comment, productId = productId, attachments = attachments)), fetchPolicy: FetchPolicy.networkOnly));
-    return handleResponse(response, 'createReview', (json) => AddReviewModel.fromJson(json));
+    // 🟢 CUSTOM PHP API: Bypass GraphQL for Review due to Auth issues
+    try {
+      String customerId = appStoragePref.getCustomerId().toString(); 
+      String token = appStoragePref.getCustomerToken() ?? "";
+
+      var url = Uri.parse("$baseDomain/mobikul-review-api.php");
+      debugPrint("🚀 SUBMITTING REVIEW (PHP): $url (Cust: $customerId, Prod: $productId)");
+
+      var body = {
+        "customer_id": customerId,
+        "token": token,
+        "product_id": productId.toString(),
+        "name": name,
+        "title": title,
+        "rating": rating.toString(),
+        "comment": comment,
+        "attachments": jsonEncode(attachments)
+      };
+
+      var response = await http.post(url, body: body);
+      debugPrint("🚀 REVIEW RESPONSE: ${response.body}");
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['success'] == true) {
+            return AddReviewModel(
+              success: true, 
+              message: jsonResponse['message'] ?? "Review Submitted Successfully",
+            );
+        } else {
+             return AddReviewModel(
+              success: false, 
+              message: jsonResponse['message'] ?? "Failed to submit review",
+            );
+        }
+      } else {
+        return AddReviewModel(success: false, message: "Server Error: ${response.statusCode} - ${response.reasonPhrase}");
+      }
+    } catch (e) {
+      debugPrint("❌ REVIEW ERROR: $e");
+      return AddReviewModel(success: false, message: "App Error: $e");
+    }
   }
 
   Future<DownloadableProductModel?> getCustomerDownloadableProducts(int page, int limit, {String? title, String? status, String? orderId, String? orderDateFrom, String? orderDateTo}) async {
