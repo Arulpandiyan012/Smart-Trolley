@@ -25,7 +25,7 @@ class AddReviewModel extends BaseModel{
   // String? success;
   Review? review;
 
-  AddReviewModel({ this.review});
+  AddReviewModel({this.review, bool? success, String? message}) : super(success: success, message: message);
   factory AddReviewModel.fromJson(Map<String, dynamic> json) => _$AddReviewModelFromJson(json);
 
   @override

@@ -56,11 +56,12 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
     return Theme(
       data:Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        iconColor: Theme.of(context).colorScheme.onPrimary,
+        iconColor: Colors.black87, // 🟢 FIX: Visible Icon
+        collapsedIconColor: Colors.black87,
         tilePadding:const EdgeInsets.symmetric(horizontal: AppSizes.spacingLarge) ,
         title: Text(
           StringConstants.customerRating.localized(),
-          style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600,fontSize: AppSizes.spacingLarge),
+          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600, fontSize: AppSizes.spacingLarge),
         ),
         initiallyExpanded: true,
         children: [
@@ -93,11 +94,12 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                               ),
 
                               const SizedBox(height: 6),
-                              Text(
+                                  Text(
                                   "${widget.averageRating?.toString() ?? ''} Rating & "
                                   "${widget.review?.length.toString() ?? ''} Reviews",
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 12
+                                    fontSize: 12,
+                                    color: Colors.grey[800] // 🟢 Explicit Color
                                   )),
                               const SizedBox(height: 8),
                             ]),
@@ -108,38 +110,160 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                     Padding(
                         padding: EdgeInsets.fromLTRB(
                             8, ((widget.review?.length ?? 0) > 0 ? 8 : 0), 0, 0),
-                        child: TextButton(
-                            style: ButtonStyle(
-                                padding: MaterialStateProperty.all<EdgeInsets>(
-                                    const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 15)),
-                                foregroundColor: MaterialStateProperty.all<Color>(
-                                    Theme.of(context).colorScheme.onBackground),
-                                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8.0),
-                                        side: BorderSide(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onBackground)))),
-                            onPressed: () {
-                              widget.isLogin ?? false
-                                  ? Navigator.pushNamed(context, addReviewScreen,
-                                      arguments: AddReviewDetail(
-                                          imageUrl: widget.productImage,
-                                          productId: widget.productId,
-                                          productName: widget.productName))
-                                  : ScaffoldMessenger.of(context)
-                                      .showSnackBar(SnackBar(
-                                      content:
-                                          Text(StringConstants.pleaseLoginReview.localized()),
-                                      duration: const Duration(seconds: 3),
-                                    ));
-                            },
-                            child: Text(StringConstants.writeReview.localized().toUpperCase(), style: const TextStyle(fontSize: 17)))),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFF0C831F), width: 1.2),
+                                backgroundColor: const Color(0xFFF0FDF4), // Very light green tint
+                                foregroundColor: const Color(0xFF0C831F),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                widget.isLogin ?? false
+                                    ? Navigator.pushNamed(context, addReviewScreen,
+                                        arguments: AddReviewDetail(
+                                            imageUrl: widget.productImage,
+                                            productId: widget.productId,
+                                            productName: widget.productName))
+                                    : ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                        content:
+                                            Text(StringConstants.pleaseLoginReview.localized()),
+                                        duration: const Duration(seconds: 3),
+                                      ));
+                              },
+                              icon: const Icon(Icons.edit_note, size: 20),
+                              label: Text(
+                                StringConstants.writeReview.localized().toUpperCase(), 
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5)
+                              ),
+                          ),
+                        )),
                   ])),
+          
+          // 🟢 ADDED: Review List
+          if ((widget.review?.length ?? 0) > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingNormal),
+              child: ListView.separated(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: (widget.review!.length > 3) ? 3 : widget.review!.length,
+                separatorBuilder: (ctx, index) => const Divider(),
+                itemBuilder: (context, index) {
+                  var item = widget.review![index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            RatingBar(
+                              starCount: 5,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              rating: double.tryParse(item.rating?.toString() ?? "0.0") ?? 0.0,
+                              size: 14,
+                            ),
+                            const Spacer(),
+                            Text(item.createdAt ?? "", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(item.title ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                        const SizedBox(height: 4),
+                        Text(item.comment ?? "", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                        const SizedBox(height: 6),
+                        Text("${StringConstants.reviewBy.localized()} ${item.customerName ?? item.title ?? 'Guest'}", 
+                            style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+          if ((widget.review?.length ?? 0) > 3)
+            Padding(
+               padding: const EdgeInsets.all(8.0),
+               child: TextButton(
+                 onPressed: () {
+                    _showAllReviews(context);
+                 }, 
+                 child: const Text("View All Reviews", style: TextStyle(color: Color(0xFF0C831F), fontWeight: FontWeight.bold))
+               ),
+            ),
+             
+          const SizedBox(height: 10),
         ],
       ),
+    );
+  }
+
+  void _showAllReviews(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text("All Reviews (${widget.review?.length})", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                const Divider(),
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollController,
+                    itemCount: widget.review?.length ?? 0,
+                    separatorBuilder: (ctx, index) => const Divider(),
+                    padding: const EdgeInsets.all(16),
+                    itemBuilder: (context, index) {
+                      var item = widget.review![index];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              RatingBar(
+                                starCount: 5,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                rating: double.tryParse(item.rating?.toString() ?? "0.0") ?? 0.0,
+                                size: 14,
+                              ),
+                              const Spacer(),
+                              Text(item.createdAt ?? "", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(item.title ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                          const SizedBox(height: 4),
+                          Text(item.comment ?? "", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                          const SizedBox(height: 6),
+                          Text("${StringConstants.reviewBy.localized()} ${item.customerName ?? item.title ?? 'Guest'}", 
+                              style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
