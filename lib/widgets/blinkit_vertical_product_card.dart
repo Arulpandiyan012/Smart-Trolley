@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/utils/index.dart'; 
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
+import 'package:bagisto_app_demo/utils/app_global_data.dart';
 
 class BlinkitVerticalProductCard extends StatelessWidget {
   final dynamic data;
@@ -123,24 +124,38 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                 Positioned(
                   top: 4,
                   right: 4,
-                  child: InkWell(
-                    onTap: () {
-                       if (onAddToWishlist != null) {
-                         onAddToWishlist!(productId.toString(), isInWishlist, data);
-                       }
-                    },
-                    child: Container(
-                      width: 24, height: 24,
-                      decoration: const BoxDecoration(
-                         shape: BoxShape.circle,
-                         color: Colors.transparent, 
-                      ),
-                      child: Icon(
-                        isInWishlist ? Icons.favorite : Icons.favorite_border, 
-                        size: 16, 
-                        color: isInWishlist ? Colors.red : Colors.grey[400]
-                      ),
-                    ),
+                  child: StreamBuilder<Set<String>>(
+                    stream: GlobalData.wishlistUpdateStream,
+                    builder: (context, snapshot) {
+                      // Use global set if available, otherwise fallback to local data
+                      final currentWishlist = snapshot.data ?? GlobalData.wishlistProductIds;
+                      bool active = currentWishlist.contains(productId.toString());
+                      
+                      // If stream hasn't fired yet but we have data in card, use that as secondary fallback
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                         active = active || isInWishlist;
+                      }
+
+                      return InkWell(
+                        onTap: () {
+                           if (onAddToWishlist != null) {
+                             onAddToWishlist!(productId.toString(), active, data);
+                           }
+                        },
+                        child: Container(
+                          width: 24, height: 24,
+                          decoration: const BoxDecoration(
+                             shape: BoxShape.circle,
+                             color: Colors.transparent, 
+                          ),
+                          child: Icon(
+                            active ? Icons.favorite : Icons.favorite_border, 
+                            size: 16, 
+                            color: active ? Colors.red : Colors.grey[400]
+                          ),
+                        ),
+                      );
+                    }
                   ),
                 ),
                 

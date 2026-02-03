@@ -10,6 +10,7 @@
 
 import 'package:bagisto_app_demo/data_model/account_models/account_info_details.dart';
 import 'package:bagisto_app_demo/screens/drawer/utils/index.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 import '../../utils/server_configuration.dart';
 import '../../utils/shared_preference_keys.dart';
 
@@ -95,7 +96,7 @@ class _DrawerListViewState extends State<DrawerListView> {
               Padding(
                       padding: const EdgeInsets.all(AppSizes.spacingNormal),
                       child: CircleAvatar(
-                        foregroundImage: NetworkImage(widget.image ?? ""),
+                        foregroundImage: ImageView.getImageProvider(widget.image),
                         backgroundImage: const AssetImage(AssetConstants.userPlaceHolder),
                       )
                     ),

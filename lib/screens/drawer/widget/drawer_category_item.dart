@@ -11,6 +11,7 @@
 
 
 import 'package:bagisto_app_demo/screens/drawer/utils/index.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 
 class DrawerCategoryItem extends StatefulWidget {
   final HomeCategories element;
@@ -54,9 +55,7 @@ class _DrawerCategoryItemState extends State<DrawerCategoryItem> {
               ),
               contentPadding: const EdgeInsets.fromLTRB(8, 0, 20, 0),
               leading: CircleAvatar(
-                foregroundImage: NetworkImage(
-                    widget.element.logoUrl ?? ""
-                ),
+                foregroundImage: ImageView.getImageProvider(widget.element.logoUrl),
                 backgroundImage: const AssetImage(AssetConstants.placeHolder),
               ),
               onTap: (){

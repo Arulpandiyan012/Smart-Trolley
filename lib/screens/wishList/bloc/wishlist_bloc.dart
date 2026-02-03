@@ -11,6 +11,7 @@
 import 'package:bagisto_app_demo/screens/wishList/utils/index.dart';
 
 import '../../cart_screen/cart_model/cart_data_model.dart';
+import 'package:bagisto_app_demo/utils/app_global_data.dart';
 
 class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
   WishListRepository? repository;
@@ -25,6 +26,7 @@ class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
       try {
         WishListData? wishListData = await repository?.callWishListApi();
         if (wishListData?.status == true) {
+          _syncGlobalWishlist(wishListData);
           emit(FetchDataState.success(wishListProducts: wishListData));
         } else {
           emit(FetchDataState.fail(
@@ -72,6 +74,8 @@ class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
       try {
         BaseModel? baseModel = await repository?.removeAllWishListProducts();
         if (baseModel?.success == true) {
+          GlobalData.wishlistProductIds.clear();
+          GlobalData.wishlistUpdateStream.add({});
           emit(RemoveAllWishlistProductState.success(
               baseModel: baseModel, successMsg: baseModel?.message));
         } else {
@@ -90,6 +94,19 @@ class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
         emit(FetchCartCountState.fail(
             error: StringConstants.somethingWrong.localized()));
       }
+    }
+  }
+
+  void _syncGlobalWishlist(WishListData? data) {
+    if (data?.data != null) {
+      Set<String> ids = {};
+      for (var item in data!.data!) {
+        if (item.productId != null) {
+          ids.add(item.productId!);
+        }
+      }
+      GlobalData.wishlistProductIds = ids;
+      GlobalData.wishlistUpdateStream.add(ids);
     }
   }
 }

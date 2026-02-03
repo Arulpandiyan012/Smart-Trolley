@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import 'package:bagisto_app_demo/utils/index.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
@@ -668,25 +669,9 @@ class _ProductImageWidgetState extends State<_ProductImageWidget> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(7),
-      child: CachedNetworkImage(
-        imageUrl: _cachedImageUrl!,
+      child: ImageView(
+        url: _cachedImageUrl,
         fit: BoxFit.cover,
-        maxHeightDiskCache: 200,
-        maxWidthDiskCache: 200,
-        placeholder: (context, url) => Container(
-          color: Colors.grey[200],
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 1.5),
-          ),
-        ),
-        errorWidget: (context, url, error) {
-          return Container(
-            color: Colors.amber[50],
-            child: Center(
-              child: Icon(Icons.broken_image_outlined, size: 28, color: Colors.amber[700]),
-            ),
-          );
-        },
       ),
     );
   }

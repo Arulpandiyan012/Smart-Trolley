@@ -524,14 +524,55 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var response = await http.get(url);
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
+        debugPrint("🔍 WISHLIST RAW RESPONSE: ${jsonResponse.toString().substring(0, 200)}...");
+        
         if (jsonResponse['success'] == true) {
-             var wishListModel = WishListData.fromJson(jsonResponse['data']);
+             // 🟢 ROBUST FIX: Handle nested data structure {data: {data: [...]}}
+             List<dynamic> items = [];
+             
+             var dataField = jsonResponse['data'];
+             
+             // Check if data is nested (has a 'data' property inside)
+             if (dataField is Map && dataField.containsKey('data')) {
+                debugPrint("🔍 Detected nested data structure");
+                dataField = dataField['data']; // Extract inner data
+             }
+             
+             // Now handle the actual items
+             if (dataField is List) {
+                items = dataField;
+             } else if (dataField is Map) {
+                // Single item as a map, wrap it in a list
+                items = [dataField];
+             }
+             
+             debugPrint("🔍 WISHLIST ITEMS COUNT: ${items.length}");
+             
+             // Ensure images are found
+             for(var item in items) {
+                var p = item['product'];
+                if (p != null) {
+                   debugPrint("🔍 Product keys: ${p.keys.toList()}");
+                   String? bestUrl = p['imageUrl'] ?? p['base_image_url'] ?? p['small_image_url'] ?? p['base_image'];
+                   debugPrint("🔍 Best URL found: $bestUrl");
+                   if (bestUrl != null && (p['images'] == null || (p['images'] as List).isEmpty)) {
+                      p['images'] = [{"url": bestUrl}];
+                      debugPrint("💚 Injected image URL for wishlist item: $bestUrl");
+                   }
+                }
+             }
+             
+             // Wrap data array in proper structure for model
+             var wishListModel = WishListData.fromJson({'data': items});
              wishListModel.status = true;
              wishListModel.success = true;
              return wishListModel;
         }
       }
-    } catch (e) { debugPrint("❌ FETCH WISHLIST ERROR: $e"); }
+    } catch (e, stackTrace) { 
+      debugPrint("❌ FETCH WISHLIST ERROR: $e"); 
+      debugPrint("Stack: $stackTrace");
+    }
     return WishListData(data: []);
   }
 

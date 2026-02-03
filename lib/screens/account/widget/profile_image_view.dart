@@ -9,6 +9,7 @@
  */
 
 import 'package:bagisto_app_demo/screens/account/utils/index.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 
 class ProfileImageView extends StatefulWidget {
   final Function(String? base64string)? callback;
@@ -52,9 +53,7 @@ class _ProfileImageViewState extends State<ProfileImageView> {
               backgroundColor: Colors.grey[200],
               backgroundImage: (image != null)
                   ? FileImage(File(image!.path))
-                  : (profileImageEdit.isNotEmpty)
-                      ? NetworkImage('$profileImageEdit?${DateTime.now().millisecondsSinceEpoch.toString()}') as ImageProvider
-                      : const AssetImage(AssetConstants.customerProfilePlaceholder),
+                  : ImageView.getImageProvider(profileImageEdit, fallbackAsset: AssetConstants.customerProfilePlaceholder),
             ),
           ),
 

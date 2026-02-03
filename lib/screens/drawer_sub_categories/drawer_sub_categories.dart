@@ -328,7 +328,7 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.grey[100],
-                  foregroundImage: NetworkImage(parent.logoUrl ?? ""),
+                  foregroundImage: ImageView.getImageProvider(parent.logoUrl),
                   backgroundImage: const AssetImage(AssetConstants.placeHolder),
                 ),
                 const SizedBox(height: 8),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bagisto_app_demo/screens/dashboard/utils/index.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 
 class DashboardHeaderView extends StatefulWidget {
   const DashboardHeaderView({Key? key}) : super(key: key);
@@ -50,19 +51,11 @@ class _DashboardHeaderViewState extends State<DashboardHeaderView> {
                   border: Border.all(color: Colors.grey.shade200, width: 1.5),
                 ),
                 child: ClipOval(
-                  child: (image != null && image!.isNotEmpty)
-                      ? CachedNetworkImage(
-                          fit: BoxFit.cover,
-                          imageUrl: image!,
-                          placeholder: (context, url) =>
-                              Image.asset(AssetConstants.customerProfilePlaceholder),
-                          errorWidget: (context, url, error) =>
-                              Image.asset(AssetConstants.customerProfilePlaceholder),
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.asset(AssetConstants.customerProfilePlaceholder),
-                        ),
+                  child: ImageView(
+                    url: image,
+                    fit: BoxFit.cover,
+                    placeHolder: AssetConstants.customerProfilePlaceholder,
+                  ),
                 ),
               ),
               

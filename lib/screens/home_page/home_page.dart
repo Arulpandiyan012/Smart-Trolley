@@ -29,6 +29,7 @@ import 'package:bagisto_app_demo/services/api_client.dart';
 // 🟢 Search Imports
 import 'package:bagisto_app_demo/screens/search_screen/view/search_screen.dart';
 import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart' hide Status; 
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -363,9 +364,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.grey[100],
                               ),
                               child: Center(
-                                child: isLoggedIn && image != null 
-                                  ? CircleAvatar(backgroundImage: NetworkImage(image!), radius: 18)
-                                  : Icon(Icons.person, color: Colors.black87, size: 24),
+                                  child: isLoggedIn && image != null 
+                                    ? CircleAvatar(
+                                        backgroundImage: ImageView.getImageProvider(image), 
+                                        radius: 18
+                                      )
+                                    : const Icon(Icons.person, color: Colors.black87, size: 24),
                               ),
                             ),
                           ),

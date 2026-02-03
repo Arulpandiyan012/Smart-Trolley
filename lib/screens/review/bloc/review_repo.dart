@@ -43,8 +43,12 @@ class ReviewsRepositoryImp implements ReviewsRepository {
              List<dynamic> rawData = jsonResponse['data'] ?? [];
              List<ReviewData> reviews = [];
 
-             for (var item in rawData) {
-               reviews.add(ReviewData(
+              for (var item in rawData) {
+                if (item['product'] != null) {
+                   print("🧐 REVIEW PRODUCT DATA KEYS: ${item['product'].keys.toList()}");
+                   print("🧐 REVIEW PRODUCT IMAGE INFO: base_image=${item['product']['base_image']}, imageUrl=${item['product']['imageUrl']}, small=${item['product']['small_image_url']}");
+                }
+                reviews.add(ReviewData(
                  id: item['id']?.toString(),
                  title: item['title'],
                  rating: int.tryParse(item['rating'].toString()) ?? 5,
@@ -56,7 +60,9 @@ class ReviewsRepositoryImp implements ReviewsRepository {
                    name: item['product']['name'],
                    urlKey: item['product']['url_key'],
                    images: [
-                     Images(url: item['product']['base_image']['url'])
+                     Images(url: item['product']['base_image'] is Map 
+                         ? item['product']['base_image']['url'] 
+                         : item['product']['base_image'] ?? item['product']['base_image_url'] ?? item['product']['imageUrl'] ?? "")
                    ]
                  )
                ));
