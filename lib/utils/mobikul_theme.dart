@@ -26,7 +26,7 @@ class MobiKulTheme {
   static String? fontFamily = GoogleFonts.poppins().fontFamily;
   
   static const Color primaryColor = Color(0xFFFFFFFF);
-  static const Color accentColor = Color(0xFF51A130);
+  static const Color accentColor = Color(0xFF27C16B);
 
   // replace with client accent color
   static const Color skeletonLoaderColorLight = Color(0xFFE0E0E0);

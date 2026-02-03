@@ -49,7 +49,7 @@ class ProceedView extends StatelessWidget {
         child: Container(
           height: 50,
           decoration: BoxDecoration(
-            color: const Color(0xFF0C831F), // Blinkit Green
+            color: const Color(0xFF27C16B), // Blinkit Green
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),

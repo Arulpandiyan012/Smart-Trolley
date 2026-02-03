@@ -65,7 +65,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F7FA),
       // 🟢 Use IndexedStack to keep pages alive (Cart won't reload every time)
       body: IndexedStack(
         index: _index,
@@ -108,7 +108,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
 
   Widget _navItem(int index, IconData iconOutlined, IconData iconFilled, String label) {
     final isSelected = _index == index;
-    const Color activeColor = Color(0xFFBDB76B); 
+    const Color activeColor = Color(0xFF27C16B); 
 
     return Expanded(
       child: InkWell(
@@ -138,7 +138,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
 
   Widget _cartNavItem(int index, int count) {
     final isSelected = _index == index;
-    const Color activeColor = Color(0xFFBDB76B);
+    const Color activeColor = Color(0xFF27C16B);
 
     return Expanded(
       child: InkWell(

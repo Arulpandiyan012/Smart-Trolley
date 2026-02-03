@@ -59,7 +59,7 @@ class ModernCheckoutHeader extends StatelessWidget {
                 height: 6,
                 width: MediaQuery.of(context).size.width * progress,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0C831F), // Blinkit Green
+                  color: const Color(0xFF27C16B), // Blinkit Green
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),

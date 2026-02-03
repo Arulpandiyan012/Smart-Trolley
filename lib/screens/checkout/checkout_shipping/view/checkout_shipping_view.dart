@@ -185,14 +185,14 @@ class _CheckoutShippingPageViewState extends State<CheckoutShippingPageView> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? const Color(0xFF0C831F) : Colors.transparent, 
+                color: isSelected ? const Color(0xFF27C16B) : Colors.transparent, 
                 width: 1.5
               ),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
             ),
             child: Row(
               children: [
-                Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: isSelected ? const Color(0xFF0C831F) : Colors.grey),
+                Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: isSelected ? const Color(0xFF27C16B) : Colors.grey),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(

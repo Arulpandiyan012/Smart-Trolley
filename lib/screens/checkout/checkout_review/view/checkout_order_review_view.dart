@@ -263,7 +263,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(color: Colors.grey[700], fontSize: 13)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isGreen ? const Color(0xFF0C831F) : Colors.black87)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isGreen ? const Color(0xFF27C16B) : Colors.black87)),
         ],
       ),
     );

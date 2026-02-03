@@ -172,7 +172,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
                         
                         Text(
                           item?.product?.priceHtml?.priceHtml ?? "",
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0C831F)),
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF27C16B)),
                         ),
 
                         const SizedBox(height: 12),
@@ -196,7 +196,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
         if (widget.isLoading)
           Container(
             color: Colors.white.withOpacity(0.5),
-            child: const Center(child: CircularProgressIndicator(color: Color(0xFF0C831F))),
+            child: const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B))),
           )
       ],
     );
@@ -221,8 +221,8 @@ class _WishlistItemListState extends State<WishlistItemList> {
       height: 36,
       width: 100,
       decoration: BoxDecoration(
-        color: hasItems ? const Color(0xFF0C831F) : Colors.white,
-        border: Border.all(color: const Color(0xFF0C831F)),
+        color: hasItems ? const Color(0xFF27C16B) : Colors.white,
+        border: Border.all(color: const Color(0xFF27C16B)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: hasItems
@@ -263,7 +263,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
                 child: Text(
                   "ADD",
                   style: TextStyle(
-                    color: Color(0xFF0C831F),
+                    color: Color(0xFF27C16B),
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                   ),

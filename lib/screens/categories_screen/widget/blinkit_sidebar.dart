@@ -39,7 +39,7 @@ class _BlinkitSidebarState extends State<BlinkitSidebar> {
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : Colors.transparent,
                 border: isSelected 
-                  ? const Border(left: BorderSide(color: Color(0xFF0C831F), width: 4))
+                  ? const Border(left: BorderSide(color: Color(0xFF27C16B), width: 4))
                   : null,
               ),
               child: Column(
@@ -55,7 +55,7 @@ class _BlinkitSidebarState extends State<BlinkitSidebar> {
                       border: Border.all(color: Colors.grey[200]!),
                     ),
                     // Replace Icon with Image.network or Image.asset
-                    child: Icon(Icons.eco, color: isSelected ? const Color(0xFF0C831F) : Colors.grey),
+                    child: Icon(Icons.eco, color: isSelected ? const Color(0xFF27C16B) : Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Text(

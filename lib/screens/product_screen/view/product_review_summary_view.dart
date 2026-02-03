@@ -114,9 +114,9 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Color(0xFF0C831F), width: 1.2),
+                                side: const BorderSide(color: Color(0xFF27C16B), width: 1.2),
                                 backgroundColor: const Color(0xFFF0FDF4), // Very light green tint
-                                foregroundColor: const Color(0xFF0C831F),
+                                foregroundColor: const Color(0xFF27C16B),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 elevation: 0,
@@ -193,7 +193,7 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                  onPressed: () {
                     _showAllReviews(context);
                  }, 
-                 child: const Text("View All Reviews", style: TextStyle(color: Color(0xFF0C831F), fontWeight: FontWeight.bold))
+                 child: const Text("View All Reviews", style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold))
                ),
             ),
              

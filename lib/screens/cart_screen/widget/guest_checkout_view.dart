@@ -60,7 +60,7 @@ class GuestCheckoutView extends StatelessWidget {
                 Navigator.of(context).pushNamed(signIn);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0C831F), // Blinkit Green
+                backgroundColor: const Color(0xFF27C16B), // Blinkit Green
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
@@ -87,7 +87,7 @@ class GuestCheckoutView extends StatelessWidget {
                 Navigator.pushNamed(context, signUp, arguments: false);
               },
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF0C831F)),
+                side: const BorderSide(color: Color(0xFF27C16B)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text(
@@ -95,7 +95,7 @@ class GuestCheckoutView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0C831F),
+                  color: Color(0xFF27C16B),
                 ),
               ),
             ),

@@ -25,12 +25,12 @@ class SmartAddButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFF0C831F)),
+          border: Border.all(color: const Color(0xFF27C16B)),
         ),
         child: const SizedBox(
             height: 14, 
             width: 14, 
-            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0C831F))
+            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF27C16B))
         ),
       );
     }
@@ -45,7 +45,7 @@ class SmartAddButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF0C831F)),
+            border: Border.all(color: const Color(0xFF27C16B)),
             boxShadow: [
               BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 2, offset: const Offset(0, 1))
             ],
@@ -53,7 +53,7 @@ class SmartAddButton extends StatelessWidget {
           child: const Text(
               "ADD", 
               style: TextStyle(
-                  color: Color(0xFF0C831F), 
+                  color: Color(0xFF27C16B), 
                   fontWeight: FontWeight.bold, 
                   fontSize: 13
               )
@@ -66,7 +66,7 @@ class SmartAddButton extends StatelessWidget {
     return Container(
       height: 32, width: 85,
       decoration: BoxDecoration(
-        color: const Color(0xFF0C831F),
+        color: const Color(0xFF27C16B),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(

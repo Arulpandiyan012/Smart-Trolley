@@ -13,6 +13,7 @@ import '../data_model/theme_customization.dart' as theme;
 import '../utils/index.dart' hide Translations;
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_event.dart';
 
+import 'package:bagisto_app_demo/screens/home_page/widget/blinkit_category_grid.dart'; // 🟢 NEW IMPORT
 import 'new_product_view.dart';
 import 'reach_top.dart'; 
 
@@ -82,8 +83,9 @@ List<dynamic> _catChildren(dynamic cat) {
 
 class _Section {
   final String title;
-  final List<dynamic> products;
-  _Section(this.title, this.products);
+  final String type; // 🟢 New Field
+  final List<dynamic> items; // Can be products OR mock categories
+  _Section(this.title, this.type, this.items);
 }
 
 IconData _categoryIconFor(String name) {
@@ -119,15 +121,11 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFA5D6A7), Color(0xFFC8E6C9)], 
-        ),
+        color: Colors.white, // Flat white
         boxShadow: [
           BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 8,
+            color: Color(0x08000000), // Very subtle shadow
+            blurRadius: 4,
             offset: Offset(0, 2),
           ),
         ],
@@ -416,7 +414,7 @@ class _HomePageViewState extends State<HomePageView> {
 
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: _buildPromoBanner(widget.customHomeData),
@@ -427,69 +425,71 @@ class _HomePageViewState extends State<HomePageView> {
                     for (final s in sections) ...[
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 2), // 🟢 Reduced Padding (Gap)
                           child: Row(
                             children: [
                               Expanded(
                                 child: Text(
                                   s.title,
                                   style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15, // 🟢 Reduced size
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Roboto', // 🟢 Modern Font
+                                    color: Colors.black87,
                                   ),
                                 ),
                               ),
-                              TextButton(
-                                onPressed: () => _handleSeeAll(s.title),
-                                child: const Text(
-                                  'See all',
-                                  style: TextStyle(color: Colors.deepOrange),
+                              // Only show "See all" for Products, not Grids (unless we want to)
+                              if (s.type == "product_carousel")
+                                TextButton(
+                                  onPressed: () => _handleSeeAll(s.title),
+                                  child: const Text(
+                                    'See all',
+                                    style: TextStyle(color: Colors.deepOrange),
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
                       ),
+                      
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: NewProductView(
-                            model: s.products,
-                            title: s.title,
-                            isLogin: widget.isLogin,
-                            isRecentProduct: false,
-                            callPreCache: widget.callPreCache,
-                            useGrid: true,
-                            onAddToCart: (id) =>
-                                widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added")),
-                            
-                            // 🟢 THE FIX IS HERE:
-                            onAddToWishlist: (String id, bool isInWishlist, dynamic product) {
-                               if (widget.isLogin) {
-                                  // 1. Manually update the Model instantly
-                                  // This uses "dynamic" access to bypass strict type checking issues.
-                                  try {
-                                    (product as dynamic).isInWishlist = !isInWishlist;
-                                  } catch (_) {
-                                    // If product is a Map, try updating map key
-                                    try { if (product is Map) product['in_wishlist'] = !isInWishlist; } catch(_) {}
-                                  }
-
-                                  // 2. Force Screen Update instantly
-                                  setState(() {});
-
-                                  // 3. Send event to server
-                                  // We pass NULL for 'datum' so the Bloc doesn't try to toggle it back again!
-                                  if (isInWishlist) {
-                                     widget.homePageBloc?.add(RemoveWishlistItemEvent(id, null)); 
-                                  } else {
-                                     widget.homePageBloc?.add(FetchAddWishlistHomepageEvent(id, null));
-                                  }
-                               } else {
-                                  ShowMessage.warningNotification("Please login to add to wishlist", context);
-                               }
-                            },
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: s.type == "blinkit_category_grid" 
+                            ? BlinkitCategoryGrid(
+                                categories: s.items,
+                                onTap: (link, title) {
+                                  // Handle Navigation. For now, try to open by Title or Slug
+                                  // The 'link' from backend is like 'category_slug_veg'.
+                                  // We can map this to real categories if needed, or just open generic.
+                                  _handleSeeAll(title); 
+                                },
+                              )
+                            : NewProductView(
+                                model: s.items,
+                                title: s.title,
+                                isLogin: widget.isLogin,
+                                isRecentProduct: false,
+                                callPreCache: widget.callPreCache,
+                                useGrid: true,
+                                onAddToCart: (id) =>
+                                    widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added")),
+                                onAddToWishlist: (String id, bool isInWishlist, dynamic product) {
+                                   if (widget.isLogin) {
+                                      try { (product as dynamic).isInWishlist = !isInWishlist; } catch (_) {}
+                                      try { if (product is Map) product['in_wishlist'] = !isInWishlist; } catch(_) {}
+                                      setState(() {});
+                                      if (isInWishlist) {
+                                         widget.homePageBloc?.add(RemoveWishlistItemEvent(id, null)); 
+                                      } else {
+                                         widget.homePageBloc?.add(FetchAddWishlistHomepageEvent(id, null));
+                                      }
+                                   } else {
+                                      ShowMessage.warningNotification("Please login to add to wishlist", context);
+                                   }
+                                },
+                              ),
                         ),
                       ),
                     ],
@@ -502,9 +502,95 @@ class _HomePageViewState extends State<HomePageView> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 10,
+                    bottom: 80, // Moved up to avoid covering cart bar if present
                     child: buildReachBottomView(context, _scrollController),
                   ),
+
+                // 🟢 FLOATING VIEW CART BAR (Blinkit Style)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: StreamBuilder<int>(
+                    stream: GlobalData.cartCountController.stream,
+                    builder: (context, snapshot) {
+                      int count = 0;
+                      // Try to get from snapshot, fallback to storage
+                      if (snapshot.hasData) {
+                         count = snapshot.data ?? 0;
+                      } else {
+                         // Initial load might be empty stream, check pref
+                         count = appStoragePref.getCartCount();
+                      }
+
+                      if (count <= 0) return const SizedBox.shrink();
+
+                      return InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(context, cartScreen).then((_) {
+                             setState(() {}); // Refresh home on return
+                          });
+                        },
+                        child: Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF27C16B), // Blinkit Green
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "$count ${count == 1 ? 'Item' : 'Items'}",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12
+                                    ),
+                                  ),
+                                  const Text(
+                                    "View Total", // We don't have total price here easily without fetching cart
+                                    style: TextStyle(
+                                      color: Colors.white70, 
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500
+                                    ),
+                                  )
+                                ],
+                              ),
+                              Row(
+                                children: const [
+                                  Text(
+                                    "View Cart",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_right, color: Colors.white),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -569,46 +655,83 @@ class _HomePageViewState extends State<HomePageView> {
   }
 
   List<_Section> _buildSectionsFromTheme(theme.ThemeCustomDataModel? data) {
-    const expectedTitles = <String>[
-      'New Products',
-      'Featured Products',
-      'Grocery & Kitchen',
-      'Farm Fresh Vegetables',
-      'Seasonal & Exotic Fruits',
-    ];
+    // 🟢 DYNAMIC CATEGORY BUILDING
+    // Instead of hardcoded titles, we iterate the Theme Customization data.
+    // This allows the Backend (Bagisto Admin) to control the Titles and Order.
 
     final productLists = (GlobalData.allProducts ?? const <dynamic>[]).toList();
     final sections = <_Section>[];
 
-    for (var i = 0; i < expectedTitles.length; i++) {
-      if (i >= productLists.length) break;
-      final resp = productLists[i];
-      final products = (resp?.data as List?)?.cast<dynamic>() ?? const [];
-      if (products.isNotEmpty) {
-        sections.add(_Section(expectedTitles[i], products));
-      }
+
+
+
+
+    final themeItems = data?.themeCustomization ?? [];
+    int productListIndex = 0;
+
+    for (final element in themeItems) {
+       // 🟢 1. CHECK IF IT IS A GRID (Subcategories)
+       // The backend now sends type="blinkit_category_grid" for some sections.
+       if (element.type == "blinkit_category_grid") {
+          String title = element.name ?? "Categories";
+          // Try to get translated title
+          try {
+             final trans = element.translations?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale);
+             if (trans?.options?.title != null) title = trans!.options!.title!;
+          } catch (_) {}
+
+          // Get the 'images' array which contains our Mock Subcategories
+          List<dynamic> subCategories = [];
+          try {
+             final trans = element.translations?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale);
+             if (trans?.options?.images is List) {
+                subCategories = trans!.options!.images!;
+             }
+          } catch (_) {}
+
+          if (subCategories.isNotEmpty) {
+             sections.add(_Section(title, "blinkit_category_grid", subCategories));
+          }
+       }
+       
+       // 🟢 2. CHECK IF IT IS A PRODUCT CAROUSEL (Existing Logic)
+       else if (element.type == "product_carousel") {
+          // 1. Extract Title
+          String title = "Products";
+          try {
+             final trans = element.translations?.firstWhereOrNull(
+                (e) => e.localeCode == GlobalData.locale
+             );
+             if (trans?.options?.title != null && trans!.options!.title!.isNotEmpty) {
+                title = trans.options!.title!;
+             }
+          } catch (_) {}
+
+          // 2. Map to the next available Product List
+          // We assume GlobalData.allProducts is populated in the same order as these carousels.
+          // (Note: There is a potential race condition in fetching, but we follow existing pattern).
+          if (productListIndex < productLists.length) {
+             final resp = productLists[productListIndex];
+             final products = (resp?.data as List?)?.cast<dynamic>() ?? const [];
+             
+             // Only add section if it has products
+             if (products.isNotEmpty) {
+                sections.add(_Section(title, "product_carousel", products));
+             }
+             productListIndex++;
+          }
+       }
     }
 
-    final merged = <dynamic>[];
-    for (final s in sections) merged.addAll(s.products);
+    // 🟢 "All Products" Fallback/Aggregation
+    // If we have extra product lists not accounted for, or just to aggregate everything unique
+    // The original code did this, but for "Quick Commerce", usually we just want specific sections.
+    // I will keep the Unique Aggregation but label it clearly if it wasn't already shown.
     
-    for (var i = expectedTitles.length; i < productLists.length; i++) {
-       final resp = productLists[i];
-       final products = (resp?.data as List?)?.cast<dynamic>() ?? const [];
-       merged.addAll(products);
-    }
-
-    final seen = <String>{};
-    final unique = <dynamic>[];
-    for (final p in merged) {
-      final id = (p as dynamic).id?.toString() ?? (p as dynamic)['id']?.toString() ?? '';
-      if (id.isNotEmpty && seen.add(id)) unique.add(p);
-    }
-
-    if (unique.isNotEmpty) {
-      sections.add(_Section('All Products', unique));
-    }
-
+    // Actually, Blinkit ends with specific sections. Let's just stick to the Theme sections.
+    // The previous "All Products" section might duplicate items.
+    // I will exclude the "All Products" aggregation unless requested, to keep the UI clean.
+    
     return sections;
   }
 }

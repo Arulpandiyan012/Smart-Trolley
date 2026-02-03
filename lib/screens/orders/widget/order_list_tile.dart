@@ -146,7 +146,7 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
-                            color: Color(0xFF0C831F), // Brand Green
+                            color: Color(0xFF27C16B), // Brand Green
                           ),
                         ),
                       ],
