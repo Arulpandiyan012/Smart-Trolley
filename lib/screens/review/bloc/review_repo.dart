@@ -14,6 +14,7 @@ import 'package:bagisto_app_demo/screens/review/utils/index.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
+import 'package:bagisto_app_demo/utils/app_global_data.dart';
 
 abstract class ReviewsRepository {
   Future<ReviewModel> callReviewApi(int page);
@@ -77,5 +78,39 @@ class ReviewsRepositoryImp implements ReviewsRepository {
       print("❌ Custom Review Fetch Error: $error");
     }
     return ReviewModel(data: []);
+  }
+
+  // 🟢 NEW: Fetch ALL Ratings for Home Page Tiles (Bypassing Cache)
+  static Future<void> fetchAllRatingsMap() async {
+    try {
+      final Uri url = Uri.parse("https://ecom.thesmartedgetech.com/mobikul-review-api.php?action=get_all_ratings");
+      print("🚀 Fetching Global Ratings Map...");
+      
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse['success'] == true) {
+           List<dynamic> list = jsonResponse['data'] ?? [];
+           
+           // Clear existing to avoid stale
+           GlobalData.customRatings.clear();
+           
+           for (var item in list) {
+              String pid = item['product_id'].toString();
+              double avg = double.tryParse(item['avg_rating'].toString()) ?? 0.0;
+              int count = int.tryParse(item['count'].toString()) ?? 0;
+              
+              GlobalData.customRatings[pid] = {
+                'rating': avg,
+                'count': count
+              };
+           }
+           print("✅ Global Ratings Map Updated: ${GlobalData.customRatings.length} products");
+        }
+      }
+    } catch (e) {
+      print("❌ Global Ratings Fetch Error: $e");
+    }
   }
 }

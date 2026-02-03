@@ -50,6 +50,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
+  await GetStorage.init(); // 🟢 FIX: Init Default Storage (Used by Onboarding)
   await GetStorage.init("configurationStorage");
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();

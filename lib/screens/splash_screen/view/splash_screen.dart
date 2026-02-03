@@ -13,6 +13,7 @@
 import 'package:bagisto_app_demo/screens/splash_screen/utils/index.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:bagisto_app_demo/utils/route_constants.dart';
+import 'package:bagisto_app_demo/screens/review/bloc/review_repo.dart';
 
 import '../../../utils/prefetching_helper.dart';
 class SplashScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateHomepage();
     preCacheCMSData();
     preCacheLanguageData();
+    ReviewsRepositoryImp.fetchAllRatingsMap(); // 🟢 Prefetch Ratings
     super.initState();
   }
 

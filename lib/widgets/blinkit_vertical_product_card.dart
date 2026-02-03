@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/utils/index.dart'; 
+import 'package:bagisto_app_demo/utils/app_global_data.dart'; 
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
 
@@ -210,37 +211,29 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     // 🟢 RATING STARS
                     Builder(
                       builder: (context) {
-                        // 1. Extract Rating
-                        double rating = 0.0;
-                        try {
-                           var r = (data as dynamic).averageRating;
-                           if (r == null) r = (data as dynamic).rating; // Fallback
-                           if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
-                        } catch (_) {}
+                        // 1. Extract Product ID
+                        String pid = (data as dynamic).id?.toString() ?? "0";
 
-                        // 2. Extract Count & Calculate Client-Side Average
+                        // 2. Extract Rating & Count (Standard Way)
+                        double rating = 0.0;
                         int reviewCount = 0;
                         try {
+                           var r = (data as dynamic).averageRating;
+                           if (r == null) r = (data as dynamic).rating;
+                           if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
+                           
                            var reviews = (data as dynamic).reviews;
-                           if (reviews is List) {
-                              reviewCount = reviews.length;
-                              
-                              // 🟢 CLIENT-SIDE CALCULATION (Fallback)
-                              // If Backend Aggregate is 0 (because of SQL insert), calculate it ourselves.
-                              if (rating == 0 && reviewCount > 0) {
-                                  double totalObj = 0;
-                                  for (var r in reviews) {
-                                      var val = (r as dynamic).rating;
-                                      if (val != null) totalObj += double.tryParse(val.toString()) ?? 0;
-                                  }
-                                  rating = totalObj / reviewCount;
-                              }
-                           }
+                           if (reviews is List) reviewCount = reviews.length;
                         } catch (_) {}
-
-                        // 🟢 ALWAYS SHOW STARS (Even empty) to prove UI works
-                        // User can decide later if they want to hide them.
-                        // if (rating <= 0 && reviewCount == 0) return const SizedBox();
+                        
+                        // 🟢 3. FALLBACK: Check Custom Global Map (If Standard is Empty)
+                        if (rating == 0 && reviewCount == 0 && GlobalData.customRatings.containsKey(pid)) {
+                            var custom = GlobalData.customRatings[pid];
+                            if (custom != null) {
+                                rating = (custom['rating'] is num) ? (custom['rating'] as num).toDouble() : 0.0;
+                                reviewCount = (custom['count'] is int) ? (custom['count'] as int) : 0;
+                            }
+                        }
 
                         return Row(
                           children: [
