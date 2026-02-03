@@ -174,11 +174,11 @@ class _BagistoAppState extends State<BagistoApp> {
               child: MaterialApp(
                 theme: ThemeData(
                   useMaterial3: true,
-                  scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-                  primaryColor: const Color(0xFF0C831F),
+                  scaffoldBackgroundColor: const Color(0xFFF5F7FA), // Blinkit Light Grey
+                  primaryColor: const Color(0xFF27C16B), // Blinkit Bright Green
                   colorScheme: ColorScheme.fromSwatch().copyWith(
-                    primary: const Color(0xFF0C831F),
-                    secondary: const Color(0xFF0C831F),
+                    primary: const Color(0xFF27C16B),
+                    secondary: const Color(0xFF27C16B),
                   ),
                   textTheme: GoogleFonts.poppinsTextTheme(
                     Theme.of(context).textTheme,

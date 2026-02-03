@@ -18,7 +18,7 @@ class CartActionsView extends StatelessWidget {
               Navigator.pushReplacementNamed(context, home);
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF0C831F)), // Blinkit Green
+              side: const BorderSide(color: Color(0xFF27C16B)), // Blinkit Green
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -27,7 +27,7 @@ class CartActionsView extends StatelessWidget {
             child: Text(
               StringConstants.continueShopping.localized().toUpperCase(),
               style: const TextStyle(
-                color: Color(0xFF0C831F),
+                color: Color(0xFF27C16B),
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),

@@ -87,7 +87,7 @@ class _ProductScreenState extends State<ProductScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFF0C831F), // Blinkit Green
+                color: const Color(0xFF27C16B), // Blinkit Green
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(

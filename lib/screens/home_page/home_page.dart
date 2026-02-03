@@ -6,6 +6,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; 
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
@@ -283,88 +284,45 @@ class _HomeScreenState extends State<HomeScreen> {
         endDrawer: _drawerData(context),
 
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(145), 
+          preferredSize: const Size.fromHeight(130), // Slightly reduced height
           child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF9CCC65), 
-                  Color(0xFFDCEDC8), 
-                ],
-              ),
-            ),
+            color: Colors.white, // Flat White Background
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // TOP ROW: Delivery Header + Profile/Menu
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start, // Align to top
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              isLoggedIn
-                                  ? Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          "Welcome back,",
-                                          style: TextStyle(
-                                            fontSize: 11, 
-                                            color: Colors.black54,
-                                            fontWeight: FontWeight.w500
-                                          ),
-                                        ),
-                                        Text(
-                                          customerUserName ?? "", 
-                                          style: const TextStyle(
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : SizedBox(
-                                      height: 34,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.orange,
-                                          elevation: 0,
-                                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(builder: (context) => const SignInScreen()),
-                                          ).then((_) {
-                                            _fetchSharedPreferenceData(); 
-                                          });
-                                        },
-                                        child: const Text(
-                                          "Sign In",
-                                          style: TextStyle(
-                                            color: Colors.white, 
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14
-                                          ),
-                                        ),
-                                      ),
+                              // 🟢 1. "Delivery in..." Header
+                              Row(
+                                children: [
+                                  Text(
+                                    "Delivery in 11 minutes", 
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 18,
+                                      color: Colors.black87,
+                                      height: 1.0, 
                                     ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2), // Small gap
                               
-                              const SizedBox(height: 2),
+                              // 🟢 2. Address Selector
                               GestureDetector(
                                 onTap: _openDeliveryLocation,
                                 behavior: HitTestBehavior.opaque,
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Flexible(
                                       child: Text(
@@ -375,18 +333,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 : 'Select delivery address'),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.black87,
+                                        style: TextStyle(
+                                          color: Colors.grey[700],
                                           fontWeight: FontWeight.w500,
-                                          fontSize: 13,
+                                          fontSize: 12,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
                                     const Icon(
-                                      Icons.keyboard_arrow_down,
-                                      size: 18,
-                                      color: Colors.black54,
+                                      Icons.arrow_drop_down,
+                                      size: 20,
+                                      color: Colors.black87,
                                     ),
                                   ],
                                 ),
@@ -395,52 +352,70 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
+                        // Profile Icon (Blinkit style is minimal, usually just profile icon)
                         Builder(
-                          builder: (ctx) => IconButton(
-                            icon: const Icon(Icons.menu, color: Colors.black87),
-                            onPressed: () => Scaffold.of(ctx).openEndDrawer(),
-                            tooltip: MaterialLocalizations.of(ctx).openAppDrawerTooltip,
+                          builder: (ctx) => InkWell(
+                            onTap: () => Scaffold.of(ctx).openEndDrawer(),
+                            child: Container(
+                              height: 38, width: 38,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey[100],
+                              ),
+                              child: Center(
+                                child: isLoggedIn && image != null 
+                                  ? CircleAvatar(backgroundImage: NetworkImage(image!), radius: 18)
+                                  : Icon(Icons.person, color: Colors.black87, size: 24),
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
 
+                    // SEARCH BAR (Blinkit Style: Rounded, soft shadow)
                     InkWell(
                       onTap: _goToSearch, 
                       child: Container(
-                        height: 44,
+                        height: 48,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
                         child: Row(
                           children: [
-                            const SizedBox(width: 8),
-                            const Icon(Icons.search, color: Colors.grey),
-                            const SizedBox(width: 8),
+                            const Icon(Icons.search, color: Color(0xFF27C16B), size: 24), // Green Search Icon
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: TextField(
-                                enabled: false, 
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  hintText: "Search for fruits, snacks, groceries…",
-                                  border: InputBorder.none,
+                              child: Text(
+                                "Search 'Milk'",
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500
                                 ),
                               ),
                             ),
+                            Container(
+                                width: 1, height: 20, color: Colors.grey[300]
+                            ),
                             IconButton(
-                              icon: const Icon(Icons.mic, color: Colors.grey),
+                              icon: const Icon(Icons.mic, color: Colors.grey, size: 22),
                               onPressed: _goToSearch, 
                               tooltip: 'Voice search',
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.only(left: 12),
                             ),
                           ],
                         ),

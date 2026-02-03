@@ -93,7 +93,7 @@ class _CheckoutPaymentViewState extends State<CheckoutPaymentView> {
                height: 50,
                child: ElevatedButton.icon(
                  style: ElevatedButton.styleFrom(
-                   backgroundColor: const Color(0xFF0C831F), 
+                   backgroundColor: const Color(0xFF27C16B), 
                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
                  ),
                  icon: const Icon(Icons.payment, color: Colors.white),
@@ -118,12 +118,12 @@ class _CheckoutPaymentViewState extends State<CheckoutPaymentView> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isSelected ? const Color(0xFF0C831F) : Colors.transparent, width: 1.5),
+              border: Border.all(color: isSelected ? const Color(0xFF27C16B) : Colors.transparent, width: 1.5),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
             ),
             child: Row(
               children: [
-                Icon(isSelected ? Icons.check_circle : Icons.circle_outlined, color: isSelected ? const Color(0xFF0C831F) : Colors.grey),
+                Icon(isSelected ? Icons.check_circle : Icons.circle_outlined, color: isSelected ? const Color(0xFF27C16B) : Colors.grey),
                 const SizedBox(width: 16),
                 Text(method.methodTitle ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               ],

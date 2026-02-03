@@ -161,10 +161,10 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF0C831F) : const Color(0xFFF5F5F5),
+                  color: isSelected ? const Color(0xFF27C16B) : const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF0C831F) : Colors.transparent
+                    color: isSelected ? const Color(0xFF27C16B) : Colors.transparent
                   )
                 ),
                 child: Text(
@@ -249,7 +249,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
       return const EmptyDataView();
     } else {
       return RefreshIndicator(
-        color: const Color(0xFF0C831F),
+        color: const Color(0xFF27C16B),
         onRefresh: () {
           return Future.delayed(const Duration(seconds: 1), () {
             orderListBloc?.add(FetchOrderListEvent(
@@ -435,7 +435,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0C831F),
+                        backgroundColor: const Color(0xFF27C16B),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
@@ -488,7 +488,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0C831F), width: 1.5)
+          borderSide: const BorderSide(color: Color(0xFF27C16B), width: 1.5)
         )
       ),
     );

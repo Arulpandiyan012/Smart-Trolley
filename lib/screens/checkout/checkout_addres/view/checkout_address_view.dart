@@ -105,7 +105,7 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
         },
         builder: (context, state) {
           if (state is CheckOutLoaderState) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF0C831F)));
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)));
           }
           return _buildContent();
         },
@@ -127,8 +127,8 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
               const Text("Saved Addresses", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               TextButton.icon(
                 onPressed: () => _openAddAddressSheet(), 
-                icon: const Icon(Icons.add_circle_outline, size: 18, color: Color(0xFF0C831F)),
-                label: const Text("Add New", style: TextStyle(color: Color(0xFF0C831F), fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.add_circle_outline, size: 18, color: Color(0xFF27C16B)),
+                label: const Text("Add New", style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold)),
               )
             ],
           ),
@@ -169,7 +169,7 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _openAddAddressSheet(),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0C831F)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B)),
               child: const Text("Add Address Now", style: TextStyle(color: Colors.white)),
             )
           ],
@@ -196,7 +196,7 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0C831F) : Colors.transparent, 
+            color: isSelected ? const Color(0xFF27C16B) : Colors.transparent, 
             width: 2
           ),
           boxShadow: [
@@ -211,7 +211,7 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
               padding: const EdgeInsets.only(top: 4),
               child: Icon(
                 isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                color: isSelected ? const Color(0xFF0C831F) : Colors.grey[400],
+                color: isSelected ? const Color(0xFF27C16B) : Colors.grey[400],
                 size: 24,
               ),
             ),

@@ -143,7 +143,7 @@ class CartListItem extends StatelessWidget {
                      
                      // Green Counter Button
                      Material(
-                       color: const Color(0xFF0C831F), // Blinkit Green
+                       color: const Color(0xFF27C16B), // Blinkit Green
                        borderRadius: BorderRadius.circular(6),
                        clipBehavior: Clip.hardEdge,
                        child: SizedBox(

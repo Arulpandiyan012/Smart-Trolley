@@ -218,8 +218,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           width: 40,
                           fit: BoxFit.contain,filterQuality: FilterQuality.high, // 🟢 FIX: Removes scaling artifacts/lines
                           isAntiAlias: true, // 🟢 FIX: Smooths edges
-                          // color: const Color(0xFF0C831F), // Dark Brand Green
-                          errorBuilder: (c, o, s) => const Icon(Icons.shopping_cart, size: 30, color: Color(0xFF0C831F)),
+                          // color: const Color(0xFF27C16B), // Dark Brand Green
+                          errorBuilder: (c, o, s) => const Icon(Icons.shopping_cart, size: 30, color: Color(0xFF27C16B)),
                         ),
                       ),
                     ),

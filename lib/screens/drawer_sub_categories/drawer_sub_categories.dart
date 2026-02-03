@@ -460,11 +460,11 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
                              child: Container(
                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                decoration: BoxDecoration(
-                                 border: Border.all(color: const Color(0xFF0C831F)),
+                                 border: Border.all(color: const Color(0xFF27C16B)),
                                  borderRadius: BorderRadius.circular(6),
                                  color: const Color(0xFFF7FFF9),
                                ),
-                               child: const Text("ADD", style: TextStyle(color: Color(0xFF0C831F), fontWeight: FontWeight.w800, fontSize: 11)),
+                               child: const Text("ADD", style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 11)),
                              ),
                            ),
                          )

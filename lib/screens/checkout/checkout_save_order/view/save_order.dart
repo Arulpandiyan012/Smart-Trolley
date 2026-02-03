@@ -52,7 +52,7 @@ class _CheckOutSaveOrderState extends State<CheckOutSaveOrder> {
       channelDescription: 'Notifications for order status updates',
       importance: Importance.max,
       priority: Priority.high,
-      color: Color(0xFF0C831F),
+      color: Color(0xFF27C16B),
     );
     const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
     
@@ -132,7 +132,7 @@ class _CheckOutSaveOrderState extends State<CheckOutSaveOrder> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle_outline, size: 80, color: Color(0xFF0C831F)), // Success Icon
+            const Icon(Icons.check_circle_outline, size: 80, color: Color(0xFF27C16B)), // Success Icon
             const SizedBox(height: AppSizes.spacingMedium),
             
             Text(
@@ -211,7 +211,7 @@ class _CheckOutSaveOrderState extends State<CheckOutSaveOrder> {
                    
                    Row(
                      children: [
-                       const Icon(Icons.notifications_active, color: Color(0xFF0C831F), size: 20),
+                       const Icon(Icons.notifications_active, color: Color(0xFF27C16B), size: 20),
                        const SizedBox(width: 12),
                        Expanded(
                          child: Column(
@@ -222,7 +222,7 @@ class _CheckOutSaveOrderState extends State<CheckOutSaveOrder> {
                            ],
                          ),
                        ),
-                       Switch(value: true, onChanged: (val){}, activeColor: const Color(0xFF0C831F))
+                       Switch(value: true, onChanged: (val){}, activeColor: const Color(0xFF27C16B))
                      ],
                    )
                 ],
@@ -244,7 +244,7 @@ class _CheckOutSaveOrderState extends State<CheckOutSaveOrder> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0C831F),
+                  backgroundColor: const Color(0xFF27C16B),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {

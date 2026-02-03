@@ -222,7 +222,10 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
               
               if (state.status == CheckOutShippingStatus.success) {
                 if (currentIndex == 1) {
-                   setState(() { currentIndex = 2; });
+                   // 🟢 AUTO-SKIP STEP 2 (Shipping)
+                   // Defaulting to flatrate as per standard flow
+                   shippingRateCode = 'flatrate_flatrate'; 
+                   setState(() { currentIndex = 3; });
                 } else if (currentIndex == 2) {
                    if (state.paymentMethods != null) {
                       paymentMethods = state.paymentMethods;
@@ -231,6 +234,12 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
                 }
               } else {
                 if (currentIndex == 1) {
+                   // Even on fail/partial, try to skip if possible, or show error?
+                   // If we fail here, staying on 1 might be stuck.
+                   // Let's force skip with default if it's a "shipping not found" type error but we want to proceed? 
+                   // No, safer to fallback to 2 so user can retry or see error.
+                   // But actually, the original code fell back to 2.
+                   // Let's fallback to 2 here so they see the manual option (which might work or show empty).
                    shippingRateCode = 'flatrate_flatrate';
                    setState(() { currentIndex = 2; });
                 } else {
@@ -257,7 +266,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
               if (isLoading)
                 Container(
                   color: Colors.black.withOpacity(0.3),
-                  child: const Center(child: CircularProgressIndicator(color: Color(0xFF0C831F))),
+                  child: const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B))),
                 )
             ],
           ),
@@ -335,12 +344,12 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: const Color(0xFF0C831F), width: 2),
+                    border: Border.all(color: const Color(0xFF27C16B), width: 2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.radio_button_checked, color: Color(0xFF0C831F)),
+                      const Icon(Icons.radio_button_checked, color: Color(0xFF27C16B)),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +447,7 @@ Widget _buildBottomBar() {
                   child: ElevatedButton(
                     onPressed: _onProceedFinalV14, 
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0C831F),
+                      backgroundColor: const Color(0xFF27C16B),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 8), // Reduce padding to fit text

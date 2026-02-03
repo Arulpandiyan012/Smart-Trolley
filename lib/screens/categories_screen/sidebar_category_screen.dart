@@ -6,7 +6,7 @@ import 'package:bagisto_app_demo/utils/app_global_data.dart';
 import 'package:bagisto_app_demo/utils/app_constants.dart';
 import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
-import 'widget/blinkit_product_card.dart'; 
+import 'package:bagisto_app_demo/widgets/blinkit_product_card.dart'; 
 import 'package:bagisto_app_demo/widgets/show_message.dart';
 
 // 🟢 FIX: All necessary Cart imports
@@ -236,11 +236,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 Container(
                   width: 64, 
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF9CCC65), Color(0xFFDCEDC8)],
-                    ),
+                    color: const Color(0xFFF5F7FA), // Flat light grey
+                    border: const Border(right: BorderSide(color: Colors.black12)),
                   ),
                   child: ListView.builder(
                     itemCount: _categories.length,
@@ -497,7 +494,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadCategories,
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFBDB76B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B)),
             child: const Text("Retry", style: TextStyle(color: Colors.white)),
           ),
         ],

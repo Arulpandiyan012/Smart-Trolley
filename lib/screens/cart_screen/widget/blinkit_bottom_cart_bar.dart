@@ -71,9 +71,9 @@ class BlinkitBottomCartBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF0C831F).withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFF27C16B).withOpacity(0.3)),
                     ),
-                    child: const Icon(Icons.home_filled, color: Color(0xFF0C831F), size: 16),
+                    child: const Icon(Icons.home_filled, color: Color(0xFF27C16B), size: 16),
                   ),
                   const SizedBox(width: 12),
                   
@@ -116,14 +116,14 @@ class BlinkitBottomCartBar extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF0C831F)),
+                        border: Border.all(color: const Color(0xFF27C16B)),
                         borderRadius: BorderRadius.circular(6),
                         color: Colors.white,
                       ),
                       child: const Text(
                         "CHANGE",
                         style: TextStyle(
-                          color: Color(0xFF0C831F),
+                          color: Color(0xFF27C16B),
                           fontWeight: FontWeight.bold,
                           fontSize: 10,
                         ),
@@ -167,7 +167,7 @@ class BlinkitBottomCartBar extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: onProceedTap,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0C831F),
+                          backgroundColor: const Color(0xFF27C16B),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
