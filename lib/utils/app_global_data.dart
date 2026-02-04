@@ -50,4 +50,8 @@ class GlobalData {
       BehaviorSubject<Set<String>>.seeded({});
 
   static List<NewProductsModel?>? allProducts = [];
+  
+  // 🟢 CUSTOM RATINGS CACHE (Bypassing Bagisto Cache)
+  // Map<ProductId, {rating: double, count: int}>
+  static Map<String, dynamic> customRatings = {};
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/utils/index.dart'; 
+import 'package:bagisto_app_demo/utils/app_global_data.dart'; 
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
 import 'package:bagisto_app_demo/utils/app_global_data.dart';
