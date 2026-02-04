@@ -553,9 +553,37 @@ Future<OrderDetail?> getOrderDetail(int id) async {
                 var p = item['product'];
                 if (p != null) {
                    debugPrint("🔍 Product keys: ${p.keys.toList()}");
+                   
+                   // 🟢 Discover best possible image URL
                    String? bestUrl = p['imageUrl'] ?? p['base_image_url'] ?? p['small_image_url'] ?? p['base_image'];
+                   
+                   // Check nested baseImage
+                   if ((bestUrl == null || bestUrl.isEmpty) && p['baseImage'] != null) {
+                      bestUrl = p['baseImage']['url'];
+                   }
+                   
                    debugPrint("🔍 Best URL found: $bestUrl");
-                   if (bestUrl != null && (p['images'] == null || (p['images'] as List).isEmpty)) {
+
+                   // 🟢 Inject into 'images' array if 'images' is missing, empty, or contains only directory paths
+                   bool needsInjection = false;
+                   var existingImages = p['images'];
+                   
+                   if (existingImages == null || (existingImages is List && existingImages.isEmpty)) {
+                      needsInjection = true;
+                   } else if (existingImages is List) {
+                      // Check if all existing images are just directory paths/invalid
+                      bool allInvalid = true;
+                      for (var img in existingImages) {
+                         String? u = img is Map ? img['url'] : img.toString();
+                         if (u != null && u.isNotEmpty && !u.endsWith("/storage/product/")) {
+                            allInvalid = false;
+                            break;
+                         }
+                      }
+                      if (allInvalid) needsInjection = true;
+                   }
+
+                   if (bestUrl != null && bestUrl.isNotEmpty && needsInjection) {
                       p['images'] = [{"url": bestUrl}];
                       debugPrint("💚 Injected image URL for wishlist item: $bestUrl");
                    }

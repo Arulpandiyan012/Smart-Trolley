@@ -52,8 +52,13 @@ class ImageView extends StatelessWidget {
       }
     }
     
-    // 3. Filter out known "empty" backend paths that return 500
-    if (cleanUrl.endsWith("/storage/product/") || 
+    // 3. Transform broken storage paths to working cache paths
+    if (cleanUrl.contains("/storage/product/")) {
+        cleanUrl = cleanUrl.replaceFirst("/storage/product/", "/cache/medium/product/");
+    }
+
+    // 4. Filter out known "empty" backend paths that return 500
+    if (cleanUrl.endsWith("/cache/medium/product/") || 
         cleanUrl.endsWith("/storage/small/") ||
         cleanUrl.endsWith("/storage/medium/") ||
         cleanUrl.endsWith("/storage/large/")) {

@@ -29,17 +29,36 @@ class BlinkitVerticalProductCard extends StatelessWidget {
   }
 
   String? _productImage(dynamic p) {
+    if (p == null) return null;
+    
+    // 🟢 PRIORITY 1: Check direct URL fields (from API injection)
+    try {
+      final directUrl = (p as dynamic).imageUrl ?? 
+                       (p as dynamic).base_image_url ?? 
+                       (p as dynamic).small_image_url ?? 
+                       (p as dynamic).base_image;
+      if (directUrl is String && directUrl.isNotEmpty && !directUrl.endsWith("/storage/product/")) {
+        return directUrl;
+      }
+    } catch (_) {}
+
+    // 🟢 PRIORITY 2: Check images array
     try {
       final imgs = (p as dynamic).images;
       if (imgs is List && imgs.isNotEmpty) {
-        final u = _imageFromAny(imgs.first);
-        if (u != null && u.isNotEmpty) return u;
+        for(var i in imgs) {
+           final u = _imageFromAny(i);
+           if (u != null && u.isNotEmpty && !u.endsWith("/storage/product/")) return u;
+        }
       }
     } catch (_) {}
+    
+    // 🟢 PRIORITY 3: Check baseImage.url
     try {
       final v = (p as dynamic).baseImage?.url;
-      if (v is String && v.isNotEmpty) return v;
+      if (v is String && v.isNotEmpty && !v.endsWith("/storage/product/")) return v;
     } catch (_) {}
+    
     return null;
   }
 

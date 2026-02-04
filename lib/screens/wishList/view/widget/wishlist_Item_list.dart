@@ -55,13 +55,13 @@ class _WishlistItemListState extends State<WishlistItemList> {
   String? _productImage(dynamic p) {
     if (p == null) return null;
     
-    // 🟢 PRIORITY 1: Check direct URL fields (from API injection)
+    // 🟢 PRIORITY 1: Check direct URL fields (from API injection or models)
     try {
       final directUrl = (p as dynamic).imageUrl ?? 
                        (p as dynamic).base_image_url ?? 
                        (p as dynamic).small_image_url ?? 
                        (p as dynamic).base_image;
-      if (directUrl is String && directUrl.isNotEmpty) {
+      if (directUrl is String && directUrl.isNotEmpty && !directUrl.endsWith("/storage/product/")) {
         debugPrint("💚 Found direct image URL: $directUrl");
         return directUrl;
       }
@@ -74,7 +74,8 @@ class _WishlistItemListState extends State<WishlistItemList> {
         // Try all images, not just first
         for(var i in imgs) {
              final u = _imageFromAny(i);
-             if (u != null && u.isNotEmpty) {
+             // Ensure it's a valid link, not just a folder path
+             if (u != null && u.isNotEmpty && !u.endsWith("/storage/product/")) {
                debugPrint("💚 Found image from array: $u");
                return u;
              }
@@ -82,16 +83,24 @@ class _WishlistItemListState extends State<WishlistItemList> {
       }
     } catch (_) {}
     
-    // 🟢 PRIORITY 3: Check baseImage.url
+    // 🟢 PRIORITY 3: Check baseImage.url (Nested Object)
     try {
       final v = (p as dynamic).baseImage?.url;
-      if (v is String && v.isNotEmpty) {
+      if (v is String && v.isNotEmpty && !v.endsWith("/storage/product/")) {
         debugPrint("💚 Found baseImage.url: $v");
         return v;
       }
     } catch (_) {}
     
-    debugPrint("⚠️ No image found for product");
+    // 🟢 PRIORITY 4: Check productFlats (if available)
+    try {
+       final flats = (p as dynamic).productFlats;
+       if (flats is List && flats.isNotEmpty) {
+          // Sometimes flats has image info or we can use another field
+       }
+    } catch (_) {}
+    
+    debugPrint("⚠️ No valid image found for product: ${(p as dynamic).name}");
     return null;
   }
 
