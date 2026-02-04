@@ -57,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  StreamSubscription? _profileSubscription;
 
   @override
   void initState() {
@@ -84,6 +85,18 @@ class _HomeScreenState extends State<HomeScreen> {
     GlobalData.locale = appStoragePref.getCustomerLanguage();
 
     _loadInitialAddress(); 
+
+    // 🟢 Listen for profile updates (Image, Name)
+    _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
+      if (!mounted) return;
+      if (data.isNotEmpty) {
+        debugPrint("👤 Profile update detected. Syncing Home Screen...");
+        setState(() {
+          image = data['image'];
+          customerUserName = data['name'];
+        });
+      }
+    });
   }
 
   // 🟢 HELPER: Sync Cart Count
@@ -104,6 +117,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<int> getCartCount() async => appStoragePref.getCartCount();
+
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
+  }
 
   Future<void> _loadInitialAddress() async {
     setState(() => _addrLoading = true);

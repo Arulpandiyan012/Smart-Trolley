@@ -13,6 +13,7 @@ import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 import 'package:bagisto_app_demo/utils/string_constants.dart';
 import 'package:bagisto_app_demo/utils/index.dart';
 import 'package:bagisto_app_demo/screens/account/widget/profile_detail.dart';
+import 'package:bagisto_app_demo/screens/account/widget/profile_image_view.dart';
 import 'package:bagisto_app_demo/screens/account/widget/account_loader_view.dart';
 
 GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -205,6 +206,9 @@ class _AccountScreenState extends State<AccountScreen>
     return SafeArea(
       child: ProfileDetailView(
         formKey: _formKey,
+        upperChild: ProfileImageView(
+          callback: (v) => base64string = v,
+        ),
         firstNameController: firstNameController,
         lastNameController: lastNameController,
         emailController: emailController,
@@ -251,6 +255,12 @@ class _AccountScreenState extends State<AccountScreen>
       appStoragePref.setCustomerName("$fName $lName".trim());
       appStoragePref.setCustomerEmail(data.email ?? "");
       appStoragePref.setCustomerImage(data.imageUrl ?? "");
+
+      // 🟢 Broadcast update globally
+      GlobalData.profileUpdateStream.add({
+        "image": data.imageUrl,
+        "name": "$fName $lName".trim()
+      });
     }
   }
 }
