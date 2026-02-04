@@ -8,6 +8,7 @@
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bagisto_app_demo/screens/sign_in/utils/index.dart';
+import 'package:bagisto_app_demo/screens/vendor/vendor_login/view/vendor_login_screen.dart';
 
 
 class SignInScreen extends StatefulWidget {
@@ -326,6 +327,15 @@ class _SignInScreenState extends State<SignInScreen> {
                       "By continuing, you agree to our Terms of Service & Privacy Policy",
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                    ),
+                    
+                    const SizedBox(height: 10),
+
+                    TextButton(
+                      onPressed: () {
+                         Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorLoginScreen()));
+                      },
+                      child: const Text("Are you a Vendor? Login here", style: TextStyle(color: Colors.blueGrey, fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
