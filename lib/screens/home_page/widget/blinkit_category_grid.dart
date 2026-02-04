@@ -46,16 +46,10 @@ class BlinkitCategoryGrid extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: (imageUrl.isNotEmpty && !imageUrl.contains("placeholder")) 
-                        ? ImageView(
-                            url: imageUrl,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.network(
-                            imageUrl, // Allow placeholder URLs for now
-                            fit: BoxFit.cover,
-                            errorBuilder: (_,__,___) => const Icon(Icons.category, color: Colors.grey),
-                          ),
+                    child: ImageView(
+                      url: imageUrl,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),

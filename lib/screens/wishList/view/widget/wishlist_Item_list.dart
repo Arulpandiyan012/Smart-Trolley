@@ -29,14 +29,21 @@ class _WishlistItemListState extends State<WishlistItemList> {
 
   String? _imageFromAny(dynamic img) {
     if (img == null) return null;
+    
+    // 1. Try common fields directly if it's an object with properties
     try { if (img.url is String && img.url.isNotEmpty) return img.url; } catch (_) {}
+    try { if (img.small_image_url is String && img.small_image_url.isNotEmpty) return img.small_image_url; } catch (_) {}
+    try { if (img.medium_image_url is String && img.medium_image_url.isNotEmpty) return img.medium_image_url; } catch (_) {}
     try { if (img.imageUrl is String && img.imageUrl.isNotEmpty) return img.imageUrl; } catch (_) {}
     try { if (img.path is String && img.path.isNotEmpty) return img.path; } catch (_) {}
     try { if (img.original is String && img.original.isNotEmpty) return img.original; } catch (_) {}
-    try { if (img.smallImageUrl is String && img.smallImageUrl.isNotEmpty) return img.smallImageUrl; } catch (_) {}
     
+    // 2. Map-based access for safety/flexibility
     if (img is Map) {
-       const keys = ['imageUrl', 'path', 'original', 'smallImageUrl', 'url'];
+       const keys = [
+         'small_image_url', 'medium_image_url', 'large_image_url', 'original_image_url',
+         'url', 'imageUrl', 'path', 'original', 'smallImageUrl'
+       ];
        for (final k in keys) {
          final v = img[k];
          if (v is String && v.isNotEmpty) return v;
@@ -46,24 +53,54 @@ class _WishlistItemListState extends State<WishlistItemList> {
   }
 
   String? _productImage(dynamic p) {
+    if (p == null) return null;
+    
+    // 🟢 PRIORITY 1: Check direct URL fields (from API injection or models)
+    try {
+      final directUrl = (p as dynamic).imageUrl ?? 
+                       (p as dynamic).base_image_url ?? 
+                       (p as dynamic).small_image_url ?? 
+                       (p as dynamic).base_image;
+      if (directUrl is String && directUrl.isNotEmpty && !directUrl.endsWith("/storage/product/")) {
+        debugPrint("💚 Found direct image URL: $directUrl");
+        return directUrl;
+      }
+    } catch (_) {}
+    
+    // 🟢 PRIORITY 2: Check images array
     try {
       final imgs = (p as dynamic).images;
       if (imgs is List && imgs.isNotEmpty) {
         // Try all images, not just first
         for(var i in imgs) {
              final u = _imageFromAny(i);
-             if (u != null && u.isNotEmpty) return u;
+             // Ensure it's a valid link, not just a folder path
+             if (u != null && u.isNotEmpty && !u.endsWith("/storage/product/")) {
+               debugPrint("💚 Found image from array: $u");
+               return u;
+             }
         }
       }
     } catch (_) {}
+    
+    // 🟢 PRIORITY 3: Check baseImage.url (Nested Object)
     try {
       final v = (p as dynamic).baseImage?.url;
-      if (v is String && v.isNotEmpty) return v;
+      if (v is String && v.isNotEmpty && !v.endsWith("/storage/product/")) {
+        debugPrint("💚 Found baseImage.url: $v");
+        return v;
+      }
     } catch (_) {}
+    
+    // 🟢 PRIORITY 4: Check productFlats (if available)
     try {
-       // Fallback for Wishlist specific structure where product might be nested differenly?
-       // Usually item.product is the ProductData.
+       final flats = (p as dynamic).productFlats;
+       if (flats is List && flats.isNotEmpty) {
+          // Sometimes flats has image info or we can use another field
+       }
     } catch (_) {}
+    
+    debugPrint("⚠️ No valid image found for product: ${(p as dynamic).name}");
     return null;
   }
 
@@ -92,6 +129,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
             // Image URL
             // 🟢 UPDATED: Use robust extractor
             String imageUrl = _productImage(item?.product) ?? "";
+            if (imageUrl.isNotEmpty) debugPrint("💚 Wishlist Item [${item?.product?.name}] Image URL: $imageUrl");
 
             return Container(
               decoration: BoxDecoration(
@@ -106,28 +144,39 @@ class _WishlistItemListState extends State<WishlistItemList> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 1. IMAGE
-                  Stack(
-                    children: [
-                      Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey[100],
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        productScreen,
+                        arguments: PassProductData(
+                          title: item?.product?.name ?? "",
+                          urlKey: item?.product?.urlKey,
+                          productId: int.tryParse(productId) ?? 0,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: imageUrl.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
-                                  placeholder: (context, url) => Container(color: Colors.grey[200]),
-                                )
-                              : const Icon(Icons.image_not_supported, color: Colors.grey),
+                      );
+                    },
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.grey[100],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: imageUrl.isNotEmpty
+                                ? ImageView(
+                                    url: imageUrl,
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Icon(Icons.image_not_supported, color: Colors.grey),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
 
                   const SizedBox(width: 12),
@@ -142,11 +191,24 @@ class _WishlistItemListState extends State<WishlistItemList> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: Text(
-                                item?.product?.name ?? "",
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1.2),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    productScreen,
+                                    arguments: PassProductData(
+                                      title: item?.product?.name ?? "",
+                                      urlKey: item?.product?.urlKey,
+                                      productId: int.tryParse(productId) ?? 0,
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  item?.product?.name ?? "",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1.2),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),

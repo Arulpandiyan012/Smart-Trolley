@@ -23,6 +23,7 @@ class ProfileDetailView extends StatefulWidget {
   final List<String>? genderValues;
   final int? currentGenderValue;
   final Function(int)? onGenderChanged;
+  final Widget? upperChild;
 
   const ProfileDetailView({
     Key? key,
@@ -37,6 +38,7 @@ class ProfileDetailView extends StatefulWidget {
     this.onGenderChanged,
     this.subsNewsLetter,
     this.onChanged,
+    this.upperChild,
   }) : super(key: key);
 
   @override
@@ -146,6 +148,10 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.upperChild != null) ...[
+              widget.upperChild!,
+              const SizedBox(height: AppSizes.spacingLarge),
+            ],
             _buildTextField(
               controller: widget.firstNameController, 
               label: "First Name", 

@@ -40,5 +40,14 @@ class GlobalData {
   // 🟢 NEW: Stream to notify Cart Screen to refresh
   static StreamController<void> cartUpdateStream = StreamController<void>.broadcast();
 
+  // 🟢 NEW: Profile Synchronization (Image, Name, etc.)
+  static final BehaviorSubject<Map<String, String?>> profileUpdateStream =
+      BehaviorSubject<Map<String, String?>>.seeded({});
+
+  // 🟢 NEW: Wishlist Synchronization
+  static Set<String> wishlistProductIds = {};
+  static final BehaviorSubject<Set<String>> wishlistUpdateStream =
+      BehaviorSubject<Set<String>>.seeded({});
+
   static List<NewProductsModel?>? allProducts = [];
 }

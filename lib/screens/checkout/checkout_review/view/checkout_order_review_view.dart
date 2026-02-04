@@ -112,9 +112,10 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: (item.product?.images?.isNotEmpty ?? false)
-                          ? Image.network(item.product!.images![0].url ?? "", fit: BoxFit.cover)
-                          : const Icon(Icons.image, color: Colors.grey),
+                      child: ImageView(
+                        url: _productImage(item.product),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -271,5 +272,26 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
 
   reload(){
     checkOutReviewBloc?.add(CheckOutReviewSavePaymentEvent(paymentMethod: widget.paymentId));
+  }
+
+  String? _productImage(dynamic p) {
+    if (p == null) return null;
+    try {
+      final imgs = (p as dynamic).images;
+      if (imgs is List && imgs.isNotEmpty) {
+        for (var i in imgs) {
+          final u = _imageFromAny(i);
+          if (u != null && u.isNotEmpty) return u;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  String? _imageFromAny(dynamic img) {
+    if (img == null) return null;
+    try { if (img.url is String && img.url.isNotEmpty) return img.url; } catch (_) {}
+    try { if (img.path is String && img.path.isNotEmpty) return img.path; } catch (_) {}
+    return null;
   }
 }

@@ -27,16 +27,23 @@ class GraphQlApiCalling {
     getToken: () async {
       String? token = appStoragePref.getCustomerToken();
       log("🟢 AuthLink Token: $token");
-      return token != null ? "Bearer $token" : null;
+      return (token != null && token.isNotEmpty) ? "Bearer $token" : null;
     },
   );
 
   GraphQLClient clientToQuery() {
-    final httpLink = HttpLink(baseUrl, defaultHeaders: {
+    Map<String, String> headers = {
       "Cookie": appStoragePref.getCookieGet(),
-      "x-currency": GlobalData.currencyCode,
-      "x-locale": GlobalData.locale
-    });
+      "x-currency": GlobalData.currencyCode ?? "INR",
+      "x-locale": GlobalData.locale ?? "en"
+    };
+
+    String? token = appStoragePref.getCustomerToken();
+    if (token != null && token.isNotEmpty) {
+      headers['token'] = token; // Add custom token header
+    }
+
+    final httpLink = HttpLink(baseUrl, defaultHeaders: headers);
 
     log("authLink---->${appStoragePref.getCustomerToken()}");
     log("headers ----> ${httpLink.defaultHeaders}");

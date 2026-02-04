@@ -9,6 +9,7 @@
  */
 
 import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -306,14 +307,9 @@ class _SearchScreenState extends State<SearchScreen>
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: (imageUrl.isNotEmpty)
-                    ? Image.network(
-                        imageUrl,
+                    ? ImageView(
+                        url: imageUrl,
                         fit: BoxFit.contain,
-                        errorBuilder: (c, o, s) => Icon(
-                          _categoryIconFor(label), 
-                          color: Colors.black54, 
-                          size: 32
-                        ),
                       )
                     : Icon(
                         _categoryIconFor(label), 

@@ -9,11 +9,13 @@
  */
 
 import 'package:bagisto_app_demo/screens/account/utils/index.dart';
+import 'package:bagisto_app_demo/widgets/image_view.dart';
 
 class ProfileImageView extends StatefulWidget {
-  final Function(String? base64string)? callback;
+  final Function(String? base64string, XFile? pickedFile)? callback;
+  final XFile? pickedFile;
 
-  const ProfileImageView({Key? key, this.callback}) : super(key: key);
+  const ProfileImageView({Key? key, this.callback, this.pickedFile}) : super(key: key);
 
   @override
   State<ProfileImageView> createState() => _ProfileImageViewState();
@@ -27,8 +29,8 @@ class _ProfileImageViewState extends State<ProfileImageView> {
 
   @override
   void initState() {
-    image = null;
     profileImageEdit = appStoragePref.getCustomerImage();
+    image = widget.pickedFile; // Sync with parent state
     super.initState();
   }
 
@@ -52,9 +54,9 @@ class _ProfileImageViewState extends State<ProfileImageView> {
               backgroundColor: Colors.grey[200],
               backgroundImage: (image != null)
                   ? FileImage(File(image!.path))
-                  : (profileImageEdit.isNotEmpty)
-                      ? NetworkImage('$profileImageEdit?${DateTime.now().millisecondsSinceEpoch.toString()}') as ImageProvider
-                      : const AssetImage(AssetConstants.customerProfilePlaceholder),
+                  : (widget.pickedFile != null)
+                      ? FileImage(File(widget.pickedFile!.path))
+                      : ImageView.getImageProvider(profileImageEdit, fallbackAsset: AssetConstants.customerProfilePlaceholder),
             ),
           ),
 
@@ -148,7 +150,9 @@ class _ProfileImageViewState extends State<ProfileImageView> {
     selectedImage = file;
     Uint8List imageBytes = await selectedImage.readAsBytes();
     base64string = base64.encode(imageBytes);
-    widget.callback!(base64string);
+    if (widget.callback != null) {
+      widget.callback!(base64string, file);
+    }
     setState(() {
       image = file;
     });

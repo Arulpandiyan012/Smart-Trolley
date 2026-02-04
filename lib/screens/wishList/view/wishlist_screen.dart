@@ -27,6 +27,8 @@ class _WishListScreenState extends State<WishListScreen> {
   bool isLoading = false;
   AddToCartModel? addToCartModel;
   WishListBloc? wishListBloc;
+  StreamSubscription? _wishlistSubscription;
+  Set<String> _lastIds = {};
 
   @override
   void initState() {
@@ -36,6 +38,21 @@ class _WishListScreenState extends State<WishListScreen> {
 
     wishListBloc = context.read<WishListBloc>();
     wishListBloc?.add(FetchWishListEvent());
+
+    // 🟢 Listen for global wishlist updates to trigger re-fetches
+    _wishlistSubscription = GlobalData.wishlistUpdateStream.listen((ids) {
+      if (!mounted) return;
+      
+      // Prevent infinite loops: only fetch if the set of IDs has actually changed
+      // (e.g. comparing the current set of IDs we know about vs the new set).
+      // Bloc updates the stream too, so we must be careful.
+      if (ids.length != _lastIds.length || !ids.every(_lastIds.contains)) {
+        debugPrint("🔄 Wishlist Screen detected change. Refreshing...");
+        _lastIds = Set.from(ids);
+        wishListBloc?.add(FetchWishListEvent());
+      }
+    });
+
     super.initState();
   }
 
@@ -45,8 +62,9 @@ class _WishListScreenState extends State<WishListScreen> {
 
   @override
   void dispose() {
-    super.dispose();
+    _wishlistSubscription?.cancel();
     wishlistController.close();
+    super.dispose();
   }
 
   @override

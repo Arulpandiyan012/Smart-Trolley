@@ -56,39 +56,6 @@ class ApiClient {
   GraphQlApiCalling client = GraphQlApiCalling();
   MutationsData mutation = MutationsData();
 
-  // 🟢 HELPER: Safe Public Client (Manual Headers)
-  GraphQLClient _getPublicClient() {
-    String? token = appStoragePref.getCustomerToken();
-    String? cookie = appStoragePref.getCookieGet();
-    
-    Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    if (cookie != null && cookie.isNotEmpty) {
-      headers['Cookie'] = cookie;
-    }
-    
-    // 🟢 FIX: Send Token in multiple formats to satisfy API guards
-    if (token != null && token.isNotEmpty) {
-      // Standard GraphQL Auth
-      headers['Authorization'] = "Bearer $token";
-      // Mobikul Custom Header
-      headers['token'] = token; 
-    }
-
-    final HttpLink httpLink = HttpLink(
-      "$baseDomain/graphql",
-      defaultHeaders: headers
-    );
-    
-    return GraphQLClient(
-      link: httpLink,
-      cache: GraphQLCache()
-    );
-  }
-
   // 🟢 1. GLOBAL HANDLER (Brute-Force Parser)
   Future<T?> handleResponse<T>(
     QueryResult<Object?> result,
@@ -169,36 +136,58 @@ class ApiClient {
       var url = Uri.parse("$baseDomain/mobikul-login.php");
       String safePhone = phone ?? "";
       var response = await http.post(url, body: { "idToken": idToken, "phone": safePhone }, headers: {"Accept": "application/json"});
-      
+      debugPrint("📥 Login Body Response: ${response.body}"); // 🟢 Added full body log
       if (response.statusCode == 200) {
+        // 🟢 CAPTURE COOKIES 
+        String? setCookie = response.headers['set-cookie'];
+        if (setCookie != null && setCookie.isNotEmpty) {
+           appStoragePref.setCookieGet(setCookie);
+           debugPrint("🍪 Captured Cookie from login: $setCookie");
+        }
+
         var data = jsonDecode(response.body);
         if (data['success'] == true) {
           String token = data['customerToken'];
           appStoragePref.setCustomerToken(token);
           appStoragePref.setCustomerLoggedIn(true);
           
-          if (data['customerData'] != null) {
-            var cData = data['customerData'];
-            int cId = int.tryParse(cData['id'].toString()) ?? 0;
-            appStoragePref.setCustomerId(cId);
-            
-            // Extract Real Name
-            String fName = cData['first_name']?.toString() ?? "";
-            String lName = cData['last_name']?.toString() ?? "";
-            String fullName = "$fName $lName".trim();
-            
-            if (fullName.isEmpty) fullName = cData['name']?.toString() ?? "";
-            
-            // Only fall back to phone if name is totally empty
-            if (fullName.isNotEmpty) {
-               appStoragePref.setCustomerName(fullName);
-            } else {
-               appStoragePref.setCustomerName(safePhone);
-            }
+            if (data['customerData'] != null) {
+              var cData = data['customerData'];
+              debugPrint("🔑 LOGIN SUCCESS data: $cData"); 
+              
+              // Robust ID extraction
+              int cId = int.tryParse(cData['id']?.toString() ?? "") ?? 0;
+              if (cId == 0) cId = int.tryParse(cData['customer_id']?.toString() ?? "") ?? 0;
+              appStoragePref.setCustomerId(cId);
+              
+              // Extract Real Name (Check both formats)
+              String fName = (cData['first_name'] ?? cData['firstName'])?.toString() ?? "";
+              String lName = (cData['last_name'] ?? cData['lastName'])?.toString() ?? "";
+              String fullName = "$fName $lName".trim();
+              
+              if (fullName.isEmpty) fullName = (cData['name'] ?? cData['fullName'])?.toString() ?? "";
+              
+              if (fullName.isNotEmpty) {
+                 appStoragePref.setCustomerName(fullName);
+              } else {
+                 appStoragePref.setCustomerName(safePhone);
+              }
 
-            String email = cData['email']?.toString() ?? "";
-            appStoragePref.setCustomerEmail(email);
-          }
+              String email = (cData['email'] ?? cData['customer_email'])?.toString() ?? "";
+              appStoragePref.setCustomerEmail(email);
+
+              // PERSIST IMAGE URL
+              String imageUrl = (cData['profile_image_url'] ?? cData['image_url'] ?? cData['imageUrl'] ?? cData['profile_image'])?.toString() ?? "";
+              if (imageUrl.isNotEmpty) {
+                appStoragePref.setCustomerImage(imageUrl);
+              }
+
+              // 🟢 Broadcast update globally for instant Home UI sync
+              GlobalData.profileUpdateStream.add({
+                "image": imageUrl,
+                "name": fullName
+              });
+            }
           return SignInModel.fromJson({ "status": true, "message": data['message'], "customerToken": token, "data": data['customerData'] });
         } else {
           return SignInModel.fromJson({ "status": false, "message": data['message'] ?? "Rejected", "customerToken": "", "data": null });
@@ -210,6 +199,7 @@ class ApiClient {
       return SignInModel.fromJson({ "status": false, "message": "App Error: $e", "customerToken": "", "data": null });
     }
   }
+
 
 Future<OrderDetail?> getOrderDetail(int id) async {
     try {
@@ -311,7 +301,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<GetDrawerCategoriesData?> homeCategories({int? id, List<Map<String, dynamic>>? filters}) async {
     List<Map<String, dynamic>>? idFilter = [{"key": "id", "value": "$id"}];
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql((filters ?? []).isNotEmpty ? mutation.homeCategoriesFilters(filters: filters) : mutation.homeCategoriesFilters(filters: idFilter)),
         fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -319,7 +309,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<NewProductsModel?> getAllProducts({List<Map<String, dynamic>>? filters, int? page, int limit = 15}) async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
       document: gql(mutation.allProductsList(filters: filters ?? [], page: page ?? 1, limit: limit)), 
       fetchPolicy: FetchPolicy.noCache
     ));
@@ -331,21 +321,21 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<ThemeCustomDataModel?> getThemeCustomizationData() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql(mutation.themeCustomizationData()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'themeCustomization', (json) => ThemeCustomDataModel.fromJson(json));
   }
 
   Future<CmsData?> getCmsPagesData() async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
       document: gql(mutation.getCmsPagesData()),
       fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'cmsPages', (json) => CmsData.fromJson(json));
   }
 
   Future<CmsPage?> getCmsPageDetails(String id) async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
       document: gql(mutation.getCmsPageDetails(id)),
       fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -353,19 +343,19 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<GetFilterAttribute?> getFilterAttributes(String categorySlug) async {
-    var response = await _getPublicClient().mutate(MutationOptions(document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getFilterAttribute', (json) => GetFilterAttribute.fromJson(json));
   }
 
   Future<CurrencyLanguageList?> getLanguageCurrency() async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
         document: gql(mutation.getLanguageCurrencyList()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getDefaultChannel', (json) => CurrencyLanguageList.fromJson(json));
   }
 
   Future<CartModel?> getCartDetails() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql(mutation.cartDetails()), 
         fetchPolicy: FetchPolicy.noCache
     ));
@@ -373,7 +363,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<CartModel?> getCartCount() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql(mutation.cartDetails()), 
         cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic,
         fetchPolicy: FetchPolicy.networkOnly
@@ -435,7 +425,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
   
   Future<AddToCartModel?> addToCart(int quantity, String productId, List downloadLinks, List groupedParams, List bundleParams, List configurableParams, String? configurableId) async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
         document: gql(mutation.addToCart(quantity: quantity, productId: productId, downloadableLinks: downloadLinks, groupedParams: groupedParams, bundleParams: bundleParams, configurableParams: configurableParams, configurableId: configurableId)),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'addItemToCart', (json) => AddToCartModel.fromJson(json));
@@ -466,7 +456,10 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<AccountInfoModel?> getCustomerData() async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getCustomerData()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(
+      document: gql(mutation.getCustomerData()), 
+      fetchPolicy: FetchPolicy.networkOnly
+    ));
     return handleResponse(response, 'accountInfo', (json) => AccountInfoModel.fromJson(json));
   }
 
@@ -524,14 +517,83 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var response = await http.get(url);
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
+        debugPrint("🔍 WISHLIST RAW RESPONSE: ${jsonResponse.toString().substring(0, 200)}...");
+        
         if (jsonResponse['success'] == true) {
-             var wishListModel = WishListData.fromJson(jsonResponse['data']);
+             // 🟢 ROBUST FIX: Handle nested data structure {data: {data: [...]}}
+             List<dynamic> items = [];
+             
+             var dataField = jsonResponse['data'];
+             
+             // Check if data is nested (has a 'data' property inside)
+             if (dataField is Map && dataField.containsKey('data')) {
+                debugPrint("🔍 Detected nested data structure");
+                dataField = dataField['data']; // Extract inner data
+             }
+             
+             // Now handle the actual items
+             if (dataField is List) {
+                items = dataField;
+             } else if (dataField is Map) {
+                // Single item as a map, wrap it in a list
+                items = [dataField];
+             }
+             
+             debugPrint("🔍 WISHLIST ITEMS COUNT: ${items.length}");
+             
+             // Ensure images are found
+             for(var item in items) {
+                var p = item['product'];
+                if (p != null) {
+                   debugPrint("🔍 Product keys: ${p.keys.toList()}");
+                   
+                   // 🟢 Discover best possible image URL
+                   String? bestUrl = p['imageUrl'] ?? p['base_image_url'] ?? p['small_image_url'] ?? p['base_image'];
+                   
+                   // Check nested baseImage
+                   if ((bestUrl == null || bestUrl.isEmpty) && p['baseImage'] != null) {
+                      bestUrl = p['baseImage']['url'];
+                   }
+                   
+                   debugPrint("🔍 Best URL found: $bestUrl");
+
+                   // 🟢 Inject into 'images' array if 'images' is missing, empty, or contains only directory paths
+                   bool needsInjection = false;
+                   var existingImages = p['images'];
+                   
+                   if (existingImages == null || (existingImages is List && existingImages.isEmpty)) {
+                      needsInjection = true;
+                   } else if (existingImages is List) {
+                      // Check if all existing images are just directory paths/invalid
+                      bool allInvalid = true;
+                      for (var img in existingImages) {
+                         String? u = img is Map ? img['url'] : img.toString();
+                         if (u != null && u.isNotEmpty && !u.endsWith("/storage/product/")) {
+                            allInvalid = false;
+                            break;
+                         }
+                      }
+                      if (allInvalid) needsInjection = true;
+                   }
+
+                   if (bestUrl != null && bestUrl.isNotEmpty && needsInjection) {
+                      p['images'] = [{"url": bestUrl}];
+                      debugPrint("💚 Injected image URL for wishlist item: $bestUrl");
+                   }
+                }
+             }
+             
+             // Wrap data array in proper structure for model
+             var wishListModel = WishListData.fromJson({'data': items});
              wishListModel.status = true;
              wishListModel.success = true;
              return wishListModel;
         }
       }
-    } catch (e) { debugPrint("❌ FETCH WISHLIST ERROR: $e"); }
+    } catch (e, stackTrace) { 
+      debugPrint("❌ FETCH WISHLIST ERROR: $e"); 
+      debugPrint("Stack: $stackTrace");
+    }
     return WishListData(data: []);
   }
 
@@ -598,14 +660,19 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var body = {
         "action": "update",
         "customer_id": customerId,
-        "firstName": firstName,
-        "lastName": lastName,
-        "email": email,
-        "gender": gender,
-        "dateOfBirth": dateOfBirth,
-        "phone": phone, 
+        "firstName": firstName ?? "",
+        "lastName": lastName ?? "",
+        "email": email ?? "",
+        "gender": gender ?? "",
+        "dateOfBirth": dateOfBirth ?? "",
+        "phone": phone ?? "", 
+        "avatar": avatar ?? "", 
+        "newsletterSubscriber": subscribedToNewsLetter?.toString() ?? "false",
       };
-      var response = await http.post(url, body: jsonEncode(body), headers: {"Content-Type": "application/json"});
+      debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
+      // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
+      var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
+      debugPrint("📥 UPDATE RESPONSE: ${response.body}"); 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         bool isSuccess = jsonResponse['success'] == true;
@@ -659,7 +726,10 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-          return OrdersListModel.fromJson(jsonResponse['data']);
+          // Wrapped data handling to match model expectation
+          var rawData = jsonResponse['data'];
+          Map<String, dynamic> wrappedData = (rawData is Map<String, dynamic>) ? rawData : {'data': rawData};
+          return OrdersListModel.fromJson(wrappedData);
         }
       }
     } catch (e) {
