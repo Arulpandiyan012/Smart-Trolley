@@ -225,6 +225,7 @@ message
             dateOfBirth
             email
             phone
+            gender
             imageUrl
             subscribedToNewsLetter
         }

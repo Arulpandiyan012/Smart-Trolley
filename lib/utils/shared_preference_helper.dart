@@ -64,7 +64,8 @@ class SharedPreferenceHelper {
     
     configurationStorage.write(customerProfilePicUrl, '');
     configurationStorage.write(customerBannerPicUrl, '');
-    configurationStorage.write(customerToken, '0');
+    configurationStorage.write(customerImage, ''); // 🟢 Added: Clear portrait image
+    configurationStorage.write(customerToken, '');
     configurationStorage.remove(customerDetails);
   }
 
@@ -97,7 +98,7 @@ class SharedPreferenceHelper {
   }
 
   String getCustomerToken() {
-    return configurationStorage.read(customerToken) ?? "0";
+    return configurationStorage.read(customerToken) ?? "";
   }
 
   setCustomerEmail(String customerEmailNew) {

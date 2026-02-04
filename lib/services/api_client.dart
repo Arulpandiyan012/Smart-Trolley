@@ -169,36 +169,58 @@ class ApiClient {
       var url = Uri.parse("$baseDomain/mobikul-login.php");
       String safePhone = phone ?? "";
       var response = await http.post(url, body: { "idToken": idToken, "phone": safePhone }, headers: {"Accept": "application/json"});
-      
+      debugPrint("📥 Login Body Response: ${response.body}"); // 🟢 Added full body log
       if (response.statusCode == 200) {
+        // 🟢 CAPTURE COOKIES 
+        String? setCookie = response.headers['set-cookie'];
+        if (setCookie != null && setCookie.isNotEmpty) {
+           appStoragePref.setCookieGet(setCookie);
+           debugPrint("🍪 Captured Cookie from login: $setCookie");
+        }
+
         var data = jsonDecode(response.body);
         if (data['success'] == true) {
           String token = data['customerToken'];
           appStoragePref.setCustomerToken(token);
           appStoragePref.setCustomerLoggedIn(true);
           
-          if (data['customerData'] != null) {
-            var cData = data['customerData'];
-            int cId = int.tryParse(cData['id'].toString()) ?? 0;
-            appStoragePref.setCustomerId(cId);
-            
-            // Extract Real Name
-            String fName = cData['first_name']?.toString() ?? "";
-            String lName = cData['last_name']?.toString() ?? "";
-            String fullName = "$fName $lName".trim();
-            
-            if (fullName.isEmpty) fullName = cData['name']?.toString() ?? "";
-            
-            // Only fall back to phone if name is totally empty
-            if (fullName.isNotEmpty) {
-               appStoragePref.setCustomerName(fullName);
-            } else {
-               appStoragePref.setCustomerName(safePhone);
-            }
+            if (data['customerData'] != null) {
+              var cData = data['customerData'];
+              debugPrint("🔑 LOGIN SUCCESS data: $cData"); 
+              
+              // Robust ID extraction
+              int cId = int.tryParse(cData['id']?.toString() ?? "") ?? 0;
+              if (cId == 0) cId = int.tryParse(cData['customer_id']?.toString() ?? "") ?? 0;
+              appStoragePref.setCustomerId(cId);
+              
+              // Extract Real Name (Check both formats)
+              String fName = (cData['first_name'] ?? cData['firstName'])?.toString() ?? "";
+              String lName = (cData['last_name'] ?? cData['lastName'])?.toString() ?? "";
+              String fullName = "$fName $lName".trim();
+              
+              if (fullName.isEmpty) fullName = (cData['name'] ?? cData['fullName'])?.toString() ?? "";
+              
+              if (fullName.isNotEmpty) {
+                 appStoragePref.setCustomerName(fullName);
+              } else {
+                 appStoragePref.setCustomerName(safePhone);
+              }
 
-            String email = cData['email']?.toString() ?? "";
-            appStoragePref.setCustomerEmail(email);
-          }
+              String email = (cData['email'] ?? cData['customer_email'])?.toString() ?? "";
+              appStoragePref.setCustomerEmail(email);
+
+              // PERSIST IMAGE URL
+              String imageUrl = (cData['profile_image_url'] ?? cData['image_url'] ?? cData['imageUrl'] ?? cData['profile_image'])?.toString() ?? "";
+              if (imageUrl.isNotEmpty) {
+                appStoragePref.setCustomerImage(imageUrl);
+              }
+
+              // 🟢 Broadcast update globally for instant Home UI sync
+              GlobalData.profileUpdateStream.add({
+                "image": imageUrl,
+                "name": fullName
+              });
+            }
           return SignInModel.fromJson({ "status": true, "message": data['message'], "customerToken": token, "data": data['customerData'] });
         } else {
           return SignInModel.fromJson({ "status": false, "message": data['message'] ?? "Rejected", "customerToken": "", "data": null });
@@ -210,6 +232,7 @@ class ApiClient {
       return SignInModel.fromJson({ "status": false, "message": "App Error: $e", "customerToken": "", "data": null });
     }
   }
+
 
 Future<OrderDetail?> getOrderDetail(int id) async {
     try {
@@ -466,7 +489,10 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<AccountInfoModel?> getCustomerData() async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getCustomerData()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await _getPublicClient().query(QueryOptions(
+      document: gql(mutation.getCustomerData()), 
+      fetchPolicy: FetchPolicy.networkOnly
+    ));
     return handleResponse(response, 'accountInfo', (json) => AccountInfoModel.fromJson(json));
   }
 
@@ -667,14 +693,19 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var body = {
         "action": "update",
         "customer_id": customerId,
-        "firstName": firstName,
-        "lastName": lastName,
-        "email": email,
-        "gender": gender,
-        "dateOfBirth": dateOfBirth,
-        "phone": phone, 
+        "firstName": firstName ?? "",
+        "lastName": lastName ?? "",
+        "email": email ?? "",
+        "gender": gender ?? "",
+        "dateOfBirth": dateOfBirth ?? "",
+        "phone": phone ?? "", 
+        "avatar": avatar ?? "", 
+        "newsletterSubscriber": subscribedToNewsLetter?.toString() ?? "false",
       };
-      var response = await http.post(url, body: jsonEncode(body), headers: {"Content-Type": "application/json"});
+      debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
+      // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
+      var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
+      debugPrint("📥 UPDATE RESPONSE: ${response.body}"); 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         bool isSuccess = jsonResponse['success'] == true;
@@ -728,7 +759,10 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-          return OrdersListModel.fromJson(jsonResponse['data']);
+          // Wrapped data handling to match model expectation
+          var rawData = jsonResponse['data'];
+          Map<String, dynamic> wrappedData = (rawData is Map<String, dynamic>) ? rawData : {'data': rawData};
+          return OrdersListModel.fromJson(wrappedData);
         }
       }
     } catch (e) {

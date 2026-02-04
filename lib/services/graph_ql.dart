@@ -27,7 +27,7 @@ class GraphQlApiCalling {
     getToken: () async {
       String? token = appStoragePref.getCustomerToken();
       log("🟢 AuthLink Token: $token");
-      return token != null ? "Bearer $token" : null;
+      return (token != null && token.isNotEmpty) ? "Bearer $token" : null;
     },
   );
 
