@@ -53,7 +53,7 @@ dependencies:
   speech_to_text: ^7.0.0
   cached_network_image: ^3.2.1
   google_fonts: 6.2.1
-  json_annotation: ^4.8.1
+  json_annotation: 4.9.0
   overlay_support: ^2.1.0
   cupertino_icons: ^1.0.2
   local_auth: ^2.1.6

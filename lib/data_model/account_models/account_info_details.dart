@@ -22,6 +22,7 @@ class AccountInfoModel {
   String? imageUrl;
   String? dateOfBirth;
   String? phone;
+  String? gender; // 🟢 Added
   bool? subscribedToNewsLetter;
 
   AccountInfoModel(
@@ -33,6 +34,7 @@ class AccountInfoModel {
       this.imageUrl,
       this.dateOfBirth,
       this.phone,
+      this.gender, // 🟢 Added
       this.subscribedToNewsLetter});
 
   factory AccountInfoModel.fromJson(Map<String, dynamic> json) =>

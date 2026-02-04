@@ -475,16 +475,20 @@ class _HomePageViewState extends State<HomePageView> {
                                 useGrid: true,
                                 onAddToCart: (id) =>
                                     widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added")),
-                                onAddToWishlist: (String id, bool isInWishlist, dynamic product) {
+                                onAddToWishlist: (String id, bool isInWishlist, dynamic product) async {
                                    if (widget.isLogin) {
                                       try { (product as dynamic).isInWishlist = !isInWishlist; } catch (_) {}
                                       try { if (product is Map) product['in_wishlist'] = !isInWishlist; } catch(_) {}
-                                      setState(() {});
+                                      
                                       if (isInWishlist) {
+                                         GlobalData.wishlistProductIds.remove(id);
                                          widget.homePageBloc?.add(RemoveWishlistItemEvent(id, null)); 
                                       } else {
+                                         GlobalData.wishlistProductIds.add(id);
                                          widget.homePageBloc?.add(FetchAddWishlistHomepageEvent(id, null));
                                       }
+                                      GlobalData.wishlistUpdateStream.add(GlobalData.wishlistProductIds);
+                                      setState(() {});
                                    } else {
                                       ShowMessage.warningNotification("Please login to add to wishlist", context);
                                    }

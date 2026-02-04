@@ -13,6 +13,7 @@ import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 import 'package:bagisto_app_demo/utils/string_constants.dart';
 import 'package:bagisto_app_demo/utils/index.dart';
 import 'package:bagisto_app_demo/screens/account/widget/profile_detail.dart';
+import 'package:bagisto_app_demo/screens/account/widget/profile_image_view.dart';
 import 'package:bagisto_app_demo/screens/account/widget/account_loader_view.dart';
 
 GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -42,6 +43,7 @@ class _AccountScreenState extends State<AccountScreen>
   AccountInfoModel? _accountInfoDetails;
   bool isLoad = true;
   String? base64string;
+  XFile? pickedFile; // 🟢 NEW: Store picked file here
   AccountInfoBloc? accountInfoBloc;
   bool subscribeNewsletter = false;
 
@@ -193,7 +195,16 @@ class _AccountScreenState extends State<AccountScreen>
               _accountInfoDetails!.dateOfBirth ?? "";
           subscribeNewsletter =
               _accountInfoDetails!.subscribedToNewsLetter ?? false;
-          currentGenderValue = 0;
+          
+          // 🟢 ROBUST GENDER MAPPING (Case Insensitive)
+          String gender = (_accountInfoDetails!.gender?.toLowerCase() ?? "");
+          if (gender.contains("female")) {
+            currentGenderValue = 1;
+          } else if (gender.contains("other")) {
+            currentGenderValue = 2;
+          } else {
+            currentGenderValue = 0; // Default Male
+          }
         }
       }
     }
@@ -205,6 +216,13 @@ class _AccountScreenState extends State<AccountScreen>
     return SafeArea(
       child: ProfileDetailView(
         formKey: _formKey,
+        upperChild: ProfileImageView(
+          pickedFile: pickedFile,
+          callback: (base64, file) {
+            base64string = base64;
+            pickedFile = file;
+          },
+        ),
         firstNameController: firstNameController,
         lastNameController: lastNameController,
         emailController: emailController,
@@ -250,7 +268,18 @@ class _AccountScreenState extends State<AccountScreen>
       String lName = data.lastName ?? "";
       appStoragePref.setCustomerName("$fName $lName".trim());
       appStoragePref.setCustomerEmail(data.email ?? "");
-      appStoragePref.setCustomerImage(data.imageUrl ?? "");
+      
+      // 🟢 ENSURE IMAGE IS SAVED
+      String image = data.imageUrl ?? "";
+      if (image.isNotEmpty) {
+        appStoragePref.setCustomerImage(image);
+      }
+
+      // 🟢 BROADCAST
+      GlobalData.profileUpdateStream.add({
+        "image": image,
+        "name": "$fName $lName".trim()
+      });
     }
   }
 }
