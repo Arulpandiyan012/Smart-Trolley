@@ -56,39 +56,6 @@ class ApiClient {
   GraphQlApiCalling client = GraphQlApiCalling();
   MutationsData mutation = MutationsData();
 
-  // 🟢 HELPER: Safe Public Client (Manual Headers)
-  GraphQLClient _getPublicClient() {
-    String? token = appStoragePref.getCustomerToken();
-    String? cookie = appStoragePref.getCookieGet();
-    
-    Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    if (cookie != null && cookie.isNotEmpty) {
-      headers['Cookie'] = cookie;
-    }
-    
-    // 🟢 FIX: Send Token in multiple formats to satisfy API guards
-    if (token != null && token.isNotEmpty) {
-      // Standard GraphQL Auth
-      headers['Authorization'] = "Bearer $token";
-      // Mobikul Custom Header
-      headers['token'] = token; 
-    }
-
-    final HttpLink httpLink = HttpLink(
-      "$baseDomain/graphql",
-      defaultHeaders: headers
-    );
-    
-    return GraphQLClient(
-      link: httpLink,
-      cache: GraphQLCache()
-    );
-  }
-
   // 🟢 1. GLOBAL HANDLER (Brute-Force Parser)
   Future<T?> handleResponse<T>(
     QueryResult<Object?> result,
@@ -334,7 +301,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<GetDrawerCategoriesData?> homeCategories({int? id, List<Map<String, dynamic>>? filters}) async {
     List<Map<String, dynamic>>? idFilter = [{"key": "id", "value": "$id"}];
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql((filters ?? []).isNotEmpty ? mutation.homeCategoriesFilters(filters: filters) : mutation.homeCategoriesFilters(filters: idFilter)),
         fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -342,7 +309,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<NewProductsModel?> getAllProducts({List<Map<String, dynamic>>? filters, int? page, int limit = 15}) async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
       document: gql(mutation.allProductsList(filters: filters ?? [], page: page ?? 1, limit: limit)), 
       fetchPolicy: FetchPolicy.noCache
     ));
@@ -354,21 +321,21 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<ThemeCustomDataModel?> getThemeCustomizationData() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql(mutation.themeCustomizationData()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'themeCustomization', (json) => ThemeCustomDataModel.fromJson(json));
   }
 
   Future<CmsData?> getCmsPagesData() async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
       document: gql(mutation.getCmsPagesData()),
       fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'cmsPages', (json) => CmsData.fromJson(json));
   }
 
   Future<CmsPage?> getCmsPageDetails(String id) async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
       document: gql(mutation.getCmsPageDetails(id)),
       fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -376,19 +343,19 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<GetFilterAttribute?> getFilterAttributes(String categorySlug) async {
-    var response = await _getPublicClient().mutate(MutationOptions(document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getFilterAttribute', (json) => GetFilterAttribute.fromJson(json));
   }
 
   Future<CurrencyLanguageList?> getLanguageCurrency() async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
         document: gql(mutation.getLanguageCurrencyList()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getDefaultChannel', (json) => CurrencyLanguageList.fromJson(json));
   }
 
   Future<CartModel?> getCartDetails() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql(mutation.cartDetails()), 
         fetchPolicy: FetchPolicy.noCache
     ));
@@ -396,7 +363,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<CartModel?> getCartCount() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
         document: gql(mutation.cartDetails()), 
         cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic,
         fetchPolicy: FetchPolicy.networkOnly
@@ -458,7 +425,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
   
   Future<AddToCartModel?> addToCart(int quantity, String productId, List downloadLinks, List groupedParams, List bundleParams, List configurableParams, String? configurableId) async {
-    var response = await _getPublicClient().mutate(MutationOptions(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
         document: gql(mutation.addToCart(quantity: quantity, productId: productId, downloadableLinks: downloadLinks, groupedParams: groupedParams, bundleParams: bundleParams, configurableParams: configurableParams, configurableId: configurableId)),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'addItemToCart', (json) => AddToCartModel.fromJson(json));
@@ -489,7 +456,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<AccountInfoModel?> getCustomerData() async {
-    var response = await _getPublicClient().query(QueryOptions(
+    var response = await (client.clientToQuery()).query(QueryOptions(
       document: gql(mutation.getCustomerData()), 
       fetchPolicy: FetchPolicy.networkOnly
     ));

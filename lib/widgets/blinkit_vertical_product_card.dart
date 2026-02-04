@@ -117,77 +117,60 @@ class BlinkitVerticalProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // IMAGE SECTION
-            // IMAGE SECTION with ADD BUTTON Overlay
             Stack(
-              clipBehavior: Clip.none, // Allow overflow if needed
+              clipBehavior: Clip.none,
               children: [
                 Container(
-                  height: 85, // 🟢 Reduced to 85 to save vertical space
+                  height: 85,
                   width: double.infinity,
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
                   ),
                   child: (imageUrl != null && imageUrl.isNotEmpty)
-                      ? ImageView(
-                          url: imageUrl,
-                          fit: BoxFit.contain,
-                        )
+                      ? ImageView(url: imageUrl, fit: BoxFit.contain)
                       : const Icon(Icons.image, size: 40, color: Colors.grey),
                 ),
-
-                // Wishlist Icon (Top Right)
                 Positioned(
                   top: 4,
                   right: 4,
                   child: StreamBuilder<Set<String>>(
                     stream: GlobalData.wishlistUpdateStream,
                     builder: (context, snapshot) {
-                      // Use global set if available, otherwise fallback to local data
                       final currentWishlist = snapshot.data ?? GlobalData.wishlistProductIds;
                       bool active = currentWishlist.contains(productId.toString());
-                      
-                      // If stream hasn't fired yet but we have data in card, use that as secondary fallback
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                         active = active || isInWishlist;
+                        active = active || isInWishlist;
                       }
-
                       return InkWell(
                         onTap: () {
-                           if (onAddToWishlist != null) {
-                             onAddToWishlist!(productId.toString(), active, data);
-                           }
+                          if (onAddToWishlist != null) {
+                            onAddToWishlist!(productId.toString(), active, data);
+                          }
                         },
                         child: Container(
-                          width: 24, height: 24,
-                          decoration: const BoxDecoration(
-                             shape: BoxShape.circle,
-                             color: Colors.transparent, 
-                          ),
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
                           child: Icon(
-                            active ? Icons.favorite : Icons.favorite_border, 
-                            size: 16, 
-                            color: active ? Colors.red : Colors.grey[400]
+                            active ? Icons.favorite : Icons.favorite_border,
+                            size: 16,
+                            color: active ? Colors.red : Colors.grey[400],
                           ),
                         ),
                       );
-                    }
+                    },
                   ),
                 ),
-                
-
-
-                // 🟢 ADD BUTTON (Overlays Bottom Right of Image)
                 Positioned(
-                  bottom: 6, 
+                  bottom: 6,
                   right: 6,
                   child: InkWell(
                     onTap: () => onAddToCart?.call(productId),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // 🟢 Further Reduced Size
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFF27C16B), width: 1),
                         borderRadius: BorderRadius.circular(6),
@@ -196,164 +179,106 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
                             blurRadius: 2,
-                            offset: const Offset(0, 1)
-                          )
-                        ]
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       child: const Text(
                         "ADD",
-                        style: TextStyle(
-                          color: Color(0xFF27C16B),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 9, // 🟢 Further Reduced Font
-                        ),
+                        style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 9),
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(6, 0, 6, 2), // 🟢 Minimal Padding
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // NAME
-                    Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11, // Slightly larger font
-                        fontWeight: FontWeight.w600,
-                        height: 1.2,
-                        color: Colors.black87,
-                      ),
-                    ),
-
-                    
-                    // UNIT
-                    Text(
-                      "1 Unit",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 10),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // 🟢 RATING STARS
-                    Builder(
-                      builder: (context) {
-                        // 1. Extract Rating
-                        double rating = 0.0;
-                        try {
-                           var r = (data as dynamic).averageRating;
-                           if (r == null) r = (data as dynamic).rating; // Fallback
-                           if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
-                        } catch (_) {}
-
-                        // 2. Extract Count & Calculate Client-Side Average
-                        int reviewCount = 0;
-                        try {
-                           var reviews = (data as dynamic).reviews;
-                           if (reviews is List) {
-                              reviewCount = reviews.length;
-                              
-                              // 🟢 CLIENT-SIDE CALCULATION (Fallback)
-                              // If Backend Aggregate is 0 (because of SQL insert), calculate it ourselves.
-                              if (rating == 0 && reviewCount > 0) {
-                                  double totalObj = 0;
-                                  for (var r in reviews) {
-                                      var val = (r as dynamic).rating;
-                                      if (val != null) totalObj += double.tryParse(val.toString()) ?? 0;
-                                  }
-                                  rating = totalObj / reviewCount;
-                              }
-                           }
-                        } catch (_) {}
-
-                        // 🟢 ALWAYS SHOW STARS (Even empty) to prove UI works
-                        // User can decide later if they want to hide them.
-                        // if (rating <= 0 && reviewCount == 0) return const SizedBox();
-
-                        return Row(
-                          children: [
-                            // Stars
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: List.generate(5, (index) {
-                                return Icon(
-                                  index < rating.round() ? Icons.star : Icons.star_border, 
-                                  size: 11,
-                                  color: index < rating.round() ? const Color(0xFFF5C518) : Colors.grey[300], // Amber vs Grey
-                                );
-                              }),
-                            ),
-                            const SizedBox(width: 4),
-                            // Count (Only show if > 0)
-                            if (reviewCount > 0)
-                              Text(
-                                "($reviewCount)",
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.grey[500],
-                                  fontWeight: FontWeight.w500
-                                ),
-                              )
-                          ],
-                        );
-                      }
-                    ),
-                    
-
-
-                    // TIMER TAG (Moved from Image)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 2, top: 2), // Added top margin
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4F6F8),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.timer_outlined, size: 9, color: Colors.black54),
-                          SizedBox(width: 3),
-                          Text("12 MINS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(), 
-
-                    // PRICE (Rate) - Now below name
-                    Text.rich(
-                      TextSpan(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 2),
+                  Text("1 Unit", style: TextStyle(color: Colors.grey[600], fontSize: 10)),
+                  const SizedBox(height: 4),
+                  Builder(
+                    builder: (context) {
+                      double rating = 0.0;
+                      try {
+                        var r = (data as dynamic).averageRating ?? (data as dynamic).rating;
+                        if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
+                        var reviews = (data as dynamic).reviews;
+                        if (reviews is List && rating == 0 && reviews.isNotEmpty) {
+                          double totalObj = 0;
+                          for (var r in reviews) {
+                            var val = (r as dynamic).rating;
+                            if (val != null) totalObj += double.tryParse(val.toString()) ?? 0;
+                          }
+                          rating = totalObj / reviews.length;
+                        }
+                      } catch (_) {}
+                      int reviewCount = 0;
+                      try {
+                        var reviews = (data as dynamic).reviews;
+                        if (reviews is List) reviewCount = reviews.length;
+                      } catch (_) {}
+                      return Row(
                         children: [
-                          TextSpan(
-                            text: "₹", 
-                            style: TextStyle(
-                              fontFamily: 'Roboto', 
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: Colors.black87,
-                            ) 
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(5, (index) {
+                              return Icon(
+                                index < rating.round() ? Icons.star : Icons.star_border,
+                                size: 11,
+                                color: index < rating.round() ? const Color(0xFFF5C518) : Colors.grey[300],
+                              );
+                            }),
                           ),
-                          TextSpan(
-                            text: priceText.replaceAll("₹", "").trim(), 
-                            style: TextStyle(
-                               fontSize: 12,
-                               fontWeight: FontWeight.w700,
-                               color: Colors.black87,
-                            )
-                          )
-                        ]
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                          const SizedBox(width: 4),
+                          if (reviewCount > 0)
+                            Text(
+                              "($reviewCount)",
+                              style: TextStyle(fontSize: 9, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 2, top: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(color: const Color(0xFFF4F6F8), borderRadius: BorderRadius.circular(3)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.timer_outlined, size: 9, color: Colors.black54),
+                        SizedBox(width: 3),
+                        Text("12 MINS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700)),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: "₹",
+                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                        ),
+                        TextSpan(
+                          text: priceText.replaceAll("₹", "").trim(),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black87),
+                        ),
+                      ],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],

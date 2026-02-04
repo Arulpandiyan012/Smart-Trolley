@@ -555,7 +555,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
           ),
         ),
         SizedBox(
-          height: 320, // 🟢 Increased to 320 to match vertical card requirements 
+          height: 260, // 🟢 Reduced from 320 to 260 for compact layout
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
             scrollDirection: Axis.horizontal,
