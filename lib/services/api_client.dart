@@ -153,7 +153,7 @@ class ApiClient {
           
             if (data['customerData'] != null) {
               var cData = data['customerData'];
-              debugPrint("🔑 LOGIN SUCCESS data: $cData"); 
+              debugPrint("🔑 LOGIN DATA KEYS: ${cData.keys.toList()}"); // 🟢 DIAGNOSTIC LOG
               
               // Robust ID extraction
               int cId = int.tryParse(cData['id']?.toString() ?? "") ?? 0;
@@ -176,8 +176,25 @@ class ApiClient {
               String email = (cData['email'] ?? cData['customer_email'])?.toString() ?? "";
               appStoragePref.setCustomerEmail(email);
 
-              // PERSIST IMAGE URL
+              // 🟢 EXTENDED STORAGE: Save all details for Edit Screen auto-population
+              String fNameSaved = (cData['first_name'] ?? cData['firstName'])?.toString() ?? "";
+              String lNameSaved = (cData['last_name'] ?? cData['lastName'])?.toString() ?? "";
+              String phoneSaved = (cData['phone'] ?? cData['customer_phone'])?.toString() ?? "";
+              String genderSaved = (cData['gender'] ?? cData['customer_gender'])?.toString() ?? "";
+              // 🟢 CHECK ALL KEYS: snake_case, camelCase, short
+              String dobSaved = (cData['date_of_birth'] ?? cData['dob'] ?? cData['customer_dob'] ?? cData['dateOfBirth'])?.toString() ?? "";
+              if (dobSaved == "0000-00-00") dobSaved = ""; // 🟢 Sanitize placeholder
               String imageUrl = (cData['profile_image_url'] ?? cData['image_url'] ?? cData['imageUrl'] ?? cData['profile_image'])?.toString() ?? "";
+
+              appStoragePref.setCustomerFirstName(fNameSaved);
+              appStoragePref.setCustomerLastName(lNameSaved);
+              appStoragePref.setCustomerPhone(phoneSaved);
+              appStoragePref.setCustomerGender(genderSaved);
+              appStoragePref.setCustomerDob(dobSaved);
+              appStoragePref.setCustomerNewsletter(cData['subscribed_to_newsletter'] == true || cData['is_subscribed'] == 1);
+
+              debugPrint("💾 SAVED TO STORAGE: FName: $fNameSaved, LName: $lNameSaved, DOB: $dobSaved");
+
               if (imageUrl.isNotEmpty) {
                 appStoragePref.setCustomerImage(imageUrl);
               }
@@ -188,8 +205,13 @@ class ApiClient {
                 "name": fullName
               });
             }
+
+          // 🟢 SYNC PROFILE AFTER PERSISTENCE (Ensure ID and values are available for fallback)
+          _syncProfileAfterLogin();
+
           return SignInModel.fromJson({ "status": true, "message": data['message'], "customerToken": token, "data": data['customerData'] });
-        } else {
+        }
+ else {
           return SignInModel.fromJson({ "status": false, "message": data['message'] ?? "Rejected", "customerToken": "", "data": null });
         }
       } else {
@@ -456,11 +478,40 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<AccountInfoModel?> getCustomerData() async {
-    var response = await (client.clientToQuery()).query(QueryOptions(
-      document: gql(mutation.getCustomerData()), 
-      fetchPolicy: FetchPolicy.networkOnly
-    ));
-    return handleResponse(response, 'accountInfo', (json) => AccountInfoModel.fromJson(json));
+    try {
+      var response = await (client.clientToQuery()).query(QueryOptions(
+        document: gql(mutation.getCustomerData()), 
+        fetchPolicy: FetchPolicy.networkOnly
+      ));
+      
+      if (!response.hasException) {
+        var data = await handleResponse(response, 'accountInfo', (json) => AccountInfoModel.fromJson(json));
+        if (data != null && data.name != null) return data;
+      } else {
+        debugPrint("⚠️ GraphQL getCustomerData had exception, skipping to fallback");
+      }
+    } catch (e) {
+      debugPrint("⚠️ GraphQL getCustomerData failed, using cache: $e");
+    }
+
+    // 🟢 FALLBACK: If GraphQL fails (unauthenticated), return data from appStoragePref
+    if (appStoragePref.getCustomerLoggedIn()) {
+        var model = AccountInfoModel(
+          name: appStoragePref.getCustomerName(),
+          email: appStoragePref.getCustomerEmail(),
+          imageUrl: appStoragePref.getCustomerImage(),
+          id: appStoragePref.getCustomerId().toString(),
+          firstName: appStoragePref.getCustomerFirstName(),
+          lastName: appStoragePref.getCustomerLastName(),
+          phone: appStoragePref.getCustomerPhone(),
+          gender: appStoragePref.getCustomerGender(),
+          dateOfBirth: appStoragePref.getCustomerDob() == "0000-00-00" ? "" : appStoragePref.getCustomerDob(), // 🟢 Sanitize
+          subscribedToNewsLetter: appStoragePref.getCustomerNewsletter(),
+        );
+        debugPrint("📦 RESTORED FROM STORAGE: FName: ${model.firstName}, LName: ${model.lastName}, DOB: ${model.dateOfBirth}");
+        return model;
+    }
+    return null;
   }
 
   Future<AddToCartModel?> updateItemToCart(List<Map<dynamic, String>> items) async {
@@ -513,6 +564,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<WishListData?> getWishList() async {
     try {
       String customerId = appStoragePref.getCustomerId().toString();
+      debugPrint("🚀 FETCHING WISHLIST (PHP) - Customer: $customerId");
       var url = Uri.parse("$baseDomain/mobikul-wishlist-api.php?action=get&customer_id=$customerId");
       var response = await http.get(url);
       if (response.statusCode == 200) {
@@ -658,27 +710,65 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     try {
       String customerId = appStoragePref.getCustomerId().toString();
       var url = Uri.parse("$baseDomain/mobikul-profile-api.php");
+      String finalDob = dateOfBirth ?? "";
+      if (finalDob.contains("-") && finalDob.split("-").first.length == 2) {
+        try {
+           // Convert dd-MM-yyyy to yyyy-MM-dd
+           var parts = finalDob.split("-");
+           if (parts.length == 3) {
+             finalDob = "${parts[2]}-${parts[1]}-${parts[0]}";
+           }
+        } catch (e) {}
+      }
+
       var body = {
         "action": "update",
         "customer_id": customerId,
+        "token": appStoragePref.getCustomerToken() ?? "", // 🟢 AUTH TOKEN ADDED
+        
+        // 🟢 DUAL KEYS: Send both formats to satisfy picky server
+        "first_name": firstName ?? "",
         "firstName": firstName ?? "",
+        
+        "last_name": lastName ?? "",
         "lastName": lastName ?? "",
+        
         "email": email ?? "",
         "gender": gender ?? "",
-        "dateOfBirth": dateOfBirth ?? "",
+        
+        "date_of_birth": finalDob, // Snake case
+        "dateOfBirth": finalDob,   // Camel case 
+        "dob": finalDob,           // Short 
+        
         "phone": phone ?? "", 
         "avatar": avatar ?? "", 
+        "subscribed_to_newsletter": subscribedToNewsLetter?.toString() ?? "false",
         "newsletterSubscriber": subscribedToNewsLetter?.toString() ?? "false",
       };
+      
+      print("📤 UPDATING PROFILE payload (Form): $body"); // 🟢 DEBUG LOG
       debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
       // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
       var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
-      debugPrint("📥 UPDATE RESPONSE: ${response.body}"); 
+      debugPrint("📥 UPDATE RESPONSE: ${response.statusCode} - ${response.body}"); 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         bool isSuccess = jsonResponse['success'] == true;
         var msg = jsonResponse['message'] ?? "Updated Successfully";
-        var customerData = jsonResponse['data'];
+        var customerData = jsonResponse['data'] ?? jsonResponse['customer'];
+        
+        debugPrint("✅ PROFILE UPDATE SUCCESS: $msg, Data: $customerData");
+
+        // 🟢 OPTIMISTIC UPDATE: Force update local storage with INPUT values
+        // This ensures the UI reflects changes even if the server echoes back old data.
+        appStoragePref.setCustomerName(((firstName ?? "") + " " + (lastName ?? "")).trim());
+        appStoragePref.setCustomerFirstName(firstName ?? "");
+        appStoragePref.setCustomerLastName(lastName ?? "");
+        appStoragePref.setCustomerEmail(email ?? "");
+        appStoragePref.setCustomerPhone(phone ?? "");
+        appStoragePref.setCustomerGender(gender ?? "");
+        appStoragePref.setCustomerDob(finalDob); // Use the formatted DOB sent to server
+        
         var dataMap = {
             "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null,
             "updateAccount": { "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null },
@@ -739,50 +829,42 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     return OrdersListModel(data: []);
   }
 
-// Inside ApiClient class in api_client.dart
+  Future<BaseModel?> cancelOrder(int orderId) async {
+    try {
+      var url = Uri.parse("$baseDomain/mobikul-order-cancel-api.php");
+      String customerId = appStoragePref.getCustomerId().toString();
+      
+      debugPrint("🔵 PHP CANCEL: Order $orderId for Customer $customerId");
 
-// Inside ApiClient class
+      var response = await http.post(
+        url, 
+        body: jsonEncode({
+          "order_id": orderId.toString(),
+          "customer_id": customerId
+        }),
+        headers: {"Content-Type": "application/json"}
+      );
+      
+      debugPrint("🔵 RAW RESPONSE: ${response.body}");
 
-// Inside lib/services/api_client.dart
-
-Future<BaseModel?> cancelOrder(int orderId) async {
-  try {
-    var url = Uri.parse("$baseDomain/mobikul-order-cancel-api.php");
-    String customerId = appStoragePref.getCustomerId().toString();
-    
-    debugPrint("🔵 PHP CANCEL: Order $orderId for Customer $customerId");
-
-    var response = await http.post(
-      url, 
-      body: jsonEncode({
-        "order_id": orderId.toString(),
-        "customer_id": customerId
-      }),
-      headers: {"Content-Type": "application/json"}
-    );
-    
-    // 🟢 DEBUG LOG: See exactly what the server says
-    debugPrint("🔵 RAW RESPONSE: ${response.body}");
-
-    if (response.statusCode == 200) {
-      try {
-        var data = jsonDecode(response.body);
-        // Pass the server message directly to the UI
-        return BaseModel(
-          success: data['success'] == true, 
-          message: data['message'] ?? "Unknown Server Error"
-        );
-      } catch (e) {
-        return BaseModel(success: false, message: "Invalid JSON from server");
+      if (response.statusCode == 200) {
+        try {
+          var data = jsonDecode(response.body);
+          return BaseModel(
+            success: data['success'] == true, 
+            message: data['message'] ?? "Unknown Server Error"
+          );
+        } catch (e) {
+          return BaseModel(success: false, message: "Invalid JSON from server");
+        }
+      } else {
+        return BaseModel(success: false, message: "HTTP Error: ${response.statusCode}");
       }
-    } else {
-      return BaseModel(success: false, message: "HTTP Error: ${response.statusCode}");
+    } catch (e) {
+      debugPrint("❌ Cancel Error: $e");
+      return BaseModel(success: false, message: "App Error: $e");
     }
-  } catch (e) {
-    debugPrint("❌ Cancel Error: $e");
-    return BaseModel(success: false, message: "App Error: $e");
   }
-}
 
   Future<AddressModel?> getAddressData() async {
     try {
@@ -1024,5 +1106,47 @@ Future<BaseModel?> cancelOrder(int orderId) async {
   Future<DownloadSampleModel?> downloadSample(String type, String id) async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.downloadSample(type, id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadSample', (json) => DownloadSampleModel.fromJson(json));
+  }
+  // 🟢 NEW: Robust Profile Synchronization after Login
+  Future<void> _syncProfileAfterLogin() async {
+    try {
+      debugPrint("🔄 Syncing profile after login...");
+      var data = await getCustomerData();
+      if (data != null) {
+        if (data.id != null && data.id!.isNotEmpty && (data.name == null || data.name!.isEmpty)) {
+            debugPrint("💡 Note: Using cached/fallback profile data");
+        }
+        debugPrint("✅ Profile synced: ${data.name}");
+        if (data.name != null && data.name!.isNotEmpty) {
+           appStoragePref.setCustomerName(data.name!);
+        }
+        if (data.email != null && data.email!.isNotEmpty) {
+           appStoragePref.setCustomerEmail(data.email!);
+        }
+        if (data.imageUrl != null && data.imageUrl!.isNotEmpty) {
+           appStoragePref.setCustomerImage(data.imageUrl!);
+        }
+
+        // 🟢 SYNC EXTENDED DETAILS (If GraphQL succeeds)
+        if (data.firstName != null) appStoragePref.setCustomerFirstName(data.firstName!);
+        if (data.lastName != null) appStoragePref.setCustomerLastName(data.lastName!);
+        if (data.phone != null) appStoragePref.setCustomerPhone(data.phone!);
+        if (data.gender != null) appStoragePref.setCustomerGender(data.gender!);
+        if (data.dateOfBirth != null) {
+          String dob = data.dateOfBirth!;
+          if (dob == "0000-00-00") dob = ""; // 🟢 Sanitize placeholder
+          appStoragePref.setCustomerDob(dob);
+        }
+        if (data.subscribedToNewsLetter != null) appStoragePref.setCustomerNewsletter(data.subscribedToNewsLetter!);
+        
+        // Broadcast updates for UI
+        GlobalData.profileUpdateStream.add({
+          "image": data.imageUrl,
+          "name": data.name
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Profile sync failed: $e");
+    }
   }
 }
