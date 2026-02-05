@@ -517,7 +517,8 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var response = await http.get(url);
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
-        debugPrint("🔍 WISHLIST RAW RESPONSE: ${jsonResponse.toString().substring(0, 200)}...");
+        String rawResponse = jsonResponse.toString();
+        debugPrint("🔍 WISHLIST RAW RESPONSE: ${rawResponse.length > 200 ? rawResponse.substring(0, 200) : rawResponse}...");
         
         if (jsonResponse['success'] == true) {
              // 🟢 ROBUST FIX: Handle nested data structure {data: {data: [...]}}
