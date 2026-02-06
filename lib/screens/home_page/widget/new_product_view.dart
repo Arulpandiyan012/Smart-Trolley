@@ -51,7 +51,7 @@ class _NewProductViewState extends State<NewProductView> {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 0.53, // 🟢 Adjusted to 0.53 to fix bottom overflow
+          childAspectRatio: 0.48, // 🟢 Adjusted to 0.48 to fix 15px bottom overflow
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
