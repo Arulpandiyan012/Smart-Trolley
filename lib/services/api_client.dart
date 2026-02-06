@@ -194,10 +194,27 @@ class ApiClient {
               appStoragePref.setCustomerNewsletter(cData['subscribed_to_newsletter'] == true || cData['is_subscribed'] == 1);
 
               debugPrint("💾 SAVED TO STORAGE: FName: $fNameSaved, LName: $lNameSaved, DOB: $dobSaved");
+              // 🟢 NEW: Log ALL customer data keys and values for debugging
+              debugPrint("🔍 FULL LOGIN CUSTOMER DATA: $cData");
 
               if (imageUrl.isNotEmpty) {
                 appStoragePref.setCustomerImage(imageUrl);
               }
+
+              // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+              // DrawerListView listens to 'customerDetails' key. We must construct and save it.
+              AccountInfoModel authModel = AccountInfoModel(
+                firstName: fNameSaved,
+                lastName: lNameSaved,
+                name: fullName,
+                email: email,
+                phone: phoneSaved,
+                dateOfBirth: dobSaved,
+                gender: genderSaved,
+                imageUrl: imageUrl.isNotEmpty ? imageUrl : appStoragePref.getCustomerImage(),
+                id: cId.toString()
+              );
+              appStoragePref.setCustomerDetails(authModel);
 
               // 🟢 Broadcast update globally for instant Home UI sync
               GlobalData.profileUpdateStream.add({
@@ -294,10 +311,28 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         document: gql(mutation.customerLogout()),
         fetchPolicy: FetchPolicy.networkOnly));
     
+    // Clear all authentication and profile data
     appStoragePref.setCustomerLoggedIn(false);
     appStoragePref.setCustomerName("");
     appStoragePref.setCustomerEmail("");
     appStoragePref.setCartCount(0);
+    
+    // 🟢 Clear extended profile details to prevent stale cache after relogin
+    appStoragePref.setCustomerFirstName("");
+    appStoragePref.setCustomerLastName("");
+    appStoragePref.setCustomerPhone("");
+    appStoragePref.setCustomerGender("");
+    appStoragePref.setCustomerDob("");
+    appStoragePref.setCustomerImage("");
+    appStoragePref.setCustomerNewsletter(false);
+    appStoragePref.setCustomerId(0);
+    appStoragePref.setCustomerToken("");
+    
+    // 🟢 Broadcast profile clear to update UI immediately
+    GlobalData.profileUpdateStream.add({
+      "image": null,
+      "name": ""
+    });
         
     return handleResponse(response, 'customerLogout', (json) => BaseModel.fromJson(json));
   }
@@ -749,25 +784,50 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       print("📤 UPDATING PROFILE payload (Form): $body"); // 🟢 DEBUG LOG
       debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
       // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
+      debugPrint("📥 UPDATE REQUEST URL: $url");
+      debugPrint("📤 UPDATE PAYLOAD: $body");
       var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
       debugPrint("📥 UPDATE RESPONSE: ${response.statusCode} - ${response.body}"); 
+
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
-        bool isSuccess = jsonResponse['success'] == true;
-        var msg = jsonResponse['message'] ?? "Updated Successfully";
-        var customerData = jsonResponse['data'] ?? jsonResponse['customer'];
+        bool isSuccess = jsonResponse['success'] == true || jsonResponse['status'] == true || jsonResponse['updateAccount']?['success'] == true;
+        var msg = jsonResponse['message'] ?? jsonResponse['updateAccount']?['message'] ?? "Updated Successfully";
+        var customerData = jsonResponse['data'] ?? jsonResponse['customer'] ?? jsonResponse['updateAccount']?['data'];
         
-        debugPrint("✅ PROFILE UPDATE SUCCESS: $msg, Data: $customerData");
+        debugPrint("✅ PROFILE UPDATE ATTEMPT RESULT: Success=$isSuccess, Message=$msg");
+        if (customerData != null) debugPrint("🔍 Server Echoed Data: $customerData");
 
         // 🟢 OPTIMISTIC UPDATE: Force update local storage with INPUT values
-        // This ensures the UI reflects changes even if the server echoes back old data.
-        appStoragePref.setCustomerName(((firstName ?? "") + " " + (lastName ?? "")).trim());
+        // This ensures the UI reflects changes immediately, even if the server is slow or fails.
+        String fullName = ((firstName ?? "") + " " + (lastName ?? "")).trim();
+        appStoragePref.setCustomerName(fullName);
         appStoragePref.setCustomerFirstName(firstName ?? "");
         appStoragePref.setCustomerLastName(lastName ?? "");
         appStoragePref.setCustomerEmail(email ?? "");
         appStoragePref.setCustomerPhone(phone ?? "");
         appStoragePref.setCustomerGender(gender ?? "");
-        appStoragePref.setCustomerDob(finalDob); // Use the formatted DOB sent to server
+        appStoragePref.setCustomerDob(finalDob); 
+
+        // 🟢 BROADCAST TO SIDEBAR/HEADER INSTANTLY
+        GlobalData.profileUpdateStream.add({
+          "image": avatar ?? appStoragePref.getCustomerImage(),
+          "name": fullName
+        });
+
+        // 🟢 SYNC FULL MODEL (Triggers Drawer's storage listener)
+        AccountInfoModel optimisticModel = AccountInfoModel(
+          firstName: firstName,
+          lastName: lastName,
+          name: fullName,
+          email: email,
+          phone: phone,
+          dateOfBirth: finalDob,
+          gender: gender,
+          imageUrl: avatar?.isNotEmpty == true ? avatar : appStoragePref.getCustomerImage(),
+          id: customerId
+        );
+        appStoragePref.setCustomerDetails(optimisticModel);
         
         var dataMap = {
             "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null,
@@ -1111,8 +1171,90 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<void> _syncProfileAfterLogin() async {
     try {
       debugPrint("🔄 Syncing profile after login...");
+
+      // 🟢 NEW: Try direct PHP API first (more reliable than GraphQL for these custom fields)
+      try {
+        String customerId = appStoragePref.getCustomerId().toString();
+        String token = appStoragePref.getCustomerToken() ?? "";
+        // 🟢 ADDED CACHE BUSTER: Ensure we don't get a cached server response
+        String t = DateTime.now().millisecondsSinceEpoch.toString();
+        var url = Uri.parse("$baseDomain/mobikul-profile-api.php?action=get&customer_id=$customerId&token=$token&t=$t");
+        var response = await http.get(url);
+        
+        debugPrint("🔍 SYNC PROFILE ATTEMPT (PHP API) - Code: ${response.statusCode}, URL: $url");
+        
+        if (response.statusCode == 200) {
+          var jsonResponse = jsonDecode(response.body);
+          debugPrint("🔍 DIRECT PHP PROFILE RESPONSE: $jsonResponse");
+          
+          if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
+            var profileData = jsonResponse['data'];
+            
+            // Update storage with fresh data from server
+            if (profileData['first_name'] != null) {
+              appStoragePref.setCustomerFirstName(profileData['first_name']);
+            }
+            if (profileData['last_name'] != null) {
+              appStoragePref.setCustomerLastName(profileData['last_name']);
+            }
+            if (profileData['email'] != null) {
+              appStoragePref.setCustomerEmail(profileData['email']);
+            }
+            if (profileData['phone'] != null) {
+              appStoragePref.setCustomerPhone(profileData['phone']);
+            }
+            if (profileData['gender'] != null) {
+              appStoragePref.setCustomerGender(profileData['gender']);
+            }
+            if (profileData['date_of_birth'] != null && profileData['date_of_birth'] != "0000-00-00") {
+              appStoragePref.setCustomerDob(profileData['date_of_birth']);
+            }
+            
+            String fullName = "${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}".trim();
+            if (fullName.isNotEmpty) {
+              appStoragePref.setCustomerName(fullName);
+            }
+
+            // 🟢 ENSURE IMAGE IS SAVED
+            String img = profileData['imageUrl'] ?? profileData['profile_image_url'] ?? "";
+            if (img.isNotEmpty) {
+              appStoragePref.setCustomerImage(img);
+            }
+            
+            debugPrint("✅ Profile synced from PHP API: $fullName");
+            
+            // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+            // DrawerListView listens to 'customerDetails' key. We must construct and save it.
+            AccountInfoModel updatedModel = AccountInfoModel(
+              firstName: profileData['first_name'] ?? "",
+              lastName: profileData['last_name'] ?? "",
+              name: fullName,
+              email: profileData['email'] ?? "",
+              phone: profileData['phone'] ?? "",
+              dateOfBirth: profileData['date_of_birth'] ?? "",
+              gender: profileData['gender'] ?? "",
+              imageUrl: img.isNotEmpty ? img : appStoragePref.getCustomerImage(),
+              id: appStoragePref.getCustomerId().toString()
+            );
+            appStoragePref.setCustomerDetails(updatedModel);
+
+            // Broadcast updates for UI
+            GlobalData.profileUpdateStream.add({
+              "image": img,
+              "name": fullName
+            });
+            
+            return; // Success, exit early and skip GraphQL sync
+          }
+        }
+      } catch (e) {
+        debugPrint("⚠️ PHP API profile fetch failed: $e");
+      }
+
       var data = await getCustomerData();
       if (data != null) {
+        debugPrint("🔍 SYNC PROFILE RESPONSE (GraphQL): Name=${data.name}, FirstName=${data.firstName}, LastName=${data.lastName}");
+        
         if (data.id != null && data.id!.isNotEmpty && (data.name == null || data.name!.isEmpty)) {
             debugPrint("💡 Note: Using cached/fallback profile data");
         }
@@ -1139,6 +1281,20 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         }
         if (data.subscribedToNewsLetter != null) appStoragePref.setCustomerNewsletter(data.subscribedToNewsLetter!);
         
+        // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+        AccountInfoModel updatedModel = AccountInfoModel(
+          firstName: data.firstName ?? "",
+          lastName: data.lastName ?? "",
+          name: data.name ?? "",
+          email: data.email ?? "",
+          phone: data.phone ?? "",
+          dateOfBirth: data.dateOfBirth ?? "",
+          gender: data.gender ?? "",
+          imageUrl: data.imageUrl ?? appStoragePref.getCustomerImage(),
+          id: data.id ?? appStoragePref.getCustomerId().toString()
+        );
+        appStoragePref.setCustomerDetails(updatedModel);
+
         // Broadcast updates for UI
         GlobalData.profileUpdateStream.add({
           "image": data.imageUrl,

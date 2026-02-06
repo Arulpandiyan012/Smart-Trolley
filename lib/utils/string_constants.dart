@@ -382,6 +382,7 @@ class StringConstants {
   static const String otpDescription = "otpDescription";
   static const String howToUse = "howToUse";
   static const String otpSteps = "otpSteps";
+  static const String updatedSuccessfully = "updatedSuccessfully";
 
 }
 
