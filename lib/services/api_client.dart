@@ -6,6 +6,7 @@
 
 import 'dart:developer';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 
@@ -63,7 +64,9 @@ class ApiClient {
     Parser<T> parser,
   ) async {
     if (result.hasException) {
-      debugPrint("❌ GRAPHQL EXCEPTION ($operation): ${result.exception.toString()}");
+      String token = appStoragePref.getCustomerToken();
+      String tokenPreview = token.length > 5 ? token.substring(0, 5) : token;
+      print("❌ GRAPHQL EXCEPTION ($operation) [Token: $tokenPreview...]: ${result.exception.toString()}");
     }
 
     String responseCookie = result.context.entry<HttpLinkResponseContext>()?.headers?['set-cookie'] ?? "";
@@ -301,13 +304,14 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         }
       } 
     } catch (e) {
-      print("🔥 API ERROR: $e");
+      print("🔥 API ERROR: $e (Token: ${appStoragePref.getCustomerToken()})");
     }
     return null; 
   }
   // 🟢 4. LOGOUT (Clears Data)
   Future<BaseModel?> customerLogout() async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'customerLogout',
         document: gql(mutation.customerLogout()),
         fetchPolicy: FetchPolicy.networkOnly));
     
@@ -350,7 +354,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
          }
       }
     } catch (e) {}
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.addToCompare(id: id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'addToCompare', document: gql(mutation.addToCompare(id: id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'addToCompare', (json) => BaseModel.fromJson(json));
   }
 
@@ -359,6 +363,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<GetDrawerCategoriesData?> homeCategories({int? id, List<Map<String, dynamic>>? filters}) async {
     List<Map<String, dynamic>>? idFilter = [{"key": "id", "value": "$id"}];
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'homeCategories',
         document: gql((filters ?? []).isNotEmpty ? mutation.homeCategoriesFilters(filters: filters) : mutation.homeCategoriesFilters(filters: idFilter)),
         fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -367,6 +372,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<NewProductsModel?> getAllProducts({List<Map<String, dynamic>>? filters, int? page, int limit = 15}) async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+      operationName: 'allProducts',
       document: gql(mutation.allProductsList(filters: filters ?? [], page: page ?? 1, limit: limit)), 
       fetchPolicy: FetchPolicy.noCache
     ));
@@ -379,6 +385,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<ThemeCustomDataModel?> getThemeCustomizationData() async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'themeCustomization',
         document: gql(mutation.themeCustomizationData()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'themeCustomization', (json) => ThemeCustomDataModel.fromJson(json));
@@ -386,6 +393,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CmsData?> getCmsPagesData() async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+      operationName: 'cmsPages',
       document: gql(mutation.getCmsPagesData()),
       fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'cmsPages', (json) => CmsData.fromJson(json));
@@ -393,6 +401,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CmsPage?> getCmsPageDetails(String id) async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+      operationName: 'cmsPage',
       document: gql(mutation.getCmsPageDetails(id)),
       fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -400,12 +409,13 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<GetFilterAttribute?> getFilterAttributes(String categorySlug) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'getFilterAttribute', document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getFilterAttribute', (json) => GetFilterAttribute.fromJson(json));
   }
 
   Future<CurrencyLanguageList?> getLanguageCurrency() async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'getDefaultChannel',
         document: gql(mutation.getLanguageCurrencyList()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getDefaultChannel', (json) => CurrencyLanguageList.fromJson(json));
@@ -413,6 +423,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CartModel?> getCartDetails() async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'cartDetail',
         document: gql(mutation.cartDetails()), 
         fetchPolicy: FetchPolicy.noCache
     ));
@@ -421,6 +432,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CartModel?> getCartCount() async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'cartDetail',
         document: gql(mutation.cartDetails()), 
         cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic,
         fetchPolicy: FetchPolicy.networkOnly
@@ -483,6 +495,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   
   Future<AddToCartModel?> addToCart(int quantity, String productId, List downloadLinks, List groupedParams, List bundleParams, List configurableParams, String? configurableId) async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'addItemToCart',
         document: gql(mutation.addToCart(quantity: quantity, productId: productId, downloadableLinks: downloadLinks, groupedParams: groupedParams, bundleParams: bundleParams, configurableParams: configurableParams, configurableId: configurableId)),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'addItemToCart', (json) => AddToCartModel.fromJson(json));
@@ -515,6 +528,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<AccountInfoModel?> getCustomerData() async {
     try {
       var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'accountInfo',
         document: gql(mutation.getCustomerData()), 
         fetchPolicy: FetchPolicy.networkOnly
       ));
@@ -550,22 +564,22 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<AddToCartModel?> updateItemToCart(List<Map<dynamic, String>> items) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.updateItemToCart(items: items)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'updateItemToCart', document: gql(mutation.updateItemToCart(items: items)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'updateItemToCart', (json) => AddToCartModel.fromJson(json));
   }
 
   Future<AddToCartModel?> removeItemFromCart(int id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.removeFromCart(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'removeCartItem', document: gql(mutation.removeFromCart(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'removeCartItem', (json) => AddToCartModel.fromJson(json));
   }
 
   Future<ApplyCoupon?> applyCoupon(String couponCode) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.applyCoupon(couponCode)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'applyCoupon', document: gql(mutation.applyCoupon(couponCode)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'applyCoupon', (json) => ApplyCoupon.fromJson(json));
   }
 
   Future<ApplyCoupon?> removeCoupon() async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.removeCoupon()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'removeCoupon', document: gql(mutation.removeCoupon()), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'removeCoupon', (json) => ApplyCoupon.fromJson(json));
   }
 
@@ -592,7 +606,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<BaseModel?> removeAllCartItem() async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.removeAllCartItem()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'removeAllCartItem', document: gql(mutation.removeAllCartItem()), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'removeAllCartItem', (json) => BaseModel.fromJson(json));
   }
 
@@ -727,131 +741,133 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<SignInModel?> socialLogin(String email, String firstName, String lastName, String phone, String signUpType) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getSocialLoginResponse(firstName: firstName, lastName: lastName, email: email, phone: phone, signUpType: signUpType)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'customerSocialSignUp', document: gql(mutation.getSocialLoginResponse(firstName: firstName, lastName: lastName, email: email, phone: phone, signUpType: signUpType)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'customerSocialSignUp', (json) => SignInModel.fromJson(json));
   }
 
   Future<SignInModel?> getSignInData(String email, String password, bool remember) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.customerLogin(email: email, password: password, remember: remember))));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'customerLogin', document: gql(mutation.customerLogin(email: email, password: password, remember: remember))));
     return handleResponse(response, 'customerLogin', (json) => SignInModel.fromJson(json));
   }
 
   Future<SignInModel?> getSignUpData(String email, String firstName, String lastName, String password, String confirmPassword, bool subscribeNewsletter, bool agreement) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.customerRegister(firstName: firstName, lastName: lastName, email: email, password: password, confirmPassword: confirmPassword, subscribedToNewsLetter: subscribeNewsletter, agreement: agreement)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'customerSignUp', document: gql(mutation.customerRegister(firstName: firstName, lastName: lastName, email: email, password: password, confirmPassword: confirmPassword, subscribedToNewsLetter: subscribeNewsletter, agreement: agreement)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'customerSignUp', (json) => SignInModel.fromJson(json));
   }
 
-  Future<AccountUpdate?> updateCustomerData(String? firstName, String? lastName, String? email, String? gender, String? dateOfBirth, String? phone, String? avatar, bool? subscribedToNewsLetter) async {
-    try {
-      String customerId = appStoragePref.getCustomerId().toString();
-      var url = Uri.parse("$baseDomain/mobikul-profile-api.php");
-      String finalDob = dateOfBirth ?? "";
-      if (finalDob.contains("-") && finalDob.split("-").first.length == 2) {
-        try {
-           // Convert dd-MM-yyyy to yyyy-MM-dd
-           var parts = finalDob.split("-");
-           if (parts.length == 3) {
-             finalDob = "${parts[2]}-${parts[1]}-${parts[0]}";
-           }
-        } catch (e) {}
+  Future<AccountUpdate?> updateCustomerData(
+      String? firstName,
+      String? lastName,
+      String? email,
+      String? gender,
+      String? dateOfBirth,
+      String? phone,
+      String? avatar,
+      bool? subscribedToNewsLetter) async {
+    
+    // 🟢 1. FORMAT DATE: Ensure yyyy-MM-dd
+    String finalDob = dateOfBirth ?? "";
+    if (finalDob.contains("-") && finalDob.split("-").first.length == 2) {
+      try {
+        var parts = finalDob.split("-");
+        if (parts.length == 3) {
+          finalDob = "${parts[2]}-${parts[1]}-${parts[0]}";
+        }
+      } catch (e) {
+        debugPrint("Date Parsing Error: $e");
       }
+    }
 
-      var body = {
-        "action": "update",
-        "customer_id": customerId,
-        "token": appStoragePref.getCustomerToken() ?? "", // 🟢 AUTH TOKEN ADDED
-        
-        // 🟢 DUAL KEYS: Send both formats to satisfy picky server
-        "first_name": firstName ?? "",
-        "firstName": firstName ?? "",
-        
-        "last_name": lastName ?? "",
-        "lastName": lastName ?? "",
-        
-        "email": email ?? "",
-        "gender": gender ?? "",
-        
-        "date_of_birth": finalDob, // Snake case
-        "dateOfBirth": finalDob,   // Camel case 
-        "dob": finalDob,           // Short 
-        
-        "phone": phone ?? "", 
-        "avatar": avatar ?? "", 
-        "subscribed_to_newsletter": subscribedToNewsLetter?.toString() ?? "false",
-        "newsletterSubscriber": subscribedToNewsLetter?.toString() ?? "false",
-      };
-      
-      print("📤 UPDATING PROFILE payload (Form): $body"); // 🟢 DEBUG LOG
-      debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
-      // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
-      debugPrint("📥 UPDATE REQUEST URL: $url");
-      debugPrint("📤 UPDATE PAYLOAD: $body");
-      var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
-      debugPrint("📥 UPDATE RESPONSE: ${response.statusCode} - ${response.body}"); 
+    // 🟢 2. ENCODE IMAGE: Convert path to Base64 if needed
+    String finalAvatar = avatar ?? "";
+    if (finalAvatar.isNotEmpty && !finalAvatar.startsWith("http") && !finalAvatar.contains("base64")) {
+      try {
+        final bytes = File(finalAvatar).readAsBytesSync();
+        finalAvatar = "data:image/png;base64,${base64Encode(bytes)}";
+        print("📸 API: Encoded image to Base64 (Length: ${finalAvatar.length})");
+      } catch (e) {
+        print("⚠️ Image Encoding Error: $e");
+      }
+    }
 
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        bool isSuccess = jsonResponse['success'] == true || jsonResponse['status'] == true || jsonResponse['updateAccount']?['success'] == true;
-        var msg = jsonResponse['message'] ?? jsonResponse['updateAccount']?['message'] ?? "Updated Successfully";
-        var customerData = jsonResponse['data'] ?? jsonResponse['customer'] ?? jsonResponse['updateAccount']?['data'];
-        
-        debugPrint("✅ PROFILE UPDATE ATTEMPT RESULT: Success=$isSuccess, Message=$msg");
-        if (customerData != null) debugPrint("🔍 Server Echoed Data: $customerData");
+    // 🟢 3. EXECUTE GRAPHQL MUTATION (Uniform with Login)
+    String token = appStoragePref.getCustomerToken();
+    print("🚀 SAVING PROFILE (AccountUpdate) - Token: ${token.isNotEmpty ? "PRESENT" : "MISSING"}");
 
-        // 🟢 OPTIMISTIC UPDATE: Force update local storage with INPUT values
-        // This ensures the UI reflects changes immediately, even if the server is slow or fails.
-        String fullName = ((firstName ?? "") + " " + (lastName ?? "")).trim();
-        appStoragePref.setCustomerName(fullName);
-        appStoragePref.setCustomerFirstName(firstName ?? "");
-        appStoragePref.setCustomerLastName(lastName ?? "");
-        appStoragePref.setCustomerEmail(email ?? "");
-        appStoragePref.setCustomerPhone(phone ?? "");
-        appStoragePref.setCustomerGender(gender ?? "");
-        appStoragePref.setCustomerDob(finalDob); 
-
-        // 🟢 BROADCAST TO SIDEBAR/HEADER INSTANTLY
-        GlobalData.profileUpdateStream.add({
-          "image": avatar ?? appStoragePref.getCustomerImage(),
-          "name": fullName
-        });
-
-        // 🟢 SYNC FULL MODEL (Triggers Drawer's storage listener)
-        AccountInfoModel optimisticModel = AccountInfoModel(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'updateAccount',
+        document: gql(mutation.updateAccount(
           firstName: firstName,
           lastName: lastName,
-          name: fullName,
           email: email,
-          phone: phone,
-          dateOfBirth: finalDob,
           gender: gender,
-          imageUrl: avatar?.isNotEmpty == true ? avatar : appStoragePref.getCustomerImage(),
-          id: customerId
-        );
-        appStoragePref.setCustomerDetails(optimisticModel);
+          dateOfBirth: finalDob,
+          phone: phone,
+          avatar: finalAvatar,
+          subscribedToNewsLetter: subscribedToNewsLetter,
+          oldPassword: "", 
+          password: "",
+          confirmPassword: ""
+        ))));
+
+    var model = await handleResponse(response, 'updateAccount', (json) => AccountUpdate.fromJson(json));
+
+    // 🟢 AGGRESSIVE FALLBACK: If GraphQL fails for ANY reason (schema error, auth error, etc.), try the PHP Bridge
+    if (model == null || (model.graphqlErrors != null && model.graphqlErrors!.isNotEmpty)) {
+      print("⚠️ GraphQL Profile Update FAILED (Error: ${model?.graphqlErrors ?? 'null model'}). Trying PHP Fallback...");
+      try {
+        String customerId = appStoragePref.getCustomerId().toString();
+        String token = appStoragePref.getCustomerToken() ?? "";
+        var url = Uri.parse("$baseDomain/mobikul-profile-api.php");
         
-        var dataMap = {
-            "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null,
-            "updateAccount": { "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null },
-            "updateCustomer": { "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null }
+        var phpBody = {
+          "action": "update", 
+          "customer_id": customerId,
+          "token": token,
+          "first_name": firstName ?? "",
+          "last_name": lastName ?? "",
+          "email": email ?? "",
+          "gender": gender ?? "",
+          "date_of_birth": finalDob,
+          "phone": phone ?? "",
+          "avatar": finalAvatar, 
+          "subscribed_to_newsletter": subscribedToNewsLetter.toString()
         };
-        return AccountUpdate.fromJson(dataMap);
+
+        var phpResponse = await http.post(url, body: phpBody);
+        print("📥 PHP FALLBACK RESPONSE: ${phpResponse.statusCode} - ${phpResponse.body}");
+        
+        if (phpResponse.statusCode == 200) {
+          var data = jsonDecode(phpResponse.body);
+          if (data['success'] == true || data['success'] == "true") {
+             print("✅ PHP Fallback Succeeded!");
+             return AccountUpdate.fromJson({
+               "success": true, 
+               "message": data['message'] ?? "Updated via fallback",
+               "customer": data['data'] ?? {}
+             });
+          }
+        }
+      } catch (e) {
+        print("❌ PHP Fallback Failed: $e");
       }
-    } catch (e) {}
-    return AccountUpdate.fromJson({"updateAccount": {"success": false, "message": "Network Error"}});
+    }
+
+    return model;
   }
 
   Future<BaseModel?> deleteCustomerAccount(String password) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.deleteAccount(password: password)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'deleteAccount', document: gql(mutation.deleteAccount(password: password)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'deleteAccount', (json) => BaseModel.fromJson(json));
   }
 
   Future<BaseModel?> forgotPassword(String email) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.forgotPassword(email: email))));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'forgotPassword', document: gql(mutation.forgotPassword(email: email))));
     return handleResponse(response, 'forgotPassword', (json) => BaseModel.fromJson(json));
   }
 
   Future<ReviewModel?> getReviewList(int page) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getReviewList(page)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'reviewsList', document: gql(mutation.getReviewList(page)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'reviewsList', (json) => ReviewModel.fromJson(json));
   }
 
@@ -1016,22 +1032,22 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<UpdateAddressModel?> updateAddress(int id, String companyName, String firstName, String lastName, String address, String address2, String country, String state, String city, String postCode, String phone, String vatId, String email) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.updateAddress(id: id, companyName: companyName, firstName: firstName, lastName: lastName, address: address, address2: address2, country: country, state: state, city: city, email: email, postCode: postCode, phone: phone, vatId: vatId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'updateAddress', document: gql(mutation.updateAddress(id: id, companyName: companyName, firstName: firstName, lastName: lastName, address: address, address2: address2, country: country, state: state, city: city, email: email, postCode: postCode, phone: phone, vatId: vatId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'updateAddress', (json) => UpdateAddressModel.fromJson(json));
   }
 
   Future<CountriesData?> getCountryStateList() async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getCountryStateList()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'countries', document: gql(mutation.getCountryStateList()), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'countries', (json) => CountriesData.fromJson(json));
   }
 
   Future<PaymentMethods?> saveShippingMethods(String? shippingMethod) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.paymentMethods(shippingMethod: shippingMethod)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'paymentMethods', document: gql(mutation.paymentMethods(shippingMethod: shippingMethod)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'paymentMethods', (json) => PaymentMethods.fromJson(json));
   }
 
   Future<SavePayment?> saveAndReview(String? paymentMethod) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.savePaymentAndReview(paymentMethod: paymentMethod)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'savePayment', document: gql(mutation.savePaymentAndReview(paymentMethod: paymentMethod)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'savePayment', (json) => SavePayment.fromJson(json));
   }
 
@@ -1119,52 +1135,52 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<DownloadableProductModel?> getCustomerDownloadableProducts(int page, int limit, {String? title, String? status, String? orderId, String? orderDateFrom, String? orderDateTo}) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.downloadableProductsCustomer(page, limit, title: title ?? "", status: status ?? "", orderId: orderId ?? "", orderDateFrom: orderDateFrom ?? "", orderDateTo: orderDateTo ?? "")), cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic, fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'downloadableLinkPurchases', document: gql(mutation.downloadableProductsCustomer(page, limit, title: title ?? "", status: status ?? "", orderId: orderId ?? "", orderDateFrom: orderDateFrom ?? "", orderDateTo: orderDateTo ?? "")), cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic, fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadableLinkPurchases', (json) => DownloadableProductModel.fromJson(json));
   }
 
   Future<DownloadLinkDataModel?> downloadLinksProductAPI(int id) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.downloadProductQuery(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'downloadLink', document: gql(mutation.downloadProductQuery(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadLink', (json) => DownloadLinkDataModel.fromJson(json));
   }
 
   Future<Download?> downloadLinksProduct(int id) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.downloadProduct(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'downloadableLinkPurchase', document: gql(mutation.downloadProduct(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadableLinkPurchase', (json) => Download.fromJson(json));
   }
 
   Future<InvoicesModel?> getInvoicesList(int orderId) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getInvoicesList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'viewInvoices', document: gql(mutation.getInvoicesList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'viewInvoices', (json) => InvoicesModel.fromJson(json));
   }
 
   Future<ShipmentModel?> getShipmentsList(int orderId) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getShipmentsList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'viewShipments', document: gql(mutation.getShipmentsList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'viewShipments', (json) => ShipmentModel.fromJson(json));
   }
 
   Future<OrderRefundModel?> getRefundList(int orderId) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getRefundList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'viewRefunds', document: gql(mutation.getRefundList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'viewRefunds', (json) => OrderRefundModel.fromJson(json));
   }
 
   Future<AddToCartModel?> reOrderCustomerOrder(String? orderId) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.reOrderCustomerOrder(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'reorder', document: gql(mutation.reOrderCustomerOrder(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'reorder', (json) => AddToCartModel.fromJson(json));
   }
 
   Future<BaseModel?> contactUsApiClient(String name, String? email, String? phone, String? describe) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.contactUsApi(name: name, email: email, phone: phone, describe: describe)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'contactUs', document: gql(mutation.contactUsApi(name: name, email: email, phone: phone, describe: describe)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'contactUs', (json) => BaseModel.fromJson(json));
   }
 
   Future<SetDefaultAddress?> setDefaultAddress(String id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.setDefaultAddress(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'setDefaultAddress', document: gql(mutation.setDefaultAddress(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'setDefaultAddress', (json) => SetDefaultAddress.fromJson(json));
   }
 
   Future<DownloadSampleModel?> downloadSample(String type, String id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.downloadSample(type, id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'downloadSample', document: gql(mutation.downloadSample(type, id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadSample', (json) => DownloadSampleModel.fromJson(json));
   }
   // 🟢 NEW: Robust Profile Synchronization after Login
@@ -1191,11 +1207,11 @@ Future<OrderDetail?> getOrderDetail(int id) async {
             var profileData = jsonResponse['data'];
             
             // Update storage with fresh data from server
-            if (profileData['first_name'] != null) {
-              appStoragePref.setCustomerFirstName(profileData['first_name']);
+            if (profileData['firstName'] != null) {
+              appStoragePref.setCustomerFirstName(profileData['firstName']);
             }
-            if (profileData['last_name'] != null) {
-              appStoragePref.setCustomerLastName(profileData['last_name']);
+            if (profileData['lastName'] != null) {
+              appStoragePref.setCustomerLastName(profileData['lastName']);
             }
             if (profileData['email'] != null) {
               appStoragePref.setCustomerEmail(profileData['email']);
@@ -1210,13 +1226,16 @@ Future<OrderDetail?> getOrderDetail(int id) async {
               appStoragePref.setCustomerDob(profileData['date_of_birth']);
             }
             
-            String fullName = "${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}".trim();
+            String fullName = profileData['name'] ?? "";
+            if (fullName.isEmpty) {
+              fullName = "${profileData['firstName'] ?? ''} ${profileData['lastName'] ?? ''}".trim();
+            }
             if (fullName.isNotEmpty) {
               appStoragePref.setCustomerName(fullName);
             }
 
             // 🟢 ENSURE IMAGE IS SAVED
-            String img = profileData['imageUrl'] ?? profileData['profile_image_url'] ?? "";
+            String img = profileData['imageUrl'] ?? "";
             if (img.isNotEmpty) {
               appStoragePref.setCustomerImage(img);
             }

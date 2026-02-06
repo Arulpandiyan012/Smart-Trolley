@@ -242,7 +242,10 @@ class SharedPreferenceHelper {
   }
 
   AccountInfoModel? getCustomerDetails() {
-    return configurationStorage.read(customerDetails);
+    var data = configurationStorage.read(customerDetails);
+    if (data == null) return null;
+    if (data is AccountInfoModel) return data;
+    return AccountInfoModel.fromJson(Map<String, dynamic>.from(data));
   }
 
   setCustomerDetails(AccountInfoModel? details) {

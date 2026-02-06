@@ -498,12 +498,14 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         customerUserName = appStoragePref.getCustomerName();
         image = appStoragePref.getCustomerImage();
+        customerDetails = appStoragePref.getCustomerDetails(); // 🟢 NEW: Load full model
         isLoggedIn = true;
       });
     } else {
       setState(() {
         customerUserName = StringConstants.signInLabel.localized();
-        image = null; // Clear image
+        image = null; 
+        customerDetails = null; // 🟢 NEW: Clear model
         isLoggedIn = false;
       });
     }

@@ -284,6 +284,17 @@ class _AccountScreenState extends State<AccountScreen>
   void _onPressSaveButton() {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
+      
+      // 🟢 OPTIMISTIC BROADCAST: Update Sidebar/Header instantly
+      String fName = firstNameController.text.trim();
+      String lName = lastNameController.text.trim();
+      String fullName = "$fName $lName".trim();
+      
+      GlobalData.profileUpdateStream.add({
+        "image": pickedFile?.path ?? appStoragePref.getCustomerImage(), // Use picked file path if available
+        "name": fullName 
+      });
+
       accountInfoBloc?.add(AccountInfoUpdateEvent(
         firstName: firstNameController.text,
         lastName: lastNameController.text,

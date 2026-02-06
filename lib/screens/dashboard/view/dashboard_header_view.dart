@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bagisto_app_demo/screens/dashboard/utils/index.dart';
@@ -15,11 +16,30 @@ class _DashboardHeaderViewState extends State<DashboardHeaderView> {
   String? customerEmail;
   String? customerPhone;
   String? image;
+  StreamSubscription? _profileSubscription;
 
   @override
   void initState() {
-    _fetchUserData();
     super.initState();
+    _fetchUserData();
+
+    // 🟢 REACTIVE LISTENER: Update instantly when profile changes elsewhere
+    _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
+      if (!mounted) return;
+      if (data.isNotEmpty) {
+        debugPrint("👤 Dashboard Header sync: ${data['name']}");
+        setState(() {
+          name = data['name'];
+          image = data['image'];
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
   }
 
   void _fetchUserData() {

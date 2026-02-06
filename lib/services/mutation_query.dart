@@ -1080,6 +1080,17 @@ String cartDetails() {
       String? confirmPassword,
       String? avatar,
       bool? subscribedToNewsLetter}) {
+    
+    // 🟢 DYNAMIC INPUT: Remove empty password fields to avoid server validation blocks
+    String passwordInputs = "";
+    if (password != null && password.isNotEmpty) {
+      passwordInputs = """
+            currentPassword: "$oldPassword"
+            newPassword: "$password"
+            newPasswordConfirmation: "$confirmPassword"
+      """;
+    }
+
     return """
       mutation updateAccount {
         updateAccount(
@@ -1088,13 +1099,9 @@ String cartDetails() {
             lastName: "$lastName"
             email: "$email"
             gender: ${gender?.toUpperCase()}
-            # uploadType: BASE64
-            # imageUrl: "data:image/png;base64,$avatar"
             dateOfBirth: "$dateOfBirth"
             phone: "$phone"
-            currentPassword: "$oldPassword"
-            newPassword: "$password"
-            newPasswordConfirmation: "$confirmPassword"
+            $passwordInputs
             newsletterSubscriber: $subscribedToNewsLetter
           }
         ) {
