@@ -799,14 +799,35 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         if (customerData != null) debugPrint("🔍 Server Echoed Data: $customerData");
 
         // 🟢 OPTIMISTIC UPDATE: Force update local storage with INPUT values
-        // This ensures the UI reflects changes even if the server echoes back old data.
-        appStoragePref.setCustomerName(((firstName ?? "") + " " + (lastName ?? "")).trim());
+        // This ensures the UI reflects changes immediately, even if the server is slow or fails.
+        String fullName = ((firstName ?? "") + " " + (lastName ?? "")).trim();
+        appStoragePref.setCustomerName(fullName);
         appStoragePref.setCustomerFirstName(firstName ?? "");
         appStoragePref.setCustomerLastName(lastName ?? "");
         appStoragePref.setCustomerEmail(email ?? "");
         appStoragePref.setCustomerPhone(phone ?? "");
         appStoragePref.setCustomerGender(gender ?? "");
-        appStoragePref.setCustomerDob(finalDob); // Use the formatted DOB sent to server
+        appStoragePref.setCustomerDob(finalDob); 
+
+        // 🟢 BROADCAST TO SIDEBAR/HEADER INSTANTLY
+        GlobalData.profileUpdateStream.add({
+          "image": avatar ?? appStoragePref.getCustomerImage(),
+          "name": fullName
+        });
+
+        // 🟢 SYNC FULL MODEL (Triggers Drawer's storage listener)
+        AccountInfoModel optimisticModel = AccountInfoModel(
+          firstName: firstName,
+          lastName: lastName,
+          name: fullName,
+          email: email,
+          phone: phone,
+          dateOfBirth: finalDob,
+          gender: gender,
+          imageUrl: avatar?.isNotEmpty == true ? avatar : appStoragePref.getCustomerImage(),
+          id: customerId
+        );
+        appStoragePref.setCustomerDetails(optimisticModel);
         
         var dataMap = {
             "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null,
