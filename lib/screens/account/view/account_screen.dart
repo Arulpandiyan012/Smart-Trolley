@@ -198,16 +198,16 @@ class _AccountScreenState extends State<AccountScreen>
       listener: (context, state) {
         if (state is AccountInfoUpdateState) {
           if (state.status == AccountStatus.success &&
-              state.accountUpdate?.status == true) {
+              (state.accountUpdate?.status == true || state.accountUpdate?.success == true)) {
             ShowMessage.successNotification(
-                state.accountUpdate?.message ?? "", context);
+                state.accountUpdate?.message ?? StringConstants.updatedSuccessfully.localized(), context);
             _updateSharedPreferences(state.accountUpdate!);
             // 🟢 FORCE REFRESH: Reload fields from updated storage immediately
             _loadAccountData(); 
-            Navigator.pop(context, true);
+            // Removed Auto-Pop: Allow user to see the "Saved" reflection on the screen
           } else if (state.status == AccountStatus.fail) {
             ShowMessage.errorNotification(
-              state.accountUpdate?.graphqlErrors ??
+              state.error ?? state.accountUpdate?.graphqlErrors ??
                   StringConstants.invalidData.localized(),
               context,
             );

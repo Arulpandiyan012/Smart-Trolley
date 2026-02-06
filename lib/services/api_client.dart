@@ -201,6 +201,21 @@ class ApiClient {
                 appStoragePref.setCustomerImage(imageUrl);
               }
 
+              // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+              // DrawerListView listens to 'customerDetails' key. We must construct and save it.
+              AccountInfoModel authModel = AccountInfoModel(
+                firstName: fNameSaved,
+                lastName: lNameSaved,
+                name: fullName,
+                email: email,
+                phone: phoneSaved,
+                dateOfBirth: dobSaved,
+                gender: genderSaved,
+                imageUrl: imageUrl.isNotEmpty ? imageUrl : appStoragePref.getCustomerImage(),
+                id: cId.toString()
+              );
+              appStoragePref.setCustomerDetails(authModel);
+
               // 🟢 Broadcast update globally for instant Home UI sync
               GlobalData.profileUpdateStream.add({
                 "image": imageUrl,
@@ -1178,12 +1193,33 @@ Future<OrderDetail?> getOrderDetail(int id) async {
             if (fullName.isNotEmpty) {
               appStoragePref.setCustomerName(fullName);
             }
+
+            // 🟢 ENSURE IMAGE IS SAVED
+            String img = profileData['imageUrl'] ?? profileData['profile_image_url'] ?? "";
+            if (img.isNotEmpty) {
+              appStoragePref.setCustomerImage(img);
+            }
             
             debugPrint("✅ Profile synced from PHP API: $fullName");
             
+            // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+            // DrawerListView listens to 'customerDetails' key. We must construct and save it.
+            AccountInfoModel updatedModel = AccountInfoModel(
+              firstName: profileData['first_name'] ?? "",
+              lastName: profileData['last_name'] ?? "",
+              name: fullName,
+              email: profileData['email'] ?? "",
+              phone: profileData['phone'] ?? "",
+              dateOfBirth: profileData['date_of_birth'] ?? "",
+              gender: profileData['gender'] ?? "",
+              imageUrl: img.isNotEmpty ? img : appStoragePref.getCustomerImage(),
+              id: appStoragePref.getCustomerId().toString()
+            );
+            appStoragePref.setCustomerDetails(updatedModel);
+
             // Broadcast updates for UI
             GlobalData.profileUpdateStream.add({
-              "image": profileData['profile_image_url'] ?? profileData['image_url'],
+              "image": img,
               "name": fullName
             });
             
@@ -1224,6 +1260,20 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         }
         if (data.subscribedToNewsLetter != null) appStoragePref.setCustomerNewsletter(data.subscribedToNewsLetter!);
         
+        // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+        AccountInfoModel updatedModel = AccountInfoModel(
+          firstName: data.firstName ?? "",
+          lastName: data.lastName ?? "",
+          name: data.name ?? "",
+          email: data.email ?? "",
+          phone: data.phone ?? "",
+          dateOfBirth: data.dateOfBirth ?? "",
+          gender: data.gender ?? "",
+          imageUrl: data.imageUrl ?? appStoragePref.getCustomerImage(),
+          id: data.id ?? appStoragePref.getCustomerId().toString()
+        );
+        appStoragePref.setCustomerDetails(updatedModel);
+
         // Broadcast updates for UI
         GlobalData.profileUpdateStream.add({
           "image": data.imageUrl,

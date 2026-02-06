@@ -42,22 +42,69 @@ class DrawerListView extends StatefulWidget {
 }
 
 class _DrawerListViewState extends State<DrawerListView> {
+  AccountInfoModel? _details;
+  String? _userName;
+  String? _image;
+  StreamSubscription? _profileSubscription;
 
   @override
   void initState() {
+    super.initState();
+    _details = widget.customerDetails;
+    _userName = widget.customerUserName;
+    _image = widget.image;
+
+    // 🟢 DIRECT BROADCAST LISTENER: For instant Sidebar updates
+    _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
+       if (data.isNotEmpty && mounted) {
+           debugPrint("👤 Sidebar direct sync: ${data['name']}");
+           setState(() {
+              _image = data['image'];
+              _userName = data['name'];
+              if (_details != null) {
+                _details!.name = data['name'];
+                _details!.imageUrl = data['image'];
+                List<String> parts = (data['name'] ?? "").split(" ");
+                if (parts.isNotEmpty) _details!.firstName = parts.first;
+              }
+           });
+       }
+    });
+
     appStoragePref.configurationStorage.listenKey(customerDetails, (value) {
-      AccountInfoModel? data = value as AccountInfoModel?;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if(mounted){
+      if (value is AccountInfoModel?) {
+        if (mounted) {
           setState(() {
-            widget.customerDetails = data;
+            _details = value;
+            if (value != null) {
+              _userName = value.name ?? "${value.firstName ?? ''} ${value.lastName ?? ''}".trim();
+              _image = value.imageUrl ?? appStoragePref.getCustomerImage();
+            }
           });
         }
-      });
+      }
     });
-    super.initState();
   }
 
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant DrawerListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.customerUserName != oldWidget.customerUserName || 
+        widget.image != oldWidget.image || 
+        widget.customerDetails != oldWidget.customerDetails) {
+      setState(() {
+        _details = widget.customerDetails;
+        _userName = widget.customerUserName;
+        _image = widget.image;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +143,7 @@ class _DrawerListViewState extends State<DrawerListView> {
               Padding(
                       padding: const EdgeInsets.all(AppSizes.spacingNormal),
                       child: CircleAvatar(
-                        foregroundImage: ImageView.getImageProvider(widget.image),
+                        foregroundImage: ImageView.getImageProvider(_image),
                         backgroundImage: const AssetImage(AssetConstants.userPlaceHolder),
                       )
                     ),
@@ -109,7 +156,7 @@ class _DrawerListViewState extends State<DrawerListView> {
                     Text(
                       !widget.isLoggedIn
                           ? StringConstants.signUpOrLogin.localized()
-                          : "${StringConstants.helloLabel.localized()} ${widget.customerDetails?.firstName?.isNotEmpty == true ? widget.customerDetails!.firstName : widget.customerUserName ?? ''}",
+                          : "${StringConstants.helloLabel.localized()} ${_userName ?? _details?.name ?? _details?.firstName ?? ''}",
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -130,7 +177,7 @@ class _DrawerListViewState extends State<DrawerListView> {
                       ),
                     ),
                     if(widget.isLoggedIn) Text(
-                        widget.customerDetails?.email ?? "",
+                        _details?.email ?? "",
                         style: Theme.of(context)
                             .textTheme
                             .bodyLarge

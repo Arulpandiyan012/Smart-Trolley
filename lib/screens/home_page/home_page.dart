@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _loadInitialAddress(); 
 
-    // 🟢 Listen for profile updates (Image, Name)
+    // 🟢 Listen for profile updates (Image, Name, and Full Model)
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
       if (!mounted) return;
       if (data.isNotEmpty) {
@@ -94,6 +94,15 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           image = data['image'];
           customerUserName = data['name'];
+          // 🟢 CRITICAL: Also update the details object so Drawer gets fresh data
+          if (customerDetails != null) {
+              customerDetails!.name = data['name'];
+              customerDetails!.imageUrl = data['image'];
+              // If we have first/last name, update them too if possible
+              List<String> names = (data['name'] ?? "").toString().split(" ");
+              if (names.isNotEmpty) customerDetails!.firstName = names.first;
+              if (names.length > 1) customerDetails!.lastName = names.sublist(1).join(" ");
+          }
         });
       }
     });
