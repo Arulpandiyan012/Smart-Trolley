@@ -308,6 +308,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   // 🟢 4. LOGOUT (Clears Data)
   Future<BaseModel?> customerLogout() async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'customerLogout',
         document: gql(mutation.customerLogout()),
         fetchPolicy: FetchPolicy.networkOnly));
     
@@ -350,7 +351,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
          }
       }
     } catch (e) {}
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.addToCompare(id: id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'addToCompare', document: gql(mutation.addToCompare(id: id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'addToCompare', (json) => BaseModel.fromJson(json));
   }
 
@@ -359,6 +360,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<GetDrawerCategoriesData?> homeCategories({int? id, List<Map<String, dynamic>>? filters}) async {
     List<Map<String, dynamic>>? idFilter = [{"key": "id", "value": "$id"}];
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'homeCategories',
         document: gql((filters ?? []).isNotEmpty ? mutation.homeCategoriesFilters(filters: filters) : mutation.homeCategoriesFilters(filters: idFilter)),
         fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -367,6 +369,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<NewProductsModel?> getAllProducts({List<Map<String, dynamic>>? filters, int? page, int limit = 15}) async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+      operationName: 'allProducts',
       document: gql(mutation.allProductsList(filters: filters ?? [], page: page ?? 1, limit: limit)), 
       fetchPolicy: FetchPolicy.noCache
     ));
@@ -379,6 +382,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<ThemeCustomDataModel?> getThemeCustomizationData() async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'themeCustomization',
         document: gql(mutation.themeCustomizationData()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'themeCustomization', (json) => ThemeCustomDataModel.fromJson(json));
@@ -386,6 +390,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CmsData?> getCmsPagesData() async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+      operationName: 'cmsPages',
       document: gql(mutation.getCmsPagesData()),
       fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'cmsPages', (json) => CmsData.fromJson(json));
@@ -393,6 +398,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CmsPage?> getCmsPageDetails(String id) async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+      operationName: 'cmsPage',
       document: gql(mutation.getCmsPageDetails(id)),
       fetchPolicy: FetchPolicy.networkOnly
     ));
@@ -400,12 +406,13 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<GetFilterAttribute?> getFilterAttributes(String categorySlug) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'getFilterAttribute', document: gql(mutation.getFilterAttributes(categorySlug)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getFilterAttribute', (json) => GetFilterAttribute.fromJson(json));
   }
 
   Future<CurrencyLanguageList?> getLanguageCurrency() async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'getDefaultChannel',
         document: gql(mutation.getLanguageCurrencyList()),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'getDefaultChannel', (json) => CurrencyLanguageList.fromJson(json));
@@ -413,6 +420,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CartModel?> getCartDetails() async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'cartDetail',
         document: gql(mutation.cartDetails()), 
         fetchPolicy: FetchPolicy.noCache
     ));
@@ -421,6 +429,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
   Future<CartModel?> getCartCount() async {
     var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'cartDetail',
         document: gql(mutation.cartDetails()), 
         cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic,
         fetchPolicy: FetchPolicy.networkOnly
@@ -483,6 +492,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   
   Future<AddToCartModel?> addToCart(int quantity, String productId, List downloadLinks, List groupedParams, List bundleParams, List configurableParams, String? configurableId) async {
     var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'addItemToCart',
         document: gql(mutation.addToCart(quantity: quantity, productId: productId, downloadableLinks: downloadLinks, groupedParams: groupedParams, bundleParams: bundleParams, configurableParams: configurableParams, configurableId: configurableId)),
         fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'addItemToCart', (json) => AddToCartModel.fromJson(json));
@@ -515,6 +525,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<AccountInfoModel?> getCustomerData() async {
     try {
       var response = await (client.clientToQuery()).query(QueryOptions(
+        operationName: 'accountInfo',
         document: gql(mutation.getCustomerData()), 
         fetchPolicy: FetchPolicy.networkOnly
       ));
@@ -550,22 +561,22 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<AddToCartModel?> updateItemToCart(List<Map<dynamic, String>> items) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.updateItemToCart(items: items)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'updateItemToCart', document: gql(mutation.updateItemToCart(items: items)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'updateItemToCart', (json) => AddToCartModel.fromJson(json));
   }
 
   Future<AddToCartModel?> removeItemFromCart(int id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.removeFromCart(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'removeCartItem', document: gql(mutation.removeFromCart(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'removeCartItem', (json) => AddToCartModel.fromJson(json));
   }
 
   Future<ApplyCoupon?> applyCoupon(String couponCode) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.applyCoupon(couponCode)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'applyCoupon', document: gql(mutation.applyCoupon(couponCode)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'applyCoupon', (json) => ApplyCoupon.fromJson(json));
   }
 
   Future<ApplyCoupon?> removeCoupon() async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.removeCoupon()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'removeCoupon', document: gql(mutation.removeCoupon()), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'removeCoupon', (json) => ApplyCoupon.fromJson(json));
   }
 
@@ -592,7 +603,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<BaseModel?> removeAllCartItem() async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.removeAllCartItem()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'removeAllCartItem', document: gql(mutation.removeAllCartItem()), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'removeAllCartItem', (json) => BaseModel.fromJson(json));
   }
 
@@ -727,17 +738,17 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<SignInModel?> socialLogin(String email, String firstName, String lastName, String phone, String signUpType) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getSocialLoginResponse(firstName: firstName, lastName: lastName, email: email, phone: phone, signUpType: signUpType)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'customerSocialSignUp', document: gql(mutation.getSocialLoginResponse(firstName: firstName, lastName: lastName, email: email, phone: phone, signUpType: signUpType)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'customerSocialSignUp', (json) => SignInModel.fromJson(json));
   }
 
   Future<SignInModel?> getSignInData(String email, String password, bool remember) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.customerLogin(email: email, password: password, remember: remember))));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'customerLogin', document: gql(mutation.customerLogin(email: email, password: password, remember: remember))));
     return handleResponse(response, 'customerLogin', (json) => SignInModel.fromJson(json));
   }
 
   Future<SignInModel?> getSignUpData(String email, String firstName, String lastName, String password, String confirmPassword, bool subscribeNewsletter, bool agreement) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.customerRegister(firstName: firstName, lastName: lastName, email: email, password: password, confirmPassword: confirmPassword, subscribedToNewsLetter: subscribeNewsletter, agreement: agreement)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'customerSignUp', document: gql(mutation.customerRegister(firstName: firstName, lastName: lastName, email: email, password: password, confirmPassword: confirmPassword, subscribedToNewsLetter: subscribeNewsletter, agreement: agreement)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'customerSignUp', (json) => SignInModel.fromJson(json));
   }
 
@@ -841,17 +852,17 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<BaseModel?> deleteCustomerAccount(String password) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.deleteAccount(password: password)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'deleteAccount', document: gql(mutation.deleteAccount(password: password)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'deleteAccount', (json) => BaseModel.fromJson(json));
   }
 
   Future<BaseModel?> forgotPassword(String email) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.forgotPassword(email: email))));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'forgotPassword', document: gql(mutation.forgotPassword(email: email))));
     return handleResponse(response, 'forgotPassword', (json) => BaseModel.fromJson(json));
   }
 
   Future<ReviewModel?> getReviewList(int page) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getReviewList(page)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'reviewsList', document: gql(mutation.getReviewList(page)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'reviewsList', (json) => ReviewModel.fromJson(json));
   }
 
@@ -1016,22 +1027,22 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<UpdateAddressModel?> updateAddress(int id, String companyName, String firstName, String lastName, String address, String address2, String country, String state, String city, String postCode, String phone, String vatId, String email) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.updateAddress(id: id, companyName: companyName, firstName: firstName, lastName: lastName, address: address, address2: address2, country: country, state: state, city: city, email: email, postCode: postCode, phone: phone, vatId: vatId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'updateAddress', document: gql(mutation.updateAddress(id: id, companyName: companyName, firstName: firstName, lastName: lastName, address: address, address2: address2, country: country, state: state, city: city, email: email, postCode: postCode, phone: phone, vatId: vatId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'updateAddress', (json) => UpdateAddressModel.fromJson(json));
   }
 
   Future<CountriesData?> getCountryStateList() async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.getCountryStateList()), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'countries', document: gql(mutation.getCountryStateList()), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'countries', (json) => CountriesData.fromJson(json));
   }
 
   Future<PaymentMethods?> saveShippingMethods(String? shippingMethod) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.paymentMethods(shippingMethod: shippingMethod)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'paymentMethods', document: gql(mutation.paymentMethods(shippingMethod: shippingMethod)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'paymentMethods', (json) => PaymentMethods.fromJson(json));
   }
 
   Future<SavePayment?> saveAndReview(String? paymentMethod) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.savePaymentAndReview(paymentMethod: paymentMethod)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'savePayment', document: gql(mutation.savePaymentAndReview(paymentMethod: paymentMethod)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'savePayment', (json) => SavePayment.fromJson(json));
   }
 
@@ -1119,52 +1130,52 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<DownloadableProductModel?> getCustomerDownloadableProducts(int page, int limit, {String? title, String? status, String? orderId, String? orderDateFrom, String? orderDateTo}) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.downloadableProductsCustomer(page, limit, title: title ?? "", status: status ?? "", orderId: orderId ?? "", orderDateFrom: orderDateFrom ?? "", orderDateTo: orderDateTo ?? "")), cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic, fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'downloadableLinkPurchases', document: gql(mutation.downloadableProductsCustomer(page, limit, title: title ?? "", status: status ?? "", orderId: orderId ?? "", orderDateFrom: orderDateFrom ?? "", orderDateTo: orderDateTo ?? "")), cacheRereadPolicy: CacheRereadPolicy.mergeOptimistic, fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadableLinkPurchases', (json) => DownloadableProductModel.fromJson(json));
   }
 
   Future<DownloadLinkDataModel?> downloadLinksProductAPI(int id) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.downloadProductQuery(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'downloadLink', document: gql(mutation.downloadProductQuery(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadLink', (json) => DownloadLinkDataModel.fromJson(json));
   }
 
   Future<Download?> downloadLinksProduct(int id) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.downloadProduct(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'downloadableLinkPurchase', document: gql(mutation.downloadProduct(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadableLinkPurchase', (json) => Download.fromJson(json));
   }
 
   Future<InvoicesModel?> getInvoicesList(int orderId) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getInvoicesList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'viewInvoices', document: gql(mutation.getInvoicesList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'viewInvoices', (json) => InvoicesModel.fromJson(json));
   }
 
   Future<ShipmentModel?> getShipmentsList(int orderId) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getShipmentsList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'viewShipments', document: gql(mutation.getShipmentsList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'viewShipments', (json) => ShipmentModel.fromJson(json));
   }
 
   Future<OrderRefundModel?> getRefundList(int orderId) async {
-    var response = await (client.clientToQuery()).query(QueryOptions(document: gql(mutation.getRefundList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).query(QueryOptions(operationName: 'viewRefunds', document: gql(mutation.getRefundList(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'viewRefunds', (json) => OrderRefundModel.fromJson(json));
   }
 
   Future<AddToCartModel?> reOrderCustomerOrder(String? orderId) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.reOrderCustomerOrder(orderId)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'reorder', document: gql(mutation.reOrderCustomerOrder(orderId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'reorder', (json) => AddToCartModel.fromJson(json));
   }
 
   Future<BaseModel?> contactUsApiClient(String name, String? email, String? phone, String? describe) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.contactUsApi(name: name, email: email, phone: phone, describe: describe)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'contactUs', document: gql(mutation.contactUsApi(name: name, email: email, phone: phone, describe: describe)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'contactUs', (json) => BaseModel.fromJson(json));
   }
 
   Future<SetDefaultAddress?> setDefaultAddress(String id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.setDefaultAddress(id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'setDefaultAddress', document: gql(mutation.setDefaultAddress(id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'setDefaultAddress', (json) => SetDefaultAddress.fromJson(json));
   }
 
   Future<DownloadSampleModel?> downloadSample(String type, String id) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(document: gql(mutation.downloadSample(type, id)), fetchPolicy: FetchPolicy.networkOnly));
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'downloadSample', document: gql(mutation.downloadSample(type, id)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'downloadSample', (json) => DownloadSampleModel.fromJson(json));
   }
   // 🟢 NEW: Robust Profile Synchronization after Login

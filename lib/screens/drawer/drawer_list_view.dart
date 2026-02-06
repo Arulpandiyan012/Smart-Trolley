@@ -72,16 +72,21 @@ class _DrawerListViewState extends State<DrawerListView> {
     });
 
     appStoragePref.configurationStorage.listenKey(customerDetails, (value) {
-      if (value is AccountInfoModel?) {
-        if (mounted) {
-          setState(() {
-            _details = value;
-            if (value != null) {
-              _userName = value.name ?? "${value.firstName ?? ''} ${value.lastName ?? ''}".trim();
-              _image = value.imageUrl ?? appStoragePref.getCustomerImage();
-            }
-          });
-        }
+      if (value == null) return;
+      
+      AccountInfoModel? details;
+      if (value is AccountInfoModel) {
+        details = value;
+      } else if (value is Map) {
+        details = AccountInfoModel.fromJson(Map<String, dynamic>.from(value));
+      }
+
+      if (details != null && mounted) {
+        setState(() {
+          _details = details;
+          _userName = details!.name ?? "${details!.firstName ?? ''} ${details!.lastName ?? ''}".trim();
+          _image = details!.imageUrl ?? appStoragePref.getCustomerImage();
+        });
       }
     });
   }
@@ -153,25 +158,27 @@ class _DrawerListViewState extends State<DrawerListView> {
                   crossAxisAlignment:
                   CrossAxisAlignment.start,
                   children: [
+                    if (_userName?.isNotEmpty == true || _details?.name != null) 
+                       Builder(builder: (context) {
+                         debugPrint("🔍 SIDEBAR DISPLAY - Name: '$_userName', DetailName: '${_details?.name}', DetailFName: '${_details?.firstName}'");
+                         return const SizedBox.shrink();
+                       }),
                     Text(
                       !widget.isLoggedIn
                           ? StringConstants.signUpOrLogin.localized()
-                          : "${StringConstants.helloLabel.localized()} ${_userName ?? _details?.name ?? _details?.firstName ?? ''}",
+                          : "Hello ${_userName?.isNotEmpty == true ? _userName : (_details?.name?.isNotEmpty == true ? _details!.name : (_details?.firstName?.isNotEmpty == true ? _details!.firstName : (_details?.email?.isNotEmpty == true ? _details!.email!.split('@').first : 'User')))}",
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.black.withOpacity(0.9), // 🟢 RICH BLACK
+                        fontWeight: FontWeight.w900, // 🟢 EXTRA BOLD
+                        fontSize: 18,
+                        letterSpacing: 0.5,
                         shadows: <Shadow>[
                           const Shadow(
-                            offset: Offset(0.5, 0.5),
-                            blurRadius: 3.0,
-                            color: Color.fromARGB(
-                                40, 0, 0, 0),
-                          ),
-                          const Shadow(
-                            offset: Offset(0.5, 0.5),
-                            blurRadius: 5,
-                            color: Color.fromARGB(
-                                40, 0, 0, 255),
+                            offset: Offset(0.3, 0.3),
+                            blurRadius: 1.0,
+                            color: Colors.white70, // Subtle contrast shadow
                           ),
                         ],
                       ),
@@ -341,15 +348,16 @@ class _DrawerListViewState extends State<DrawerListView> {
       }
       if (isLogged) {
         String value = appStoragePref.getCustomerName();
-          setState(() {
-            widget.customerUserName = value;
-            widget.isLoggedIn = isLogged;
-          });
         String imageValue = appStoragePref.getCustomerImage();
-          setState(() {
-            widget.image = imageValue;
-            widget.isLoggedIn = isLogged;
-          });
+        AccountInfoModel? details = appStoragePref.getCustomerDetails();
+        setState(() {
+          widget.customerUserName = value;
+          _userName = value;
+          widget.image = imageValue;
+          _image = imageValue;
+          _details = details;
+          widget.isLoggedIn = isLogged;
+        });
       } else {
         setState(() {
           widget.customerUserName = StringConstants.signUpOrLogin.localized();

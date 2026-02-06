@@ -10,6 +10,7 @@
 
 // file_names, avoid_print, must_be_immutable
 
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -37,9 +38,9 @@ class ImageView extends StatelessWidget {
        debugPrint("🖼️ Normalizing Image URL: $cleanUrl");
     }
     
-    // 1. Filter out local file paths that crash CachedNetworkImage
-    if (cleanUrl.startsWith("file:///")) {
-      return "";
+    // 1. Allow local file paths (don't normalize them as URLs)
+    if (cleanUrl.startsWith("/") || cleanUrl.contains(":\\") || cleanUrl.startsWith("file://")) {
+      return cleanUrl;
     }
 
     // 2. Normalize relative paths if needed
@@ -69,33 +70,65 @@ class ImageView extends StatelessWidget {
   }
 
   static ImageProvider getImageProvider(String? url, {String? fallbackAsset}) {
-    final cleanUrl = normalizeUrl(url);
-    if (cleanUrl.isEmpty) {
+    if (url == null || url.trim().isEmpty) {
       return AssetImage(fallbackAsset ?? AssetConstants.placeHolder);
     }
-    return NetworkImage(cleanUrl);
+    
+    final cleanUrl = url.trim();
+    // Support local files
+    if (cleanUrl.startsWith("/") || cleanUrl.contains(":\\") || cleanUrl.startsWith("file://")) {
+      String path = cleanUrl.replaceFirst("file://", "");
+      return FileImage(File(path));
+    }
+
+    final normalized = normalizeUrl(cleanUrl);
+    if (normalized.isEmpty) {
+      return AssetImage(fallbackAsset ?? AssetConstants.placeHolder);
+    }
+    return CachedNetworkImageProvider(normalized);
   }
 
   @override
   Widget build(BuildContext context) {
-    final cleanUrl = normalizeUrl(url);
+    if (url == null || url!.trim().isEmpty) {
+      return _placeholder();
+    }
 
-    if (cleanUrl.isEmpty) {
-      return Image.asset(
-        placeHolder ?? AssetConstants.placeHolder,
+    final cleanUrl = url!.trim();
+
+    // 🟢 Support Local Files Optimistically
+    if (cleanUrl.startsWith("/") || cleanUrl.contains(":\\") || cleanUrl.startsWith("file://")) {
+      String path = cleanUrl.replaceFirst("file://", "");
+      return Image.file(
+        File(path),
         width: width != 0.0 ? width : null,
         height: height != 0.0 ? height : null,
         fit: fit,
+        errorBuilder: (context, error, stackTrace) => _placeholder(),
       );
+    }
+
+    final normalized = normalizeUrl(cleanUrl);
+    if (normalized.isEmpty) {
+      return _placeholder();
     }
 
     return CachedNetworkImage(
       width:  width != 0.0 ?  width : null,
       height: height != 0.0 ?  height : null,
       fit: fit ?? BoxFit.scaleDown,
-      imageUrl: cleanUrl,
-      placeholder: (context, url) => Image.asset(placeHolder ?? AssetConstants.placeHolder),
-      errorWidget: (context, url, error) => Image.asset(placeHolder ?? AssetConstants.placeHolder),
+      imageUrl: normalized,
+      placeholder: (context, url) => _placeholder(),
+      errorWidget: (context, url, error) => _placeholder(),
+    );
+  }
+
+  Widget _placeholder() {
+    return Image.asset(
+      placeHolder ?? AssetConstants.placeHolder,
+      width: width != 0.0 ? width : null,
+      height: height != 0.0 ? height : null,
+      fit: fit,
     );
   }
 }

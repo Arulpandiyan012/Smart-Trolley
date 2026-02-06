@@ -45,16 +45,16 @@ class GraphQlApiCalling {
       headers["Cookie"] = cookie;
     }
 
-    // 🟢 DEBUGGING: Log if token is missing
+    // 🟢 DEBUGGING: Log if token is missing (Neutral for guest)
     if (token.isEmpty) {
-      debugPrint("⚠️ WARNING: Attempting GraphQL call with EMPTY token");
+      debugPrint("ℹ️ Guest Access: GraphQL call initialization");
     } else {
       headers['token'] = token; 
     }
 
     final httpLink = HttpLink(baseUrl, defaultHeaders: headers);
 
-    debugPrint("🛡️ OUTGOING HEADERS: $headers");
+    debugPrint("🛡️ OUTGOING HEADERS: { ... }"); // 🟢 Redacted for log cleanliness
     debugPrint("🛡️ BASE URL: $baseUrl");
 
     return GraphQLClient(
@@ -69,7 +69,20 @@ class GraphQlApiCalling {
 class LoggerLink extends Link {
   @override
   Stream<Response> request(Request request, [NextLink? forward]) {
-    debugPrint("🚀 GRAPHQL OPERATION: ${request.operation.operationName}");
+    String? opName = request.operation.operationName;
+    
+    // 🟢 Attempt to extract name from document if explicit name is missing
+    if (opName == null) {
+      final doc = request.operation.document;
+      // Very basic extraction of 'query Name {' or 'mutation Name {'
+      final content = doc.toString();
+      final match = RegExp(r'(query|mutation)\s+([a-zA-Z0-9_]+)', multiLine: true).firstMatch(content);
+      if (match != null && match.groupCount >= 2) {
+        opName = match.group(2);
+      }
+    }
+
+    debugPrint("🚀 GRAPHQL OPERATION: ${opName ?? "UNNAMED"}");
     return forward!(request);
   }
 }
