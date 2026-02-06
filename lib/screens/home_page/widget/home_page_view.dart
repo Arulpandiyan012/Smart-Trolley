@@ -394,7 +394,15 @@ class _HomePageViewState extends State<HomePageView> {
             top: false,
             child: Stack(
               children: [
-                CustomScrollView(
+                RefreshIndicator(
+                  color: const Color(0xFF27C16B),
+                  onRefresh: () async {
+                     widget.homePageBloc?.add(FetchHomeCustomData());
+                     widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
+                     // Wait a moment for UX
+                     await Future.delayed(const Duration(seconds: 2));
+                  },
+                  child: CustomScrollView(
                   controller: _scrollController, 
                   slivers: [
                     SliverPersistentHeader(
@@ -501,6 +509,7 @@ class _HomePageViewState extends State<HomePageView> {
                     const SliverToBoxAdapter(child: SizedBox(height: 24)),
                   ],
                 ),
+              ),
 
                 if (_showBackToTop)
                   Positioned(

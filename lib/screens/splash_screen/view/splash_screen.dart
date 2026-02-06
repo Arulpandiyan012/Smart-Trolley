@@ -12,6 +12,7 @@
 
 import 'package:bagisto_app_demo/screens/splash_screen/utils/index.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../vendor/dashboard/view/vendor_dashboard_screen.dart'; // 🟢 Vendor Import
 import 'package:bagisto_app_demo/utils/route_constants.dart';
 import 'package:bagisto_app_demo/screens/review/bloc/review_repo.dart';
 
@@ -56,6 +57,16 @@ Widget build(BuildContext context) {
     Directory appDocDir = await getApplicationDocumentsDirectory();
     appDocPath = appDocDir.path;
     Timer(const Duration(seconds: defaultSplashDelay), () {
+      
+      // 🟢 CHECK VENDOR SESSION
+      if (appStoragePref.getVendorLoggedIn()) {
+         Navigator.pushReplacement(
+           context, 
+           MaterialPageRoute(builder: (context) => const VendorDashboardScreen())
+         );
+         return;
+      }
+
       bool hasSeenOnboarding = GetStorage().read('hasSeenOnboarding') ?? false;
       if (hasSeenOnboarding) {
         Navigator.pushReplacementNamed(context, home);

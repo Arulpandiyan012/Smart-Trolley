@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../stock_management/view/stock_management_screen.dart';
 import '../../orders/view/vendor_orders_screen.dart';
 
+import 'package:bagisto_app_demo/utils/index.dart'; // For appStoragePref & Routes
+
 class VendorDashboardScreen extends StatelessWidget {
   const VendorDashboardScreen({Key? key}) : super(key: key);
 
@@ -12,6 +14,19 @@ class VendorDashboardScreen extends StatelessWidget {
         title: const Text('Vendor Dashboard'),
         backgroundColor: const Color(0xFF27C16B),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            tooltip: "Logout",
+            onPressed: () {
+               // 🟢 Logout Vendor
+               appStoragePref.setVendorLoggedIn(false);
+               
+               // Redirect to App Home
+               Navigator.pushNamedAndRemoveUntil(context, home, (route) => false);
+            },
+          )
+        ],
       ),
       body: GridView.count(
         crossAxisCount: 2,

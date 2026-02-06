@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../dashboard/view/vendor_dashboard_screen.dart';
+import 'package:bagisto_app_demo/utils/index.dart'; // 🟢 For appStoragePref
 
 class VendorLoginScreen extends StatefulWidget {
   const VendorLoginScreen({Key? key}) : super(key: key);
@@ -93,8 +94,14 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     // Mock Login Delay
     await Future.delayed(const Duration(seconds: 1));
 
-    // TODO: Implement actual vendor login logic
-    if (_emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+    // Hardcoded Vendor Login Check
+    final email = _emailController.text.trim(); // Trim to be safe
+    final password = _passwordController.text;
+
+    if (email == "vendor@gmail.com" && password == "SMT@26") {
+      // 🟢 Save Session
+      appStoragePref.setVendorLoggedIn(true);
+      
       if (mounted) {
          Navigator.pushReplacement(
           context,
@@ -104,7 +111,10 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter email and password')),
+          const SnackBar(
+            content: Text('Invalid Email or Password'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

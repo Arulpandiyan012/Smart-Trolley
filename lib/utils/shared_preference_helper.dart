@@ -271,11 +271,12 @@ class SharedPreferenceHelper {
     return configurationStorage.read("cartId") ?? "";
   }
 
-  setCustomerNewsletter(bool subscribed) {
-    configurationStorage.write("customerNewsletter", subscribed);
+  // 🟢 Vendor Persistence
+  setVendorLoggedIn(bool isLoggedIn) {
+    configurationStorage.write("isVendorLoggedIn", isLoggedIn);
   }
 
-  bool getCustomerNewsletter() {
-    return configurationStorage.read("customerNewsletter") ?? false;
+  bool getVendorLoggedIn() {
+    return configurationStorage.read("isVendorLoggedIn") ?? false;
   }
 }
