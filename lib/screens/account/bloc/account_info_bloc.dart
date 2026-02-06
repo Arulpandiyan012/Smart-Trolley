@@ -41,6 +41,7 @@ class AccountInfoBloc extends Bloc<AccountInfoBaseEvent, AccountInfoBaseState> {
       }
     } else if (event is AccountInfoUpdateEvent) {
       try {
+        emit(AccountInfoUpdateState.loading());
         // ✅ Call Repository with correct arguments (No passwords)
         AccountUpdate? accountUpdate = await repository!.callAccountUpdateApi(
             event.firstName ?? "",
@@ -65,6 +66,7 @@ class AccountInfoBloc extends Bloc<AccountInfoBaseEvent, AccountInfoBaseState> {
       }
     } else if (event is AccountInfoDeleteEvent) {
       try {
+        emit(AccountInfoDeleteState.loading());
         BaseModel? baseModel =
             await repository?.callDeleteAccountApi(event.password ?? "");
         if (baseModel?.success == true) {

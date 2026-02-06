@@ -9,7 +9,7 @@
  */
 
 import 'dart:developer';
-
+import 'package:flutter/foundation.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../utils/app_global_data.dart';
@@ -26,28 +26,37 @@ class GraphQlApiCalling {
   final authLink = AuthLink(
     getToken: () async {
       String? token = appStoragePref.getCustomerToken();
-      log("🟢 AuthLink Token: $token");
+      debugPrint("🟢 AuthLink Token: ${token.isNotEmpty ? token.substring(0, 5) + "..." : "EMPTY"}");
+      if (token == "fake_token_bypass") return null; // 🟢 SANITIZE
       return (token != null && token.isNotEmpty) ? "Bearer $token" : null;
     },
   );
 
   GraphQLClient clientToQuery() {
+    String? token = appStoragePref.getCustomerToken();
+    String? cookie = appStoragePref.getCookieGet();
+    
     Map<String, String> headers = {
-      "Cookie": appStoragePref.getCookieGet(),
       "x-currency": GlobalData.currencyCode ?? "INR",
       "x-locale": GlobalData.locale ?? "en"
     };
 
-    String? token = appStoragePref.getCustomerToken();
-    if (token != null && token.isNotEmpty) {
-      headers['token'] = token; // Add custom token header
+    if (cookie.isNotEmpty) {
+      headers["Cookie"] = cookie;
+    }
+
+    // 🟢 DEBUGGING: Log if token is missing
+    if (token.isEmpty) {
+      debugPrint("⚠️ WARNING: Attempting GraphQL call with EMPTY token");
+    } else {
+      headers['token'] = token; 
     }
 
     final httpLink = HttpLink(baseUrl, defaultHeaders: headers);
 
-    log("authLink---->${appStoragePref.getCustomerToken()}");
-    log("headers ----> ${httpLink.defaultHeaders}");
-    log("baseUrl ----> $baseUrl");
+    debugPrint("🛡️ OUTGOING HEADERS: $headers");
+    debugPrint("🛡️ BASE URL: $baseUrl");
+
     return GraphQLClient(
       cache: GraphQLCache(store: HiveStore()),
       queryRequestTimeout: const Duration(seconds: 40),
@@ -60,7 +69,7 @@ class GraphQlApiCalling {
 class LoggerLink extends Link {
   @override
   Stream<Response> request(Request request, [NextLink? forward]) {
-    log("\nOperation -> ${request.operation}\n\n");
+    debugPrint("🚀 GRAPHQL OPERATION: ${request.operation.operationName}");
     return forward!(request);
   }
 }

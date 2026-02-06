@@ -66,6 +66,10 @@ class SharedPreferenceHelper {
     configurationStorage.write(customerBannerPicUrl, '');
     configurationStorage.write(customerImage, ''); // 🟢 Added: Clear portrait image
     configurationStorage.write(customerToken, '');
+    configurationStorage.write("customerFirstName", ''); 
+    configurationStorage.write("customerLastName", ''); 
+    configurationStorage.write("customerDob", ''); 
+    configurationStorage.write("customerGender", ''); 
     configurationStorage.remove(customerDetails);
   }
 
@@ -128,11 +132,49 @@ class SharedPreferenceHelper {
   }
 
   setCustomerName(String customerNameValue) {
+    print("💾 STORAGE: Setting Name: '$customerNameValue'");
     configurationStorage.write(customerName, customerNameValue);
   }
 
   String getCustomerName() {
     return configurationStorage.read(customerName) ?? "";
+  }
+
+  // 🟢 LOGGING EDITIONS (KEEP THESE)
+  setCustomerFirstName(String customerFirstNameValue) {
+    print("💾 STORAGE: Setting FName: '$customerFirstNameValue'");
+    configurationStorage.write("customerFirstName", customerFirstNameValue);
+  }
+
+  String getCustomerFirstName() {
+    return configurationStorage.read("customerFirstName") ?? "";
+  }
+
+  setCustomerLastName(String customerLastNameValue) {
+     print("💾 STORAGE: Setting LName: '$customerLastNameValue'");
+    configurationStorage.write("customerLastName", customerLastNameValue);
+  }
+
+  String getCustomerLastName() {
+    return configurationStorage.read("customerLastName") ?? "";
+  }
+
+
+  setCustomerDob(String dob) {
+    if (dob == "0000-00-00") dob = "";
+    configurationStorage.write("customerDob", dob);
+  }
+
+  String getCustomerDob() {
+    return configurationStorage.read("customerDob") ?? "";
+  }
+
+  setCustomerGender(String gender) {
+    configurationStorage.write("customerGender", gender);
+  }
+
+  String getCustomerGender() {
+    return configurationStorage.read("customerGender") ?? "";
   }
 
   bool getCustomerLoggedIn() {

@@ -110,7 +110,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
-    List<TextInputFormatter>? inputFormatters, 
+    List<TextInputFormatter>? inputFormatters,
+    String? prefixText, // 🟢 New Parameter
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,10 +180,15 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               controller: widget.phoneController, 
               label: "Phone Number",
               isRequired: true, 
+              // 🟢 REVERT: Removed +91 Prefix for India
               keyboardType: TextInputType.number, 
               maxLength: 10,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
-              validator: _validatePhone
+              validator: (v) {
+                if (v == null || v.isEmpty) return "Phone number is required";
+                if (v.length != 10) return "Enter 10 digit mobile number";
+                return null;
+              }
             ),
             const SizedBox(height: AppSizes.spacingMedium),
             _buildTextField(

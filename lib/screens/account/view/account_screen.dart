@@ -55,16 +55,54 @@ class _AccountScreenState extends State<AccountScreen>
     _loadAccountData();
   }
 
+  String _formatDob(String dob) {
+    if (dob.isEmpty || dob == "0000-00-00") return "";
+    // If it's yyyy-MM-dd, convert to dd-MM-yyyy
+    if (dob.contains("-")) {
+      var parts = dob.split("-");
+      if (parts.length == 3 && parts[0].length == 4) {
+        return "${parts[2]}-${parts[1]}-${parts[0]}";
+      }
+    }
+    return dob;
+  }
+
   void _loadAccountData() {
     isLoggedIn = appStoragePref.getCustomerLoggedIn();
     if (isLoggedIn) {
-      String fullName = appStoragePref.getCustomerName();
-      List<String> names = fullName.split(" ");
-      firstNameController.text = names.isNotEmpty ? names.first : "";
-      if (names.length > 1) {
-        lastNameController.text = names.sublist(1).join(" ");
+      // 🟢 ROBUST NAME LOADING: Read distinct fields first
+      String fName = appStoragePref.getCustomerFirstName();
+      String lName = appStoragePref.getCustomerLastName();
+      
+      if (fName.isNotEmpty || lName.isNotEmpty) {
+          firstNameController.text = fName;
+          lastNameController.text = lName;
+      } else {
+          // Fallback to legacy name splitting if individual fields are empty
+          String fullName = appStoragePref.getCustomerName();
+          List<String> names = fullName.split(" ");
+          firstNameController.text = names.isNotEmpty ? names.first : "";
+          if (names.length > 1) {
+            lastNameController.text = names.sublist(1).join(" ");
+          }
       }
+      
       emailController.text = appStoragePref.getCustomerEmail();
+      String storedPhone = appStoragePref.getCustomerPhone();
+      // 🟢 REVERT: Removed Strict Sanitization
+      phoneController.text = storedPhone;
+
+      dobController.text = _formatDob(appStoragePref.getCustomerDob());
+      
+      // 🟢 Initialize gender from storage
+      String gender = appStoragePref.getCustomerGender().toLowerCase();
+      if (gender.contains("female")) {
+        currentGenderValue = 1;
+      } else if (gender.contains("other")) {
+        currentGenderValue = 2;
+      } else {
+        currentGenderValue = 0;
+      }
     }
   }
 
@@ -160,14 +198,16 @@ class _AccountScreenState extends State<AccountScreen>
       listener: (context, state) {
         if (state is AccountInfoUpdateState) {
           if (state.status == AccountStatus.success &&
-              state.accountUpdate?.status == true) {
+              (state.accountUpdate?.status == true || state.accountUpdate?.success == true)) {
             ShowMessage.successNotification(
-                state.accountUpdate?.message ?? "", context);
+                state.accountUpdate?.message ?? StringConstants.updatedSuccessfully.localized(), context);
             _updateSharedPreferences(state.accountUpdate!);
-            Navigator.pop(context, true);
+            // 🟢 FORCE REFRESH: Reload fields from updated storage immediately
+            _loadAccountData(); 
+            // Removed Auto-Pop: Allow user to see the "Saved" reflection on the screen
           } else if (state.status == AccountStatus.fail) {
             ShowMessage.errorNotification(
-              state.accountUpdate?.graphqlErrors ??
+              state.error ?? state.accountUpdate?.graphqlErrors ??
                   StringConstants.invalidData.localized(),
               context,
             );
@@ -192,7 +232,7 @@ class _AccountScreenState extends State<AccountScreen>
           emailController.text = _accountInfoDetails!.email ?? "";
           phoneController.text = _accountInfoDetails!.phone ?? "";
           dobController.text =
-              _accountInfoDetails!.dateOfBirth ?? "";
+              _formatDob(_accountInfoDetails!.dateOfBirth ?? "");
           subscribeNewsletter =
               _accountInfoDetails!.subscribedToNewsLetter ?? false;
           
@@ -262,12 +302,30 @@ class _AccountScreenState extends State<AccountScreen>
 
   void _updateSharedPreferences(AccountUpdate accountUpdate) {
     appStoragePref.setCustomerLoggedIn(true);
+    
+    // 🟢 OPTIMISTIC OVERWRITE: 
+    // The server often returns stale data. We must trust the UI input which the user just saved.
+    String fName = firstNameController.text.trim();
+    String lName = lastNameController.text.trim();
+    String eMail = emailController.text.trim();
+    String phone = phoneController.text.trim();
+    String dob = dobController.text.trim();
+    
+    appStoragePref.setCustomerName("$fName $lName".trim());
+    appStoragePref.setCustomerFirstName(fName);
+    appStoragePref.setCustomerLastName(lName);
+    appStoragePref.setCustomerEmail(eMail);
+    appStoragePref.setCustomerPhone(phone);
+    
+    // Convert back to YYYY-MM-DD for storage if needed, or store as is if consistent
+    // For now, storing as is since we control the display format
+    appStoragePref.setCustomerDob(dob); 
+        
     var data = accountUpdate.data;
     if (data != null) {
-      String fName = data.firstName ?? "";
-      String lName = data.lastName ?? "";
-      appStoragePref.setCustomerName("$fName $lName".trim());
-      appStoragePref.setCustomerEmail(data.email ?? "");
+      // Only read fields not editable in this screen form if any
+      appStoragePref.setCustomerGender(data.gender ?? "");
+
       
       // 🟢 ENSURE IMAGE IS SAVED
       String image = data.imageUrl ?? "";
@@ -280,6 +338,23 @@ class _AccountScreenState extends State<AccountScreen>
         "image": image,
         "name": "$fName $lName".trim()
       });
+
+      // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners
+      // DrawerListView listens to 'customerDetails' key, not individual fields.
+      // We must construct and save the full model to trigger the UI update.
+      AccountInfoModel updatedModel = AccountInfoModel(
+        firstName: fName,
+        lastName: lName,
+        name: "$fName $lName".trim(),
+        email: eMail,
+        phone: phone,
+        dateOfBirth: dob,
+        gender: data.gender ?? "",
+        imageUrl: image.isNotEmpty ? image : appStoragePref.getCustomerImage(),
+        subscribedToNewsLetter: subscribeNewsletter,
+        id: appStoragePref.getCustomerId().toString()
+      );
+      appStoragePref.setCustomerDetails(updatedModel);
     }
   }
 }
