@@ -675,23 +675,46 @@ class _HomePageViewState extends State<HomePageView> {
 
     for (final element in themeItems) {
        // 🟢 1. CHECK IF IT IS A GRID (Subcategories)
-       // The backend now sends type="blinkit_category_grid" for some sections.
+       // The backend sends type="blinkit_category_grid".
+       // We now fetch REAL Subcategories from GlobalData.categoriesDrawerData (Actual Backend Data)
        if (element.type == "blinkit_category_grid") {
           String title = element.name ?? "Categories";
-          // Try to get translated title
           try {
              final trans = element.translations?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale);
              if (trans?.options?.title != null) title = trans!.options!.title!;
           } catch (_) {}
 
-          // Get the 'images' array which contains our Mock Subcategories
+          // 🟢 FEATURE: Fetch Real Subcategories
+          // 1. Find the matching Root Category by Name
           List<dynamic> subCategories = [];
-          try {
-             final trans = element.translations?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale);
-             if (trans?.options?.images is List) {
-                subCategories = trans!.options!.images!;
+          final allRealCats = GlobalData.categoriesDrawerData?.data ?? [];
+          
+          dynamic foundRootCat;
+          // Helper to find category by name (case insensitive)
+          for (var cat in allRealCats) {
+             if (_catLabel(cat).toLowerCase() == title.toLowerCase()) {
+                foundRootCat = cat;
+                break;
              }
-          } catch (_) {}
+          }
+
+          if (foundRootCat != null) {
+              // 2. Use its children (Real Backend Data)
+              final children = _catChildren(foundRootCat);
+              subCategories = children.map((child) => {
+                  'title': _catLabel(child),
+                  'image': _catBannerUrl(child).isNotEmpty ? _catBannerUrl(child) : _catBannerUrl(foundRootCat), // Fallback to parent if child has no image
+                  'link': _catSlug(child) // Use slug for navigation
+              }).toList();
+          } else {
+             // 3. Fallback to Mock Data (if Real Category not found)
+             try {
+                final trans = element.translations?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale);
+                if (trans?.options?.images is List) {
+                   subCategories = trans!.options!.images!;
+                }
+             } catch (_) {}
+          }
 
           if (subCategories.isNotEmpty) {
              sections.add(_Section(title, "blinkit_category_grid", subCategories));
