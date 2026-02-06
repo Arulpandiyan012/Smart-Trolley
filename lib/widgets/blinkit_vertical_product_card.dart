@@ -81,6 +81,29 @@ class BlinkitVerticalProductCard extends StatelessWidget {
      return "";
   }
 
+  bool _isOutOfStock(dynamic p) {
+      if (p == null) return true;
+      try { if ((p as dynamic).isSaleable == false) return true; } catch (_) {}
+      
+      try {
+          // Check Inventories List to see actual qty
+          // Because 'isSaleable' might be true even if request quantity logic differs
+          if ((p as dynamic).inventories is List) {
+              int total = 0;
+              bool found = false;
+              for (var i in (p as dynamic).inventories) {
+                  if (i.qty != null) {
+                      total += (i.qty as int);
+                      found = true;
+                  }
+              }
+              if (found) return total <= 0;
+          }
+      } catch (_) {}
+      
+      return false; 
+  }
+
   @override
   Widget build(BuildContext context) {
     final imageUrl = _productImage(data);
@@ -168,7 +191,20 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                 Positioned(
                   bottom: 6,
                   right: 6,
-                  child: InkWell(
+                  child: _isOutOfStock(data) 
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.red.shade200, width: 1),
+                        borderRadius: BorderRadius.circular(6),
+                        color: Colors.red.shade50,
+                      ),
+                      child: Text(
+                        "OOS", // Out of stock
+                        style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold, fontSize: 8),
+                      ),
+                    )
+                  : InkWell(
                     onTap: () => onAddToCart?.call(productId),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
