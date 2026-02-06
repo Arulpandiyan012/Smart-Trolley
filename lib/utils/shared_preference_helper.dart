@@ -228,4 +228,13 @@ class SharedPreferenceHelper {
   String getCartId() {
     return configurationStorage.read("cartId") ?? "";
   }
+
+  // 🟢 Vendor Persistence
+  setVendorLoggedIn(bool isLoggedIn) {
+    configurationStorage.write("isVendorLoggedIn", isLoggedIn);
+  }
+
+  bool getVendorLoggedIn() {
+    return configurationStorage.read("isVendorLoggedIn") ?? false;
+  }
 }
