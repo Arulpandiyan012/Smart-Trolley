@@ -127,29 +127,37 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadInitialAddress() async {
     setState(() => _addrLoading = true);
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      // Add timeout protection to prevent crashes
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+          .timeout(const Duration(seconds: 3), onTimeout: () => false);
+      
       if (!serviceEnabled) {
+        debugPrint('📍 Location services disabled');
         setState(() => _addrLoading = false);
         return;
       }
 
-      var permission = await Geolocator.checkPermission();
+      var permission = await Geolocator.checkPermission()
+          .timeout(const Duration(seconds: 3));
+      
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+        permission = await Geolocator.requestPermission()
+            .timeout(const Duration(seconds: 5));
       }
 
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+        debugPrint('📍 Location permission denied');
         setState(() => _addrLoading = false);
         return;
       }
 
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-      );
+      ).timeout(const Duration(seconds: 10));
 
-      final placemarks =
-          await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude)
+          .timeout(const Duration(seconds: 5));
 
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
@@ -171,8 +179,12 @@ class _HomeScreenState extends State<HomeScreen> {
           countryVal: p.isoCountryCode ?? "IN",
           pinVal: p.postalCode
         );
+        debugPrint('📍 Location loaded: $fullAddress');
       }
-    } catch (_) {} finally {
+    } catch (e) {
+      // Catch all errors including DeadSystemException
+      debugPrint('📍 Location error (non-fatal): $e');
+    } finally {
       if (mounted) setState(() => _addrLoading = false);
     }
   }

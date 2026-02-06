@@ -59,8 +59,21 @@ class Data {
         this.subscribedToNewsLetter
      });
 
-  factory Data.fromJson(Map<String, dynamic> json) =>
-      _$DataFromJson(json);
+  factory Data.fromJson(Map<String, dynamic> json) {
+    return Data(
+      id: (json['id'] ?? json['customer_id'] ?? json['customerId'])?.toString(),
+      email: (json['email'] ?? json['customer_email'] ?? json['customerEmail'])?.toString(),
+      firstName: (json['firstName'] ?? json['first_name'] ?? json['first_name'])?.toString(),
+      lastName: (json['lastName'] ?? json['last_name'] ?? json['last_name'])?.toString(),
+      name: (json['name'] ?? json['full_name'] ?? json['customer_name'])?.toString(),
+      gender: (json['gender'] ?? json['customer_gender'])?.toString(),
+      dateOfBirth: (json['dateOfBirth'] ?? json['date_of_birth'] ?? json['dob'] ?? json['customer_dob'])?.toString(),
+      phone: (json['phone'] ?? json['customer_phone'] ?? json['telephone'])?.toString(),
+      imageUrl: (json['imageUrl'] ?? json['image_url'] ?? json['profile_image_url'])?.toString(),
+      status: json['status'],
+      subscribedToNewsLetter: (json['subscribedToNewsLetter'] ?? json['is_subscribed'] ?? json['subscribed_to_newsletter']) == true || (json['is_subscribed'] == 1),
+    );
+  }
 
   Map<String, dynamic> toJson() =>
       _$DataToJson(this);
