@@ -194,6 +194,8 @@ class ApiClient {
               appStoragePref.setCustomerNewsletter(cData['subscribed_to_newsletter'] == true || cData['is_subscribed'] == 1);
 
               debugPrint("💾 SAVED TO STORAGE: FName: $fNameSaved, LName: $lNameSaved, DOB: $dobSaved");
+              // 🟢 NEW: Log ALL customer data keys and values for debugging
+              debugPrint("🔍 FULL LOGIN CUSTOMER DATA: $cData");
 
               if (imageUrl.isNotEmpty) {
                 appStoragePref.setCustomerImage(imageUrl);
@@ -294,10 +296,28 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         document: gql(mutation.customerLogout()),
         fetchPolicy: FetchPolicy.networkOnly));
     
+    // Clear all authentication and profile data
     appStoragePref.setCustomerLoggedIn(false);
     appStoragePref.setCustomerName("");
     appStoragePref.setCustomerEmail("");
     appStoragePref.setCartCount(0);
+    
+    // 🟢 Clear extended profile details to prevent stale cache after relogin
+    appStoragePref.setCustomerFirstName("");
+    appStoragePref.setCustomerLastName("");
+    appStoragePref.setCustomerPhone("");
+    appStoragePref.setCustomerGender("");
+    appStoragePref.setCustomerDob("");
+    appStoragePref.setCustomerImage("");
+    appStoragePref.setCustomerNewsletter(false);
+    appStoragePref.setCustomerId(0);
+    appStoragePref.setCustomerToken("");
+    
+    // 🟢 Broadcast profile clear to update UI immediately
+    GlobalData.profileUpdateStream.add({
+      "image": null,
+      "name": ""
+    });
         
     return handleResponse(response, 'customerLogout', (json) => BaseModel.fromJson(json));
   }
@@ -749,15 +769,19 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       print("📤 UPDATING PROFILE payload (Form): $body"); // 🟢 DEBUG LOG
       debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
       // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
+      debugPrint("📥 UPDATE REQUEST URL: $url");
+      debugPrint("📤 UPDATE PAYLOAD: $body");
       var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
       debugPrint("📥 UPDATE RESPONSE: ${response.statusCode} - ${response.body}"); 
+
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
-        bool isSuccess = jsonResponse['success'] == true;
-        var msg = jsonResponse['message'] ?? "Updated Successfully";
-        var customerData = jsonResponse['data'] ?? jsonResponse['customer'];
+        bool isSuccess = jsonResponse['success'] == true || jsonResponse['status'] == true || jsonResponse['updateAccount']?['success'] == true;
+        var msg = jsonResponse['message'] ?? jsonResponse['updateAccount']?['message'] ?? "Updated Successfully";
+        var customerData = jsonResponse['data'] ?? jsonResponse['customer'] ?? jsonResponse['updateAccount']?['data'];
         
-        debugPrint("✅ PROFILE UPDATE SUCCESS: $msg, Data: $customerData");
+        debugPrint("✅ PROFILE UPDATE ATTEMPT RESULT: Success=$isSuccess, Message=$msg");
+        if (customerData != null) debugPrint("🔍 Server Echoed Data: $customerData");
 
         // 🟢 OPTIMISTIC UPDATE: Force update local storage with INPUT values
         // This ensures the UI reflects changes even if the server echoes back old data.
@@ -1111,8 +1135,69 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   Future<void> _syncProfileAfterLogin() async {
     try {
       debugPrint("🔄 Syncing profile after login...");
+
+      // 🟢 NEW: Try direct PHP API first (more reliable than GraphQL for these custom fields)
+      try {
+        String customerId = appStoragePref.getCustomerId().toString();
+        String token = appStoragePref.getCustomerToken() ?? "";
+        // 🟢 ADDED CACHE BUSTER: Ensure we don't get a cached server response
+        String t = DateTime.now().millisecondsSinceEpoch.toString();
+        var url = Uri.parse("$baseDomain/mobikul-profile-api.php?action=get&customer_id=$customerId&token=$token&t=$t");
+        var response = await http.get(url);
+        
+        debugPrint("🔍 SYNC PROFILE ATTEMPT (PHP API) - Code: ${response.statusCode}, URL: $url");
+        
+        if (response.statusCode == 200) {
+          var jsonResponse = jsonDecode(response.body);
+          debugPrint("🔍 DIRECT PHP PROFILE RESPONSE: $jsonResponse");
+          
+          if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
+            var profileData = jsonResponse['data'];
+            
+            // Update storage with fresh data from server
+            if (profileData['first_name'] != null) {
+              appStoragePref.setCustomerFirstName(profileData['first_name']);
+            }
+            if (profileData['last_name'] != null) {
+              appStoragePref.setCustomerLastName(profileData['last_name']);
+            }
+            if (profileData['email'] != null) {
+              appStoragePref.setCustomerEmail(profileData['email']);
+            }
+            if (profileData['phone'] != null) {
+              appStoragePref.setCustomerPhone(profileData['phone']);
+            }
+            if (profileData['gender'] != null) {
+              appStoragePref.setCustomerGender(profileData['gender']);
+            }
+            if (profileData['date_of_birth'] != null && profileData['date_of_birth'] != "0000-00-00") {
+              appStoragePref.setCustomerDob(profileData['date_of_birth']);
+            }
+            
+            String fullName = "${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}".trim();
+            if (fullName.isNotEmpty) {
+              appStoragePref.setCustomerName(fullName);
+            }
+            
+            debugPrint("✅ Profile synced from PHP API: $fullName");
+            
+            // Broadcast updates for UI
+            GlobalData.profileUpdateStream.add({
+              "image": profileData['profile_image_url'] ?? profileData['image_url'],
+              "name": fullName
+            });
+            
+            return; // Success, exit early and skip GraphQL sync
+          }
+        }
+      } catch (e) {
+        debugPrint("⚠️ PHP API profile fetch failed: $e");
+      }
+
       var data = await getCustomerData();
       if (data != null) {
+        debugPrint("🔍 SYNC PROFILE RESPONSE (GraphQL): Name=${data.name}, FirstName=${data.firstName}, LastName=${data.lastName}");
+        
         if (data.id != null && data.id!.isNotEmpty && (data.name == null || data.name!.isEmpty)) {
             debugPrint("💡 Note: Using cached/fallback profile data");
         }

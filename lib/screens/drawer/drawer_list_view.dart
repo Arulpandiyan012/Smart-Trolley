@@ -109,7 +109,7 @@ class _DrawerListViewState extends State<DrawerListView> {
                     Text(
                       !widget.isLoggedIn
                           ? StringConstants.signUpOrLogin.localized()
-                          : "${StringConstants.helloLabel.localized()} ${widget.customerDetails?.firstName ?? ""}",
+                          : "${StringConstants.helloLabel.localized()} ${widget.customerDetails?.firstName?.isNotEmpty == true ? widget.customerDetails!.firstName : widget.customerUserName ?? ''}",
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
