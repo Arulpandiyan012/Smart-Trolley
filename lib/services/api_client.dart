@@ -6,6 +6,7 @@
 
 import 'dart:developer';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 
@@ -63,7 +64,9 @@ class ApiClient {
     Parser<T> parser,
   ) async {
     if (result.hasException) {
-      debugPrint("❌ GRAPHQL EXCEPTION ($operation): ${result.exception.toString()}");
+      String token = appStoragePref.getCustomerToken();
+      String tokenPreview = token.length > 5 ? token.substring(0, 5) : token;
+      print("❌ GRAPHQL EXCEPTION ($operation) [Token: $tokenPreview...]: ${result.exception.toString()}");
     }
 
     String responseCookie = result.context.entry<HttpLinkResponseContext>()?.headers?['set-cookie'] ?? "";
@@ -301,7 +304,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         }
       } 
     } catch (e) {
-      print("🔥 API ERROR: $e");
+      print("🔥 API ERROR: $e (Token: ${appStoragePref.getCustomerToken()})");
     }
     return null; 
   }
@@ -752,103 +755,105 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     return handleResponse(response, 'customerSignUp', (json) => SignInModel.fromJson(json));
   }
 
-  Future<AccountUpdate?> updateCustomerData(String? firstName, String? lastName, String? email, String? gender, String? dateOfBirth, String? phone, String? avatar, bool? subscribedToNewsLetter) async {
-    try {
-      String customerId = appStoragePref.getCustomerId().toString();
-      var url = Uri.parse("$baseDomain/mobikul-profile-api.php");
-      String finalDob = dateOfBirth ?? "";
-      if (finalDob.contains("-") && finalDob.split("-").first.length == 2) {
-        try {
-           // Convert dd-MM-yyyy to yyyy-MM-dd
-           var parts = finalDob.split("-");
-           if (parts.length == 3) {
-             finalDob = "${parts[2]}-${parts[1]}-${parts[0]}";
-           }
-        } catch (e) {}
+  Future<AccountUpdate?> updateCustomerData(
+      String? firstName,
+      String? lastName,
+      String? email,
+      String? gender,
+      String? dateOfBirth,
+      String? phone,
+      String? avatar,
+      bool? subscribedToNewsLetter) async {
+    
+    // 🟢 1. FORMAT DATE: Ensure yyyy-MM-dd
+    String finalDob = dateOfBirth ?? "";
+    if (finalDob.contains("-") && finalDob.split("-").first.length == 2) {
+      try {
+        var parts = finalDob.split("-");
+        if (parts.length == 3) {
+          finalDob = "${parts[2]}-${parts[1]}-${parts[0]}";
+        }
+      } catch (e) {
+        debugPrint("Date Parsing Error: $e");
       }
+    }
 
-      var body = {
-        "action": "update",
-        "customer_id": customerId,
-        "token": appStoragePref.getCustomerToken() ?? "", // 🟢 AUTH TOKEN ADDED
-        
-        // 🟢 DUAL KEYS: Send both formats to satisfy picky server
-        "first_name": firstName ?? "",
-        "firstName": firstName ?? "",
-        
-        "last_name": lastName ?? "",
-        "lastName": lastName ?? "",
-        
-        "email": email ?? "",
-        "gender": gender ?? "",
-        
-        "date_of_birth": finalDob, // Snake case
-        "dateOfBirth": finalDob,   // Camel case 
-        "dob": finalDob,           // Short 
-        
-        "phone": phone ?? "", 
-        "avatar": avatar ?? "", 
-        "subscribed_to_newsletter": subscribedToNewsLetter?.toString() ?? "false",
-        "newsletterSubscriber": subscribedToNewsLetter?.toString() ?? "false",
-      };
-      
-      print("📤 UPDATING PROFILE payload (Form): $body"); // 🟢 DEBUG LOG
-      debugPrint("📤 UPDATING PROFILE payload (Form): $body"); 
-      // 🟢 FIX: Send as Form data (no jsonEncode, no application/json header)
-      debugPrint("📥 UPDATE REQUEST URL: $url");
-      debugPrint("📤 UPDATE PAYLOAD: $body");
-      var response = await http.post(url, body: body, headers: {"Accept": "application/json"});
-      debugPrint("📥 UPDATE RESPONSE: ${response.statusCode} - ${response.body}"); 
+    // 🟢 2. ENCODE IMAGE: Convert path to Base64 if needed
+    String finalAvatar = avatar ?? "";
+    if (finalAvatar.isNotEmpty && !finalAvatar.startsWith("http") && !finalAvatar.contains("base64")) {
+      try {
+        final bytes = File(finalAvatar).readAsBytesSync();
+        finalAvatar = "data:image/png;base64,${base64Encode(bytes)}";
+        print("📸 API: Encoded image to Base64 (Length: ${finalAvatar.length})");
+      } catch (e) {
+        print("⚠️ Image Encoding Error: $e");
+      }
+    }
 
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        bool isSuccess = jsonResponse['success'] == true || jsonResponse['status'] == true || jsonResponse['updateAccount']?['success'] == true;
-        var msg = jsonResponse['message'] ?? jsonResponse['updateAccount']?['message'] ?? "Updated Successfully";
-        var customerData = jsonResponse['data'] ?? jsonResponse['customer'] ?? jsonResponse['updateAccount']?['data'];
-        
-        debugPrint("✅ PROFILE UPDATE ATTEMPT RESULT: Success=$isSuccess, Message=$msg");
-        if (customerData != null) debugPrint("🔍 Server Echoed Data: $customerData");
+    // 🟢 3. EXECUTE GRAPHQL MUTATION (Uniform with Login)
+    String token = appStoragePref.getCustomerToken();
+    print("🚀 SAVING PROFILE (AccountUpdate) - Token: ${token.isNotEmpty ? "PRESENT" : "MISSING"}");
 
-        // 🟢 OPTIMISTIC UPDATE: Force update local storage with INPUT values
-        // This ensures the UI reflects changes immediately, even if the server is slow or fails.
-        String fullName = ((firstName ?? "") + " " + (lastName ?? "")).trim();
-        appStoragePref.setCustomerName(fullName);
-        appStoragePref.setCustomerFirstName(firstName ?? "");
-        appStoragePref.setCustomerLastName(lastName ?? "");
-        appStoragePref.setCustomerEmail(email ?? "");
-        appStoragePref.setCustomerPhone(phone ?? "");
-        appStoragePref.setCustomerGender(gender ?? "");
-        appStoragePref.setCustomerDob(finalDob); 
-
-        // 🟢 BROADCAST TO SIDEBAR/HEADER INSTANTLY
-        GlobalData.profileUpdateStream.add({
-          "image": avatar ?? appStoragePref.getCustomerImage(),
-          "name": fullName
-        });
-
-        // 🟢 SYNC FULL MODEL (Triggers Drawer's storage listener)
-        AccountInfoModel optimisticModel = AccountInfoModel(
+    var response = await (client.clientToQuery()).mutate(MutationOptions(
+        operationName: 'updateAccount',
+        document: gql(mutation.updateAccount(
           firstName: firstName,
           lastName: lastName,
-          name: fullName,
           email: email,
-          phone: phone,
-          dateOfBirth: finalDob,
           gender: gender,
-          imageUrl: avatar?.isNotEmpty == true ? avatar : appStoragePref.getCustomerImage(),
-          id: customerId
-        );
-        appStoragePref.setCustomerDetails(optimisticModel);
+          dateOfBirth: finalDob,
+          phone: phone,
+          avatar: finalAvatar,
+          subscribedToNewsLetter: subscribedToNewsLetter,
+          oldPassword: "", 
+          password: "",
+          confirmPassword: ""
+        ))));
+
+    var model = await handleResponse(response, 'updateAccount', (json) => AccountUpdate.fromJson(json));
+
+    // 🟢 AGGRESSIVE FALLBACK: If GraphQL fails for ANY reason (schema error, auth error, etc.), try the PHP Bridge
+    if (model == null || (model.graphqlErrors != null && model.graphqlErrors!.isNotEmpty)) {
+      print("⚠️ GraphQL Profile Update FAILED (Error: ${model?.graphqlErrors ?? 'null model'}). Trying PHP Fallback...");
+      try {
+        String customerId = appStoragePref.getCustomerId().toString();
+        String token = appStoragePref.getCustomerToken() ?? "";
+        var url = Uri.parse("$baseDomain/mobikul-profile-api.php");
         
-        var dataMap = {
-            "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null,
-            "updateAccount": { "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null },
-            "updateCustomer": { "success": isSuccess, "status": isSuccess, "message": msg, "data": customerData, "customer": customerData, "graphqlErrors": null }
+        var phpBody = {
+          "action": "update", 
+          "customer_id": customerId,
+          "token": token,
+          "first_name": firstName ?? "",
+          "last_name": lastName ?? "",
+          "email": email ?? "",
+          "gender": gender ?? "",
+          "date_of_birth": finalDob,
+          "phone": phone ?? "",
+          "avatar": finalAvatar, 
+          "subscribed_to_newsletter": subscribedToNewsLetter.toString()
         };
-        return AccountUpdate.fromJson(dataMap);
+
+        var phpResponse = await http.post(url, body: phpBody);
+        print("📥 PHP FALLBACK RESPONSE: ${phpResponse.statusCode} - ${phpResponse.body}");
+        
+        if (phpResponse.statusCode == 200) {
+          var data = jsonDecode(phpResponse.body);
+          if (data['success'] == true || data['success'] == "true") {
+             print("✅ PHP Fallback Succeeded!");
+             return AccountUpdate.fromJson({
+               "success": true, 
+               "message": data['message'] ?? "Updated via fallback",
+               "customer": data['data'] ?? {}
+             });
+          }
+        }
+      } catch (e) {
+        print("❌ PHP Fallback Failed: $e");
       }
-    } catch (e) {}
-    return AccountUpdate.fromJson({"updateAccount": {"success": false, "message": "Network Error"}});
+    }
+
+    return model;
   }
 
   Future<BaseModel?> deleteCustomerAccount(String password) async {
@@ -1202,11 +1207,11 @@ Future<OrderDetail?> getOrderDetail(int id) async {
             var profileData = jsonResponse['data'];
             
             // Update storage with fresh data from server
-            if (profileData['first_name'] != null) {
-              appStoragePref.setCustomerFirstName(profileData['first_name']);
+            if (profileData['firstName'] != null) {
+              appStoragePref.setCustomerFirstName(profileData['firstName']);
             }
-            if (profileData['last_name'] != null) {
-              appStoragePref.setCustomerLastName(profileData['last_name']);
+            if (profileData['lastName'] != null) {
+              appStoragePref.setCustomerLastName(profileData['lastName']);
             }
             if (profileData['email'] != null) {
               appStoragePref.setCustomerEmail(profileData['email']);
@@ -1221,13 +1226,16 @@ Future<OrderDetail?> getOrderDetail(int id) async {
               appStoragePref.setCustomerDob(profileData['date_of_birth']);
             }
             
-            String fullName = "${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}".trim();
+            String fullName = profileData['name'] ?? "";
+            if (fullName.isEmpty) {
+              fullName = "${profileData['firstName'] ?? ''} ${profileData['lastName'] ?? ''}".trim();
+            }
             if (fullName.isNotEmpty) {
               appStoragePref.setCustomerName(fullName);
             }
 
             // 🟢 ENSURE IMAGE IS SAVED
-            String img = profileData['imageUrl'] ?? profileData['profile_image_url'] ?? "";
+            String img = profileData['imageUrl'] ?? "";
             if (img.isNotEmpty) {
               appStoragePref.setCustomerImage(img);
             }

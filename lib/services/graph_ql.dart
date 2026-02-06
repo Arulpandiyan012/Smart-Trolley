@@ -25,10 +25,13 @@ class GraphQlApiCalling {
   final loggerLink = LoggerLink();
   final authLink = AuthLink(
     getToken: () async {
-      String? token = appStoragePref.getCustomerToken();
-      debugPrint("🟢 AuthLink Token: ${token.isNotEmpty ? token.substring(0, 5) + "..." : "EMPTY"}");
-      if (token == "fake_token_bypass") return null; // 🟢 SANITIZE
-      return (token != null && token.isNotEmpty) ? "Bearer $token" : null;
+      String token = appStoragePref.getCustomerToken().trim();
+      if (token.isEmpty) {
+        print("⚠️ AuthLink: Token is EMPTY");
+        return null;
+      }
+      print("🔑 AuthLink: Using token ${token.length > 5 ? token.substring(0, 5) : token}... (Length: ${token.length})");
+      return "Bearer $token";
     },
   );
 
@@ -38,24 +41,35 @@ class GraphQlApiCalling {
     
     Map<String, String> headers = {
       "x-currency": GlobalData.currencyCode ?? "INR",
-      "x-locale": GlobalData.locale ?? "en"
+      "x-locale": GlobalData.locale ?? "en",
+      "X-Requested-With": "XMLHttpRequest" // 🟢 Fix for 'Unauthenticated' Guard
     };
 
     if (cookie.isNotEmpty) {
       headers["Cookie"] = cookie;
     }
 
-    // 🟢 DEBUGGING: Log if token is missing (Neutral for guest)
+    // 🟢 AUTH SYNC: Multiple headers to satisfy different server guards
     if (token.isEmpty) {
-      debugPrint("ℹ️ Guest Access: GraphQL call initialization");
+      print("ℹ️ Guest Access: GraphQL call initialization");
     } else {
-      headers['token'] = token; 
+      String cleanToken = token.trim();
+      headers['token'] = cleanToken; 
+      headers['bagisto-token'] = cleanToken;
+      headers['x-bagisto-token'] = cleanToken;
+      headers['Authorization'] = "Bearer $cleanToken"; 
+      
+      // Some server wrappers require token in cookie
+      String currentCookie = headers['Cookie'] ?? "";
+      if (!currentCookie.contains("customerToken=")) {
+        headers['Cookie'] = "$currentCookie${currentCookie.isEmpty ? "" : "; "}customerToken=$cleanToken";
+      }
     }
 
     final httpLink = HttpLink(baseUrl, defaultHeaders: headers);
 
-    debugPrint("🛡️ OUTGOING HEADERS: { ... }"); // 🟢 Redacted for log cleanliness
-    debugPrint("🛡️ BASE URL: $baseUrl");
+    print("🛡️ GRAPHQL HEADERS: ${headers.keys.toList()}");
+    print("🛡️ BASE URL: $baseUrl");
 
     return GraphQLClient(
       cache: GraphQLCache(store: HiveStore()),
@@ -70,19 +84,9 @@ class LoggerLink extends Link {
   @override
   Stream<Response> request(Request request, [NextLink? forward]) {
     String? opName = request.operation.operationName;
-    
-    // 🟢 Attempt to extract name from document if explicit name is missing
-    if (opName == null) {
-      final doc = request.operation.document;
-      // Very basic extraction of 'query Name {' or 'mutation Name {'
-      final content = doc.toString();
-      final match = RegExp(r'(query|mutation)\s+([a-zA-Z0-9_]+)', multiLine: true).firstMatch(content);
-      if (match != null && match.groupCount >= 2) {
-        opName = match.group(2);
-      }
+    if (opName != null) {
+      print("🚀 GRAPHQL OPERATION: $opName");
     }
-
-    debugPrint("🚀 GRAPHQL OPERATION: ${opName ?? "UNNAMED"}");
     return forward!(request);
   }
 }
