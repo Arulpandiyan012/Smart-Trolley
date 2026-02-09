@@ -55,39 +55,32 @@ class _DrawerListViewState extends State<DrawerListView> {
     _image = widget.image;
 
     // 🟢 DIRECT BROADCAST LISTENER: For instant Sidebar updates
+    // 🟢 DIRECT BROADCAST LISTENER: For instant Sidebar updates
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
        if (data.isNotEmpty && mounted) {
-           debugPrint("👤 Sidebar direct sync: ${data['name']}");
+           debugPrint("👤 Sidebar sync: ${data['name']} / ${data['email']}");
            setState(() {
-              _image = data['image'];
-              _userName = data['name'];
-              if (_details != null) {
-                _details!.name = data['name'];
-                _details!.imageUrl = data['image'];
-                List<String> parts = (data['name'] ?? "").split(" ");
-                if (parts.isNotEmpty) _details!.firstName = parts.first;
+              if (data.containsKey('image')) _image = data['image'];
+              if (data.containsKey('name')) {
+                  _userName = data['name'];
+                  if (_details != null) {
+                    _details!.name = data['name'];
+                    List<String> parts = (data['name'] ?? "").split(" ");
+                    if (parts.isNotEmpty) _details!.firstName = parts.first;
+                  }
+              }
+              // 🟢 NEW: Sync Email Instantly
+              if (data.containsKey('email')) {
+                  if (_details != null) {
+                      _details!.email = data['email'];
+                  }
+              }
+              
+              if (_details != null && data.containsKey('image')) {
+                 _details!.imageUrl = data['image'];
               }
            });
        }
-    });
-
-    appStoragePref.configurationStorage.listenKey(customerDetails, (value) {
-      if (value == null) return;
-      
-      AccountInfoModel? details;
-      if (value is AccountInfoModel) {
-        details = value;
-      } else if (value is Map) {
-        details = AccountInfoModel.fromJson(Map<String, dynamic>.from(value));
-      }
-
-      if (details != null && mounted) {
-        setState(() {
-          _details = details;
-          _userName = details!.name ?? "${details!.firstName ?? ''} ${details!.lastName ?? ''}".trim();
-          _image = details!.imageUrl ?? appStoragePref.getCustomerImage();
-        });
-      }
     });
   }
 
