@@ -70,8 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initial Cart Load
     getCartCount().then((v) => GlobalData.cartCountController.sink.add(v));
     
-    // Sync with Server
-    _syncCartCount();
+    // Sync with Server (Wait 2s to allow UI to settle)
+    Future.delayed(const Duration(seconds: 2), () => _syncCartCount());
 
     customerLanguage = appStoragePref.getLanguageName();
     customerCurrency = appStoragePref.getCurrencyLabel();
@@ -84,7 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
     
     GlobalData.locale = appStoragePref.getCustomerLanguage();
 
-    _loadInitialAddress(); 
+    // 🔴 OPTIMIZATION: Wait 3s before triggering location/address to avoid thread hammer
+    Future.delayed(const Duration(seconds: 3), () => _loadInitialAddress()); 
 
     // 🟢 Listen for profile updates (Image, Name, and Full Model)
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
@@ -94,11 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           image = data['image'];
           customerUserName = data['name'];
+          isLoggedIn = appStoragePref.getCustomerLoggedIn(); // 🟢 Ensure sync
+          
           // 🟢 CRITICAL: Also update the details object so Drawer gets fresh data
           if (customerDetails != null) {
               customerDetails!.name = data['name'];
               customerDetails!.imageUrl = data['image'];
-              // If we have first/last name, update them too if possible
               List<String> names = (data['name'] ?? "").toString().split(" ");
               if (names.isNotEmpty) customerDetails!.firstName = names.first;
               if (names.length > 1) customerDetails!.lastName = names.sublist(1).join(" ");
@@ -515,8 +517,8 @@ class _HomeScreenState extends State<HomeScreen> {
     GlobalData.productsStream.stream.listen((event) {
       if ((event?.data ?? []).isNotEmpty) {
         GlobalData.allProducts?.add(event);
+        if (mounted) setState(() {});
       }
-      if (mounted) setState(() {});
     });
   }
 

@@ -200,9 +200,10 @@ class _SignInScreenState extends State<SignInScreen> {
               padding: const EdgeInsets.only(left: 24, right: 24, bottom: 20, top: 10),
               child: SafeArea(
                 top: false, 
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, 
-                  crossAxisAlignment: CrossAxisAlignment.center, 
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, 
+                    crossAxisAlignment: CrossAxisAlignment.center, 
                   children: [
                     
                     // 1. LOGO with LIGHT BG
@@ -340,6 +341,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ],
                 ),
               ),
+            ),
             ),
           ),
         ],

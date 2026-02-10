@@ -347,7 +347,8 @@ class _AccountScreenState extends State<AccountScreen>
       // 🟢 BROADCAST
       GlobalData.profileUpdateStream.add({
         "image": image,
-        "name": "$fName $lName".trim()
+        "name": "$fName $lName".trim(),
+        "email": eMail
       });
 
       // 🟢 SYNC FULL MODEL: Helper for Drawer/Header listeners

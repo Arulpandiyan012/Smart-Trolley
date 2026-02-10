@@ -34,9 +34,6 @@ class ImageView extends StatelessWidget {
 
   static String normalizeUrl(String? rawUrl) {
     String cleanUrl = rawUrl?.trim() ?? "";
-    if (cleanUrl.isNotEmpty && !cleanUrl.startsWith("data:")) {
-       debugPrint("🖼️ Normalizing Image URL: $cleanUrl");
-    }
     
     // 1. Allow local file paths (don't normalize them as URLs)
     if (cleanUrl.startsWith("/") || cleanUrl.contains(":\\") || cleanUrl.startsWith("file://")) {

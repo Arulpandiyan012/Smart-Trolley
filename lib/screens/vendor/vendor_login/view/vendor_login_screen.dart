@@ -26,9 +26,10 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Icon(Icons.store, size: 80, color: Color(0xFF27C16B)),
             const SizedBox(height: 24),
@@ -82,6 +83,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
