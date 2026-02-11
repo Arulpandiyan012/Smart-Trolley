@@ -292,7 +292,8 @@ class _AccountScreenState extends State<AccountScreen>
       
       GlobalData.profileUpdateStream.add({
         "image": pickedFile?.path ?? appStoragePref.getCustomerImage(), // Use picked file path if available
-        "name": fullName 
+        "name": fullName,
+        "email": emailController.text.trim()
       });
 
       accountInfoBloc?.add(AccountInfoUpdateEvent(

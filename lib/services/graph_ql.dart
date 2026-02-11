@@ -26,8 +26,9 @@ class GraphQlApiCalling {
   final authLink = AuthLink(
     getToken: () async {
       String token = appStoragePref.getCustomerToken().trim();
+      bool isLoggedIn = appStoragePref.getCustomerLoggedIn();
       if (token.isEmpty) {
-        print("⚠️ AuthLink: Token is EMPTY");
+        print("⚠️ AuthLink: Token is EMPTY (Storage Login State: $isLoggedIn)");
         return null;
       }
       print("🔑 AuthLink: Using token ${token.length > 5 ? token.substring(0, 5) : token}... (Length: ${token.length})");

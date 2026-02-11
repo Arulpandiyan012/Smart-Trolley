@@ -79,8 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // 1. Load Offline Data
     fetchOfflineProductData();
     
-    // 2. Fetch Fresh Data
-    fetchHomepageData();
+    // 2. Fetch Fresh Data (Staggered to avoid connection loss)
+    Future.delayed(const Duration(milliseconds: 500), () => fetchHomepageData());
     
     GlobalData.locale = appStoragePref.getCustomerLanguage();
 
@@ -101,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (customerDetails != null) {
               customerDetails!.name = data['name'];
               customerDetails!.imageUrl = data['image'];
+              if (data.containsKey('email')) customerDetails!.email = data['email'];
               List<String> names = (data['name'] ?? "").toString().split(" ");
               if (names.isNotEmpty) customerDetails!.firstName = names.first;
               if (names.length > 1) customerDetails!.lastName = names.sublist(1).join(" ");
@@ -285,6 +286,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (state is FetchHomeCategoriesState && state.status == Status.success) {
            getHomeCategoriesData = state.getCategoriesData;
            GlobalData.categoriesDrawerData = state.getCategoriesData;
+           // 🟢 OPTIMIZATION: CMC data already fetched by buildContainer if needed, 
+           // or we can just fetch it once here.
            homePageBloc?.add(FetchCMSDataEvent());
            setState(() {});
         }

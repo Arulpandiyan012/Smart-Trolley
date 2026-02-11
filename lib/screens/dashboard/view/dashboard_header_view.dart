@@ -31,6 +31,7 @@ class _DashboardHeaderViewState extends State<DashboardHeaderView> {
         setState(() {
           name = data['name'];
           image = data['image'];
+          if (data.containsKey('email')) customerEmail = data['email'];
         });
       }
     });

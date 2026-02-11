@@ -350,7 +350,6 @@ class _HomePageViewState extends State<HomePageView> {
         
         if (state is FetchHomeCategoriesState && state.status == Status.success) {
            GlobalData.categoriesDrawerData = state.getCategoriesData;
-           widget.homePageBloc?.add(FetchCMSDataEvent());
            setState(() {});
         }
 
