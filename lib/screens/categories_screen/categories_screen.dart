@@ -57,6 +57,10 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     subCategoryBloc = context.read<CategoryBloc>();
     
     subCategoryBloc?.add(FilterFetchEvent(widget.categorySlug));
+
+    // 🟢 SYNC: Initial Cart Fetch
+    context.read<CartScreenBloc>().add(FetchCartDataEvent());
+    
     super.initState();
   }
 
@@ -108,7 +112,10 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 
         if (state is FetchCartDataState) {
             if (state.status == CartStatus.success) {
-                GlobalData.cartCountController.sink.add(state.cartDetailsModel?.itemsQty ?? 0);
+                GlobalData.updateCartState(state.cartDetailsModel);
+                if (state.cartDetailsModel != null) {
+                   appStoragePref.setCartCount(state.cartDetailsModel!.itemsQty ?? 0);
+                }
             }
         }
       },
@@ -148,7 +155,10 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
               // Refresh global cart
               context.read<CartScreenBloc>().add(FetchCartDataEvent());
               
-              GlobalData.cartCountController.sink.add(state.response?.cart?.itemsQty ?? 0);
+              GlobalData.updateCartState(state.response?.cart);
+              if (state.response?.cart != null) {
+                appStoragePref.setCartCount(state.response!.cart!.itemsQty ?? 0);
+              }
               addToCartModel = state.response;
               ShowMessage.successNotification(state.successMsg ?? "", context);
             }

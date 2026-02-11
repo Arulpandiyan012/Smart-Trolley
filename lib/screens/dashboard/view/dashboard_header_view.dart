@@ -27,7 +27,7 @@ class _DashboardHeaderViewState extends State<DashboardHeaderView> {
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
       if (!mounted) return;
       if (data.isNotEmpty) {
-        debugPrint("👤 Dashboard Header sync: ${data['name']}");
+        debugPrint("👤 DASHBOARD HEADER [STREAM]: name=${data['name']}, email=${data['email']}");
         setState(() {
           name = data['name'];
           image = data['image'];
@@ -48,6 +48,7 @@ class _DashboardHeaderViewState extends State<DashboardHeaderView> {
     customerEmail = appStoragePref.getCustomerEmail();
     customerPhone = appStoragePref.getCustomerPhone();
     image = appStoragePref.getCustomerImage();
+    debugPrint("👤 DASHBOARD HEADER [STORAGE]: name='$name', email='$customerEmail'");
   }
 
   @override
@@ -122,11 +123,7 @@ class _DashboardHeaderViewState extends State<DashboardHeaderView> {
             right: 0,
             child: InkWell(
               onTap: () {
-                Navigator.of(context).pushNamed(accountInfo).then((value) {
-                  setState(() {
-                    _fetchUserData();
-                  });
-                });
+                Navigator.of(context).pushNamed(accountInfo);
               },
               borderRadius: BorderRadius.circular(20),
               child: Container(

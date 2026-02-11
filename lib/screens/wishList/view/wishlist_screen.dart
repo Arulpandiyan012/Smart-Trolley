@@ -194,8 +194,7 @@ class _WishListScreenState extends State<WishListScreen> {
       if (state.status == WishListStatus.success) {
         if (state.cartDetails != null) {
           appStoragePref.setCartCount(state.cartDetails?.itemsQty ?? 0);
-          GlobalData.cartCountController.sink
-              .add(state.cartDetails?.itemsQty ?? 0);
+          GlobalData.updateCartState(state.cartDetails);
         }
       }
     }
@@ -232,8 +231,10 @@ class _WishListScreenState extends State<WishListScreen> {
       if (state.status == WishListStatus.success) {
         wishListBloc?.add(FetchWishListEvent());
         addToCartModel = state.response!;
-        GlobalData.cartCountController.sink
-            .add(addToCartModel?.cart?.itemsQty ?? 0);
+        GlobalData.updateCartState(addToCartModel?.cart);
+        if (addToCartModel?.cart != null) {
+          appStoragePref.setCartCount(addToCartModel!.cart!.itemsQty ?? 0);
+        }
         return _showWishList(mWishList, context, isLoading);
       }
     }

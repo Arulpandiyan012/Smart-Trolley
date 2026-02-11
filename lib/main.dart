@@ -54,13 +54,13 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // 🟢 Move to top
   await GetStorage.init(); // 🟢 FIX: Init Default Storage (Used by Onboarding)
   await GetStorage.init("configurationStorage");
   
   // 🟢 DIAGNOSTIC: Check session state
   appStoragePref.debugCheckStorage();
   HttpOverrides.global = MyHttpOverrides();
-  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -73,7 +73,7 @@ Future<void> main() async {
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
   await initHiveForFlutter();
-  hiveRegisterAdapter();
+  await hiveRegisterAdapter();
   runApp(
     RestartWidget(
       child: BagistoApp(GlobalData.locale),
@@ -237,17 +237,12 @@ class _BagistoAppState extends State<BagistoApp> {
                 },
                 locale: _locale,
                 builder: (context, child) {
-                  return MediaQuery(
-                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                    child: child ?? const SizedBox(),
-                  );
                   return InternetMonitor(
-    // 2. Keep your existing MediaQuery logic inside
-    child: MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-      child: child ?? const SizedBox(),
-    ),
-  );
+                    child: MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: child ?? const SizedBox(),
+                    ),
+                  );
                 },
                        ),
             );

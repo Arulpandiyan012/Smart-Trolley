@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; 
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 import 'package:bagisto_app_demo/screens/home_page/data_model/theme_customization.dart'; 
 import 'package:bagisto_app_demo/screens/home_page/widget/home_page_view.dart';
 import 'package:geolocator/geolocator.dart';
@@ -91,11 +92,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
       if (!mounted) return;
       if (data.isNotEmpty) {
-        debugPrint("👤 Profile update detected. Syncing Home Screen...");
+        debugPrint("👤 HOME PAGE [STREAM]: name=${data['name']}, email=${data['email']}");
         setState(() {
           image = data['image'];
           customerUserName = data['name'];
-          isLoggedIn = appStoragePref.getCustomerLoggedIn(); // 🟢 Ensure sync
+          isLoggedIn = appStoragePref.getCustomerLoggedIn(); 
           
           // 🟢 CRITICAL: Also update the details object so Drawer gets fresh data
           if (customerDetails != null) {
@@ -295,9 +296,15 @@ class _HomeScreenState extends State<HomeScreen> {
         if (state is AddToCartState) {
           if (state.status == Status.success) {
             addToCartModel = state.graphQlBaseModel;
-            appStoragePref.setCartCount(addToCartModel?.cart?.itemsQty ?? 0);
-            GlobalData.cartCountController.sink.add(addToCartModel?.cart?.itemsQty ?? 0);
-            GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
+            // 🟢 SYNC
+            GlobalData.updateCartState(addToCartModel?.cart);
+            if (addToCartModel?.cart != null) {
+              appStoragePref.setCartCount(addToCartModel!.cart!.itemsQty ?? 0);
+            }
+            // Notify other screens
+            GlobalData.cartUpdateStream.add(null); 
+            // Ensure full fetch if items logic in addToCart is incomplete
+            context.read<CartScreenBloc>().add(FetchCartDataEvent());
 
             ShowMessage.successNotification(
                 state.successMsg ?? "Item added to cart successfully", context);

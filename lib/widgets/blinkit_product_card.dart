@@ -41,24 +41,18 @@ class BlinkitProductCard extends StatelessWidget {
                        originalPrice != sellingPrice && 
                        originalPrice != "₹0.00";
 
-    return BlocBuilder<CartScreenBloc, CartScreenBaseState>(
-      buildWhen: (previous, current) {
-        return current is FetchCartDataState;
-      },
-      builder: (context, state) {
+    return StreamBuilder<Map<String, Map<String, dynamic>>>(
+      stream: GlobalData.cartItemsController.stream,
+      builder: (context, snapshot) {
         int currentQty = 0;
         String? cartItemId;
         
-        if (state is FetchCartDataState && state.status == CartStatus.success) {
-             var cartItem = state.cartDetailsModel?.items?.firstWhere(
-                (item) => item.productId == data?.id, 
-                orElse: () => Items() 
-             );
-             if (cartItem != null && cartItem.id != null) {
-                currentQty = cartItem.quantity ?? 0;
-                cartItemId = cartItem.id;
-             }
-        } 
+        final cartMap = snapshot.data ?? {};
+        final info = cartMap[data?.id ?? ""];
+        if (info != null) {
+          currentQty = info['qty'] ?? 0;
+          cartItemId = info['cartItemId']?.toString();
+        }
 
         return InkWell(
           onTap: () {

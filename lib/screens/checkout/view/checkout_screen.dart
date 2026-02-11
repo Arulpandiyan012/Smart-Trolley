@@ -158,7 +158,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
            var orderId = response.data['order_id'];
            
            // 🟢 FIX: Clear Local Cart State
-           GlobalData.cartCountController.sink.add(0);
+           GlobalData.updateCartState(null);
            
            // 🟢 FIX: Notify CartScreen to refresh (it will see empty cart)
            GlobalData.cartUpdateStream.sink.add(true); 

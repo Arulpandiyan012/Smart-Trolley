@@ -290,6 +290,7 @@ class _AccountScreenState extends State<AccountScreen>
       String lName = lastNameController.text.trim();
       String fullName = "$fName $lName".trim();
       
+      debugPrint("👤 ACCOUNT SCREEN [OPTIMISTIC BROADCAST]: email=${emailController.text.trim()}");
       GlobalData.profileUpdateStream.add({
         "image": pickedFile?.path ?? appStoragePref.getCustomerImage(), // Use picked file path if available
         "name": fullName,
@@ -346,6 +347,7 @@ class _AccountScreenState extends State<AccountScreen>
       }
 
       // 🟢 BROADCAST
+      debugPrint("👤 ACCOUNT SCREEN [FINAL BROADCAST]: email=$eMail");
       GlobalData.profileUpdateStream.add({
         "image": image,
         "name": "$fName $lName".trim(),

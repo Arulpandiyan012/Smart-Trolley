@@ -204,28 +204,79 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                         style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold, fontSize: 8),
                       ),
                     )
-                  : InkWell(
-                    onTap: () => onAddToCart?.call(productId),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF27C16B), width: 1),
-                        borderRadius: BorderRadius.circular(6),
-                        color: const Color(0xFFF7FFF9),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 2,
-                            offset: const Offset(0, 1),
+                  : StreamBuilder<Map<String, Map<String, dynamic>>>(
+                      stream: GlobalData.cartItemsController.stream,
+                      builder: (context, snapshot) {
+                        final cartMap = snapshot.data ?? GlobalData.cartItemsController.value;
+                        final itemInfo = cartMap[productId.toString()];
+                        final int currentQty = itemInfo?['qty'] ?? 0;
+                        final String? cartItemId = itemInfo?['cartItemId']?.toString();
+
+                        if (currentQty > 0) {
+                          return Container(
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF27C16B),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    if (onAddToCart != null) {
+                                      // Logically represent decrement by passing negative or 0
+                                      // But let's check how the parent handles it.
+                                      // We might need a new callback or use id with a flag.
+                                      // For now, let's assume parent might need specific decrement handler.
+                                      onAddToCart?.call(-productId); // 🟢 CONVENTION: Negative ID means decrement
+                                    }
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Icon(Icons.remove, color: Colors.white, size: 12),
+                                  ),
+                                ),
+                                Text(
+                                  "$currentQty",
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                                ),
+                                InkWell(
+                                  onTap: () => onAddToCart?.call(productId),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Icon(Icons.add, color: Colors.white, size: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return InkWell(
+                          onTap: () => onAddToCart?.call(productId),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFF27C16B), width: 1),
+                              borderRadius: BorderRadius.circular(6),
+                              color: const Color(0xFFF7FFF9),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              "ADD",
+                              style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 9),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: const Text(
-                        "ADD",
-                        style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 9),
-                      ),
+                        );
+                      }
                     ),
-                  ),
                 ),
               ],
             ),

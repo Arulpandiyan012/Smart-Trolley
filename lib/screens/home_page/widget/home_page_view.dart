@@ -19,6 +19,7 @@ import 'reach_top.dart';
 
 import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments, categoryScreen;
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 
 String _catLabel(dynamic cat) {
   try { final v = (cat as dynamic).name;  if (v is String && v.trim().isNotEmpty) return v.trim(); } catch (_) {}
@@ -355,7 +356,7 @@ class _HomePageViewState extends State<HomePageView> {
 
         if (state is AddToCartState) {
           if (state.status == Status.success) {
-            GlobalData.cartCountController.sink.add(state.graphQlBaseModel?.cart?.itemsQty ?? 0);
+            GlobalData.updateCartState(state.graphQlBaseModel?.cart);
             appStoragePref.setCartCount(state.graphQlBaseModel?.cart?.itemsQty ?? 0);
             ShowMessage.successNotification(state.successMsg ?? "Item added to cart successfully", context);
           } else if (state.status == Status.fail) {
@@ -480,8 +481,31 @@ class _HomePageViewState extends State<HomePageView> {
                                 isRecentProduct: false,
                                 callPreCache: widget.callPreCache,
                                 useGrid: true,
-                                onAddToCart: (id) =>
-                                    widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added")),
+                                onAddToCart: (id) {
+                                  if (id > 0) {
+                                    widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added"));
+                                  } else {
+                                    // 🟢 Decrement Logic
+                                    int pid = -id;
+                                    final cartMap = GlobalData.cartItemsController.value;
+                                    final info = cartMap[pid.toString()];
+                                    if (info != null) {
+                                      int currentQty = info['qty'] ?? 0;
+                                      String? cartItemId = info['cartItemId']?.toString();
+                                      if (cartItemId != null) {
+                                        if (currentQty > 1) {
+                                           context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                             [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
+                                           ));
+                                        } else {
+                                           context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                                             cartItemId: int.parse(cartItemId)
+                                           ));
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
                                 onAddToWishlist: (String id, bool isInWishlist, dynamic product) async {
                                    if (widget.isLogin) {
                                       try { (product as dynamic).isInWishlist = !isInWishlist; } catch (_) {}
