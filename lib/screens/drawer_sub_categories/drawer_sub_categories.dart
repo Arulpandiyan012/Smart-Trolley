@@ -16,6 +16,7 @@ import 'package:bagisto_app_demo/widgets/common_app_bar.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/widgets/show_message.dart';
 import 'package:bagisto_app_demo/widgets/loader.dart'; // Ensure Loader is available
+import 'package:bagisto_app_demo/widgets/blinkit_product_card.dart';
 // 🟢 Import Filter Utils (Hide conflicting state)
 import 'package:bagisto_app_demo/screens/filter_screen/utils/index.dart' hide FilterFetchState;
 import 'package:flutter/material.dart';
@@ -110,10 +111,13 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
           } else if (state.status == Status.success) {
             ShowMessage.successNotification(
                 state.graphQlBaseModel?.message ?? "", context);
-            appStoragePref
-                .setCartCount(state.graphQlBaseModel?.cart?.itemsQty ?? 0);
-            GlobalData.cartCountController.sink
-                .add(state.graphQlBaseModel?.cart?.itemsQty ?? 0);
+            // 🟢 SYNC
+            GlobalData.updateCartState(state.graphQlBaseModel?.cart);
+            if (state.graphQlBaseModel?.cart != null) {
+              appStoragePref.setCartCount(state.graphQlBaseModel!.cart!.itemsQty ?? 0);
+            }
+            // Ensure full fetch for reactive items
+            context.read<CartScreenBloc>().add(FetchCartDataEvent());
           }
         } else if (state is AddWishlistState) {
           fetchProducts();
@@ -265,7 +269,16 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      return _buildDrawerBlinkitCard(products[index]);
+                      final product = products[index];
+                      return BlinkitProductCard(
+                        data: product,
+                        isLoggedIn: appStoragePref.getCustomerLoggedIn(),
+                        onAddToCart: (productId, quantity) {
+                           isLoading = true;
+                           setState(() {});
+                           bloc?.add(AddToCartEvent(productId, quantity));
+                        },
+                      );
                     },
                     childCount: products.length,
                   ),

@@ -290,4 +290,17 @@ class SharedPreferenceHelper {
   bool getCustomerNewsletter() {
     return configurationStorage.read("customerNewsletter") ?? false;
   }
+
+  // 🟢 DIAGNOSTIC: Check storage state on boot
+  void debugCheckStorage() {
+    print("----------------------------------------");
+    print("🔍 STORAGE DIAGNOSIS");
+    print("👤 Logged In: ${getCustomerLoggedIn()}");
+    String token = getCustomerToken();
+    print("🔑 Token: ${token.isNotEmpty ? "PRESENT (${token.length} chars)" : "MISSING"}");
+    print("📛 Name: '${getCustomerName()}'");
+    print("📧 Email: '${getCustomerEmail()}'");
+    print("🆔 ID: ${getCustomerId()}");
+    print("----------------------------------------");
+  }
 }

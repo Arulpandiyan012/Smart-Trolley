@@ -33,7 +33,7 @@ class CartListItem extends StatelessWidget {
                 arguments: PassProductData(
                     title: item?.name ?? '',
                     urlKey: item?.product?.urlKey,
-                    productId: int.parse(item?.product?.id ?? "")));
+                    productId: int.tryParse(item?.product?.id ?? "") ?? 0));
           },
           child: Container(
             padding: const EdgeInsets.all(12),
@@ -253,7 +253,7 @@ class CartListItem extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pop();
                   cartScreenBloc?.add(RemoveCartItemEvent(
-                      cartItemId: int.parse(cartDetailsModel.items?[itemIndex].id ?? "")));
+                      cartItemId: int.tryParse(cartDetailsModel.items?[itemIndex].id ?? "") ?? 0));
                 },
                 child: Text(StringConstants.yes.localized(), style: const TextStyle(color: Colors.red)))
           ],

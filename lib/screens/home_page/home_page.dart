@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; 
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 import 'package:bagisto_app_demo/screens/home_page/data_model/theme_customization.dart'; 
 import 'package:bagisto_app_demo/screens/home_page/widget/home_page_view.dart';
 import 'package:geolocator/geolocator.dart';
@@ -79,8 +80,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // 1. Load Offline Data
     fetchOfflineProductData();
     
-    // 2. Fetch Fresh Data
-    fetchHomepageData();
+    // 2. Fetch Fresh Data (Staggered to avoid connection loss)
+    Future.delayed(const Duration(milliseconds: 500), () => fetchHomepageData());
     
     GlobalData.locale = appStoragePref.getCustomerLanguage();
 
@@ -91,16 +92,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
       if (!mounted) return;
       if (data.isNotEmpty) {
-        debugPrint("👤 Profile update detected. Syncing Home Screen...");
+        debugPrint("👤 HOME PAGE [STREAM]: name=${data['name']}, email=${data['email']}");
         setState(() {
           image = data['image'];
           customerUserName = data['name'];
-          isLoggedIn = appStoragePref.getCustomerLoggedIn(); // 🟢 Ensure sync
+          isLoggedIn = appStoragePref.getCustomerLoggedIn(); 
           
           // 🟢 CRITICAL: Also update the details object so Drawer gets fresh data
           if (customerDetails != null) {
               customerDetails!.name = data['name'];
               customerDetails!.imageUrl = data['image'];
+              if (data.containsKey('email')) customerDetails!.email = data['email'];
               List<String> names = (data['name'] ?? "").toString().split(" ");
               if (names.isNotEmpty) customerDetails!.firstName = names.first;
               if (names.length > 1) customerDetails!.lastName = names.sublist(1).join(" ");
@@ -285,6 +287,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (state is FetchHomeCategoriesState && state.status == Status.success) {
            getHomeCategoriesData = state.getCategoriesData;
            GlobalData.categoriesDrawerData = state.getCategoriesData;
+           // 🟢 OPTIMIZATION: CMC data already fetched by buildContainer if needed, 
+           // or we can just fetch it once here.
            homePageBloc?.add(FetchCMSDataEvent());
            setState(() {});
         }
@@ -292,9 +296,15 @@ class _HomeScreenState extends State<HomeScreen> {
         if (state is AddToCartState) {
           if (state.status == Status.success) {
             addToCartModel = state.graphQlBaseModel;
-            appStoragePref.setCartCount(addToCartModel?.cart?.itemsQty ?? 0);
-            GlobalData.cartCountController.sink.add(addToCartModel?.cart?.itemsQty ?? 0);
-            GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
+            // 🟢 SYNC
+            GlobalData.updateCartState(addToCartModel?.cart);
+            if (addToCartModel?.cart != null) {
+              appStoragePref.setCartCount(addToCartModel!.cart!.itemsQty ?? 0);
+            }
+            // Notify other screens
+            GlobalData.cartUpdateStream.add(null); 
+            // Ensure full fetch if items logic in addToCart is incomplete
+            context.read<CartScreenBloc>().add(FetchCartDataEvent());
 
             ShowMessage.successNotification(
                 state.successMsg ?? "Item added to cart successfully", context);
@@ -329,7 +339,13 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(130), // Slightly reduced height
           child: Container(
-            color: Colors.white, // Flat White Background
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFF9C4), Colors.white], // Subtle soft yellow to white gradient
+              ),
+            ),
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -351,9 +367,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Text(
                                     "Delivery in 11 minutes", 
                                     style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w900,
                                       fontSize: 18,
-                                      color: Colors.black87,
+                                      color: const Color(0xFF2E7D32), // Direct Blinkit Green highlight
                                       height: 1.0, 
                                     ),
                                   ),
@@ -429,13 +445,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.grey[200]!),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),

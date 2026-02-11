@@ -32,6 +32,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_bloc.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_repository.dart';
+import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_bloc.dart';
+import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_repository.dart';
+import 'package:bagisto_app_demo/screens/drawer/bloc/drawer_bloc.dart';
+import 'package:bagisto_app_demo/screens/drawer/bloc/drawer_repository.dart';
 import 'package:bagisto_app_demo/widgets/internet_monitor.dart';
 
 String? token;
@@ -50,10 +54,13 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // 🟢 Move to top
   await GetStorage.init(); // 🟢 FIX: Init Default Storage (Used by Onboarding)
   await GetStorage.init("configurationStorage");
+  
+  // 🟢 DIAGNOSTIC: Check session state
+  appStoragePref.debugCheckStorage();
   HttpOverrides.global = MyHttpOverrides();
-  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -66,7 +73,7 @@ Future<void> main() async {
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
   await initHiveForFlutter();
-  hiveRegisterAdapter();
+  await hiveRegisterAdapter();
   runApp(
     RestartWidget(
       child: BagistoApp(GlobalData.locale),
@@ -165,8 +172,16 @@ class _BagistoAppState extends State<BagistoApp> {
           builder: (context, ThemeProvider themeNotifier, child) {
             
             // 🟢 MULTI BLOC PROVIDER WRAPPER
-            return MultiBlocProvider(
-              providers: [
+      // 🟢 OPTIMIZATION: Ensure CMS data is only fetched once per lifecycle
+    // The previous code returned a SizedBox early, skipping the actual MaterialApp.
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<HomePageBloc>(
+          create: (context) => HomePageBloc(HomePageRepositoryImp()),
+        ),
+        BlocProvider<DrawerBloc>(
+          create: (context) => DrawerBloc(repository: DrawerPageRepositoryImp()),
+        ),
                 // Global Cart Provider
                 BlocProvider<CartScreenBloc>(
                   create: (context) => CartScreenBloc(CartScreenRepositoryImp()),
@@ -222,17 +237,12 @@ class _BagistoAppState extends State<BagistoApp> {
                 },
                 locale: _locale,
                 builder: (context, child) {
-                  return MediaQuery(
-                    data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                    child: child ?? const SizedBox(),
-                  );
                   return InternetMonitor(
-    // 2. Keep your existing MediaQuery logic inside
-    child: MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-      child: child ?? const SizedBox(),
-    ),
-  );
+                    child: MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: child ?? const SizedBox(),
+                    ),
+                  );
                 },
                        ),
             );

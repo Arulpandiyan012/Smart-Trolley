@@ -141,6 +141,17 @@ class MutationsData {
             couponCode
             itemsQty
             taxTotal
+            items {
+                id
+                quantity
+                productId
+                product {
+                    id
+                    images {
+                        url
+                    }
+                }
+            }
         }
       }
     }""";
@@ -415,6 +426,13 @@ String cartDetails() {
                 quantity
                 type
                 name
+                productId
+                product {
+                    id
+                    images {
+                        url
+                    }
+                }
                 formattedPrice {
                     price
                     total
@@ -479,6 +497,13 @@ String cartDetails() {
                 quantity
                 type
                 name
+                productId
+                product {
+                    id
+                    images {
+                        url
+                    }
+                }
                 formattedPrice {
                     price
                     total

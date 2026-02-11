@@ -21,7 +21,6 @@ class MainActivity : FlutterFragmentActivity() {
     var methodChannelResult: MethodChannel.Result? = null
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        GeneratedPluginRegistrant.registerWith(flutterEngine)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             EVENTS

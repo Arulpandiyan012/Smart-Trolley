@@ -220,10 +220,11 @@ class ApiClient {
               appStoragePref.setCustomerDetails(authModel);
 
               // 🟢 Broadcast update globally for instant Home UI sync
-              GlobalData.profileUpdateStream.add({
-                "image": imageUrl,
-                "name": fullName
-              });
+            GlobalData.profileUpdateStream.add({
+              "image": imageUrl,
+              "name": fullName,
+              "email": email
+            });
             }
 
           // 🟢 SYNC PROFILE AFTER PERSISTENCE (Ensure ID and values are available for fallback)
@@ -1258,10 +1259,11 @@ Future<OrderDetail?> getOrderDetail(int id) async {
             appStoragePref.setCustomerDetails(updatedModel);
 
             // Broadcast updates for UI
-            GlobalData.profileUpdateStream.add({
-              "image": img,
-              "name": fullName
-            });
+          GlobalData.profileUpdateStream.add({
+            "image": img,
+            "name": fullName,
+            "email": profileData['email'] ?? ""
+          });
             
             return; // Success, exit early and skip GraphQL sync
           }

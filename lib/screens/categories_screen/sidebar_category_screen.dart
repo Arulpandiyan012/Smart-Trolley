@@ -359,7 +359,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
                             if (state is FetchCartDataState) {
                                if (state.status == CartStatus.success) {
-                                   GlobalData.cartCountController.sink.add(state.cartDetailsModel?.itemsQty ?? 0);
+                                   GlobalData.updateCartState(state.cartDetailsModel);
                                }
                             }
                           },
@@ -390,7 +390,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                                    // Refresh Cart on initial ADD
                                    context.read<CartScreenBloc>().add(FetchCartDataEvent());
                                    GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
-                                   GlobalData.cartCountController.sink.add(state.response?.cart?.itemsQty ?? 0);
+                                   GlobalData.updateCartState(state.response?.cart);
                                    ShowMessage.successNotification(state.successMsg ?? "Added", context);
                                  } else if (state.status == CategoriesStatus.fail) {
                                    ShowMessage.errorNotification(state.error ?? "Failed", context);

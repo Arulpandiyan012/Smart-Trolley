@@ -73,6 +73,13 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  // 🟢 NEW: Update Global State for reactive UI
+  void _updateGlobalCartData(CartModel? model) {
+    if (!mounted) return;
+    GlobalData.updateCartState(model);
+    appStoragePref.setCartCount(model?.itemsQty ?? 0);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScaffoldMessenger(
@@ -185,6 +192,7 @@ class _CartScreenState extends State<CartScreen> {
       listener: (BuildContext context, CartScreenBaseState state) {
         if (state is FetchCartDataState && state.status == CartStatus.success) {
             _cartDetailsModel = state.cartDetailsModel;
+            _updateGlobalCartData(_cartDetailsModel); // 🟢 SYNC
             setState(() {}); 
         }
 
@@ -201,6 +209,7 @@ class _CartScreenState extends State<CartScreen> {
           if (state.status == CartStatus.success) {
             setState(() => quantityChanged = false);
             _cartDetailsModel = state.cartDetailsModel?.cart;
+            _updateGlobalCartData(_cartDetailsModel); // 🟢 SYNC
             setState(() {});
           } else if (state.status == CartStatus.fail) {
             ShowMessage.errorNotification(state.error ?? "", context);

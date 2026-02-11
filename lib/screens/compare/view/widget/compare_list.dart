@@ -9,6 +9,7 @@
  */
 
 import 'package:bagisto_app_demo/screens/compare/utils/index.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 
 class CompareList extends StatelessWidget {
   final CompareProductsData compareScreenModel;
@@ -163,35 +164,93 @@ class CompareList extends StatelessWidget {
 
                       const Spacer(),
 
-                      // --- 3. ADD TO CART BUTTON ---
+                      // --- 3. ADD TO CART BUTTON (REACTIVE) ---
                       Padding(
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 36, // Compact height
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              elevation: 0,
-                              padding: EdgeInsets.zero, // Remove internal padding
-                            ),
-                            onPressed: (product?.isSaleable ?? false)
-                                ? () {
-                                    compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: true));
-                                    if (product?.type == StringConstants.simple || product?.type == StringConstants.virtual) {
-                                      compareScreenBloc?.add(AddToCartCompareEvent((product?.id ?? ""), 1, ""));
-                                    } else {
-                                      ShowMessage.showNotification(StringConstants.addOptions.localized(), "", Colors.yellow, const Icon(Icons.warning_amber));
-                                      compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: false));
-                                    }
-                                  }
-                                : null,
-                            child: Text(
-                              StringConstants.addToCart.localized().toUpperCase(),
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
+                        child: StreamBuilder<Map<String, Map<String, dynamic>>>(
+                          stream: GlobalData.cartItemsController.stream,
+                          builder: (context, snapshot) {
+                            int currentQty = 0;
+                            String? cartItemId;
+                            final cartMap = snapshot.data ?? {};
+                            final info = cartMap[product?.id ?? ""];
+                            if (info != null) {
+                              currentQty = info['qty'] ?? 0;
+                              cartItemId = info['cartItemId']?.toString();
+                            }
+                            bool hasItems = currentQty > 0;
+                            bool isSaleable = product?.isSaleable ?? false;
+
+                            if (!isSaleable) {
+                               return Container(
+                                 height: 36, width: double.infinity,
+                                 decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                                 child: const Center(child: Text("OUT OF STOCK", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
+                               );
+                            }
+
+                            return Container(
+                              width: double.infinity,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: hasItems ? const Color(0xFF27C16B) : Theme.of(context).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: hasItems
+                                  ? Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            if (cartItemId != null) {
+                                              if (currentQty > 1) {
+                                                 context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                                   [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
+                                                 ));
+                                              } else {
+                                                 context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                                                   cartItemId: int.tryParse(cartItemId ?? "") ?? 0
+                                                 ));
+                                              }
+                                            }
+                                          },
+                                          child: const Icon(Icons.remove, color: Colors.white, size: 18),
+                                        ),
+                                        Text(
+                                          "$currentQty",
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            if (cartItemId != null) {
+                                               context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                                 [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
+                                               ));
+                                            }
+                                          },
+                                          child: const Icon(Icons.add, color: Colors.white, size: 18),
+                                        ),
+                                      ],
+                                    )
+                                  : InkWell(
+                                      onTap: () {
+                                        compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: true));
+                                        if (product?.type == StringConstants.simple || product?.type == StringConstants.virtual) {
+                                          compareScreenBloc?.add(AddToCartCompareEvent((product?.id ?? ""), 1, ""));
+                                        } else {
+                                          ShowMessage.showNotification(StringConstants.addOptions.localized(), "", Colors.yellow, const Icon(Icons.warning_amber));
+                                          compareScreenBloc?.add(OnClickCompareLoaderEvent(isReqToShowLoader: false));
+                                        }
+                                      },
+                                      child: Center(
+                                        child: Text(
+                                          StringConstants.addToCart.localized().toUpperCase(),
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                            );
+                          }
                         ),
                       ),
                     ],

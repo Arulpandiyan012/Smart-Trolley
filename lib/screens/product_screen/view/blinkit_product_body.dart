@@ -598,11 +598,31 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
         // Since we are in ProductScreen, let's provide callbacks that use `widget.productScreenBLoc`.
         
         onAddToCart: (int id) {
-           // Reuse the logic
-           widget.productScreenBLoc?.add(AddToCartProductEvent(
-             1, id.toString(), [], [], [], [], null, ""
-           ));
-           // Also trigger Cart Refresh? Handled by listener in parent.
+           if (id > 0) {
+             widget.productScreenBLoc?.add(AddToCartProductEvent(
+               1, id.toString(), [], [], [], [], null, ""
+             ));
+           } else {
+             // 🟢 Decrement Logic
+             int pid = -id;
+             final cartMap = GlobalData.cartItemsController.value;
+             final info = cartMap[pid.toString()];
+             if (info != null) {
+               int currentQty = info['qty'] ?? 0;
+               String? cartItemId = info['cartItemId']?.toString();
+               if (cartItemId != null) {
+                 if (currentQty > 1) {
+                    context.read<CartScreenBloc>().add(UpdateCartEvent(
+                      [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
+                    ));
+                 } else {
+                    context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                      cartItemId: int.parse(cartItemId)
+                    ));
+                 }
+               }
+             }
+           }
         },
         
         onAddToWishlist: (String id, bool isInWishlist, dynamic p) {

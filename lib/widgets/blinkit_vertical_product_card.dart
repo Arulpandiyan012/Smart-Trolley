@@ -128,13 +128,13 @@ class BlinkitVerticalProductCard extends StatelessWidget {
         width: width,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[100]!),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 3,
-              offset: const Offset(0, 1),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -145,7 +145,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  height: 85,
+                  height: 80,
                   width: double.infinity,
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
@@ -204,33 +204,84 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                         style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold, fontSize: 8),
                       ),
                     )
-                  : InkWell(
-                    onTap: () => onAddToCart?.call(productId),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF27C16B), width: 1),
-                        borderRadius: BorderRadius.circular(6),
-                        color: const Color(0xFFF7FFF9),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 2,
-                            offset: const Offset(0, 1),
+                  : StreamBuilder<Map<String, Map<String, dynamic>>>(
+                      stream: GlobalData.cartItemsController.stream,
+                      builder: (context, snapshot) {
+                        final cartMap = snapshot.data ?? GlobalData.cartItemsController.value;
+                        final itemInfo = cartMap[productId.toString()];
+                        final int currentQty = itemInfo?['qty'] ?? 0;
+                        final String? cartItemId = itemInfo?['cartItemId']?.toString();
+
+                        if (currentQty > 0) {
+                          return Container(
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF27C16B),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    if (onAddToCart != null) {
+                                      // Logically represent decrement by passing negative or 0
+                                      // But let's check how the parent handles it.
+                                      // We might need a new callback or use id with a flag.
+                                      // For now, let's assume parent might need specific decrement handler.
+                                      onAddToCart?.call(-productId); // 🟢 CONVENTION: Negative ID means decrement
+                                    }
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Icon(Icons.remove, color: Colors.white, size: 12),
+                                  ),
+                                ),
+                                Text(
+                                  "$currentQty",
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                                ),
+                                InkWell(
+                                  onTap: () => onAddToCart?.call(productId),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Icon(Icons.add, color: Colors.white, size: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return InkWell(
+                          onTap: () => onAddToCart?.call(productId),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFF27C16B).withOpacity(0.5), width: 1),
+                              borderRadius: BorderRadius.circular(8),
+                              color: const Color(0xFFF7FFF9),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF27C16B).withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              "ADD",
+                              style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w900, fontSize: 10),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: const Text(
-                        "ADD",
-                        style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 9),
-                      ),
+                        );
+                      }
                     ),
-                  ),
                 ),
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -288,15 +339,18 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     },
                   ),
                   Container(
-                    margin: const EdgeInsets.only(bottom: 2, top: 2),
+                    margin: const EdgeInsets.symmetric(vertical: 2),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFF4F6F8), borderRadius: BorderRadius.circular(3)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F2F5), 
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.timer_outlined, size: 9, color: Colors.black54),
-                        SizedBox(width: 3),
-                        Text("12 MINS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700)),
+                        Icon(Icons.timer_outlined, size: 10, color: Colors.black45),
+                        SizedBox(width: 4),
+                        Text("12 MINS", style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Colors.black87)),
                       ],
                     ),
                   ),

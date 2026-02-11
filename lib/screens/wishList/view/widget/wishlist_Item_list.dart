@@ -5,7 +5,7 @@
  */
 
 import 'package:bagisto_app_demo/screens/wishList/utils/index.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 
 class WishlistItemList extends StatefulWidget {
   final WishListData? model;
@@ -24,8 +24,7 @@ class WishlistItemList extends StatefulWidget {
 }
 
 class _WishlistItemListState extends State<WishlistItemList> {
-  // Store quantity for each product ID
-  Map<String, int> quantityMap = {};
+  // No longer needed: using global cartItemsController
 
   String? _imageFromAny(dynamic img) {
     if (img == null) return null;
@@ -120,137 +119,141 @@ class _WishlistItemListState extends State<WishlistItemList> {
             String productId = item?.product?.id ?? "";
             String wishlistId = item?.id ?? "";
             
-            // Initialize Qty if not set
-            if (productId.isNotEmpty && !quantityMap.containsKey(productId)) {
-              quantityMap[productId] = 0; 
-            }
+            // 🟢 QUANTITY SYNC: Use global state
+            return StreamBuilder<Map<String, Map<String, dynamic>>>(
+              stream: GlobalData.cartItemsController.stream,
+              builder: (context, snapshot) {
+                int currentQty = 0;
+                String? cartItemId;
+                final cartMap = snapshot.data ?? {};
+                final info = cartMap[productId];
+                if (info != null) {
+                  currentQty = info['qty'] ?? 0;
+                  cartItemId = info['cartItemId']?.toString();
+                }
 
-            // Image URL
-            // Image URL
-            // 🟢 UPDATED: Use robust extractor
-            String imageUrl = _productImage(item?.product) ?? "";
-            if (imageUrl.isNotEmpty) debugPrint("💚 Wishlist Item [${item?.product?.name}] Image URL: $imageUrl");
+                // 🟢 FIX: Moved imageUrl inside builder scope
+                String imageUrl = _productImage(item?.product) ?? "";
 
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4)),
-                ],
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. IMAGE
-                  InkWell(
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        productScreen,
-                        arguments: PassProductData(
-                          title: item?.product?.name ?? "",
-                          urlKey: item?.product?.urlKey,
-                          productId: int.tryParse(productId) ?? 0,
-                        ),
-                      );
-                    },
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey[100],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: imageUrl.isNotEmpty
-                                ? ImageView(
-                                    url: imageUrl,
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Icon(Icons.image_not_supported, color: Colors.grey),
-                          ),
-                        ),
-                      ],
-                    ),
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4)),
+                    ],
                   ),
-
-                  const SizedBox(width: 12),
-
-                  // 2. DETAILS
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. IMAGE
+                      InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            productScreen,
+                            arguments: PassProductData(
+                              title: item?.product?.name ?? "",
+                              urlKey: item?.product?.urlKey,
+                              productId: int.tryParse(productId) ?? 0,
+                            ),
+                          );
+                        },
+                        child: Stack(
                           children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    productScreen,
-                                    arguments: PassProductData(
-                                      title: item?.product?.name ?? "",
-                                      urlKey: item?.product?.urlKey,
-                                      productId: int.tryParse(productId) ?? 0,
-                                    ),
-                                  );
-                                },
-                                child: Text(
-                                  item?.product?.name ?? "",
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1.2),
-                                ),
+                            Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.grey[100],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: imageUrl.isNotEmpty
+                                    ? ImageView(
+                                        url: imageUrl,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.image_not_supported, color: Colors.grey),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                          ],
+                        ),
+                      ),
+    
+                      const SizedBox(width: 12),
+    
+                      // 2. DETAILS
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        productScreen,
+                                        arguments: PassProductData(
+                                          title: item?.product?.name ?? "",
+                                          urlKey: item?.product?.urlKey,
+                                          productId: int.tryParse(productId) ?? 0,
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      item?.product?.name ?? "",
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1.2),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                
+                                // 🟢 DELETE ICON (INDIVIDUAL REMOVE)
+                                GestureDetector(
+                                  onTap: () {
+                                    if (productId.isEmpty || productId == "0") {
+                                      ShowMessage.errorNotification("Invalid Product ID", context);
+                                      return;
+                                    }
+                                    widget.wishListBloc?.add(OnClickWishListLoaderEvent(isReqToShowLoader: true));
+                                    widget.wishListBloc?.add(FetchDeleteAddItemEvent(productId));
+                                  },
+                                  child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
                             
-                            // 🟢 DELETE ICON (INDIVIDUAL REMOVE)
-                            GestureDetector(
-                              onTap: () {
-                                if (productId.isEmpty || productId == "0") {
-                                  // Safety check to prevent accidental "Delete All"
-                                  ShowMessage.errorNotification("Invalid Product ID", context);
-                                  return;
-                                }
-
-                                widget.wishListBloc?.add(OnClickWishListLoaderEvent(isReqToShowLoader: true));
-                                // 🟢 Sends only this product ID to delete
-                                widget.wishListBloc?.add(FetchDeleteAddItemEvent(productId));
-                              },
-                              child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                            Text(
+                              item?.product?.priceHtml?.priceHtml ?? "",
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF27C16B)),
+                            ),
+    
+                            const SizedBox(height: 12),
+    
+                            // 3. BLINKIT STYLE ADD BUTTON
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                _buildBlinkitAddButton(productId, wishlistId, currentQty, cartItemId, isSaleable),
+                              ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        
-                        Text(
-                          item?.product?.priceHtml?.priceHtml ?? "",
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF27C16B)),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // 3. BLINKIT STYLE ADD BUTTON
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            _buildBlinkitAddButton(productId, wishlistId, isSaleable),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              }
             );
           },
         ),
@@ -265,10 +268,9 @@ class _WishlistItemListState extends State<WishlistItemList> {
   }
 
   // Blinkit Style Add Button
-  Widget _buildBlinkitAddButton(String productId, String wishlistId, bool isSaleable) {
+  Widget _buildBlinkitAddButton(String productId, String wishlistId, int qty, String? cartItemId, bool isSaleable) {
     if (productId.isEmpty) return const SizedBox(); // Safety
 
-    int qty = quantityMap[productId] ?? 0;
     bool hasItems = qty > 0;
 
     if (!isSaleable) {
@@ -293,9 +295,17 @@ class _WishlistItemListState extends State<WishlistItemList> {
               children: [
                 InkWell(
                   onTap: () {
-                    setState(() {
-                       if (qty > 0) quantityMap[productId] = qty - 1;
-                    });
+                    if (cartItemId != null) {
+                      if (qty > 1) {
+                         context.read<CartScreenBloc>().add(UpdateCartEvent(
+                           [{'cartItemId': cartItemId, 'quantity': (qty - 1).toString()}]
+                         ));
+                      } else {
+                         context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                           cartItemId: int.parse(cartItemId)
+                         ));
+                      }
+                    }
                   },
                   child: const Icon(Icons.remove, color: Colors.white, size: 18),
                 ),
@@ -305,10 +315,11 @@ class _WishlistItemListState extends State<WishlistItemList> {
                 ),
                 InkWell(
                   onTap: () {
-                    setState(() {
-                       quantityMap[productId] = qty + 1;
-                       _addToCart(productId, wishlistId, (qty + 1).toString());
-                    });
+                    if (cartItemId != null) {
+                       context.read<CartScreenBloc>().add(UpdateCartEvent(
+                         [{'cartItemId': cartItemId, 'quantity': (qty + 1).toString()}]
+                       ));
+                    }
                   },
                   child: const Icon(Icons.add, color: Colors.white, size: 18),
                 ),
@@ -316,10 +327,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
             )
           : InkWell(
               onTap: () {
-                setState(() {
-                   quantityMap[productId] = 1;
-                   _addToCart(productId, wishlistId, "1");
-                });
+                 _addToCart(productId, wishlistId, "1");
               },
               child: const Center(
                 child: Text(

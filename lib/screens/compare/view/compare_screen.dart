@@ -11,6 +11,7 @@
 // ignore_for_file: file_names, deprecated_member_use, unnecessary_null_comparison
 
 import 'package:bagisto_app_demo/screens/compare/utils/index.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 
 class CompareScreen extends StatefulWidget {
   const CompareScreen({Key? key}) : super(key: key);
@@ -36,6 +37,9 @@ class _CompareScreenState extends State<CompareScreen>
     });
     compareScreenBloc = context.read<CompareScreenBloc>();
     compareScreenBloc?.add(CompareScreenFetchEvent());
+
+    // 🟢 SYNC: Initial Cart Fetch
+    context.read<CartScreenBloc>().add(FetchCartDataEvent());
     super.initState();
   }
 
@@ -230,8 +234,10 @@ class _CompareScreenState extends State<CompareScreen>
       isLoading = false;
       if (state.status == CompareStatusStatus.success) {
         AddToCartModel? addToCartModel = state.response;
-        GlobalData.cartCountController.sink
-            .add(addToCartModel?.cart?.itemsQty ?? 0);
+        GlobalData.updateCartState(addToCartModel?.cart);
+        if (addToCartModel?.cart != null) {
+          appStoragePref.setCartCount(addToCartModel!.cart!.itemsQty ?? 0);
+        }
         compareScreenBloc?.add(CompareScreenFetchEvent());
       }
     }

@@ -5,6 +5,7 @@
  */
 
 import 'dart:async'; 
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; 
@@ -19,6 +20,7 @@ import 'reach_top.dart';
 
 import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments, categoryScreen;
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 
 String _catLabel(dynamic cat) {
   try { final v = (cat as dynamic).name;  if (v is String && v.trim().isNotEmpty) return v.trim(); } catch (_) {}
@@ -90,14 +92,26 @@ class _Section {
 
 IconData _categoryIconFor(String name) {
   final n = name.toLowerCase();
-  if (n.contains('grocery') || n.contains('kitchen')) return Icons.shopping_cart_outlined;
-  if (n.contains('farm') || n.contains('vegetable')) return Icons.spa_outlined;
-  if (n.contains('seasonal') || n.contains('exotic')) return Icons.apple_outlined;
-  if (n.contains('dairy')) return Icons.icecream_outlined;
-  if (n.contains('bakery')) return Icons.cookie_outlined;
-  if (n.contains('snack')) return Icons.local_pizza_outlined;
-  if (n.contains('beverage') || n.contains('drink')) return Icons.local_drink_outlined;
-  if (n.contains('meat') || n.contains('non veg')) return Icons.set_meal_outlined;
+  
+  if (n.contains('fruit') || n.contains('seasonal') || n.contains('apple')) return Icons.apple_outlined;
+  if (n.contains('veg') || n.contains('farm') || n.contains('spa')) return Icons.spa_outlined;
+  if (n.contains('milk') || n.contains('dairy') || n.contains('pancakes')) return Icons.breakfast_dining_outlined;
+  if (n.contains('egg') || n.contains('protein')) return Icons.egg_outlined;
+  if (n.contains('bread') || n.contains('bakery') || n.contains('pavana')) return Icons.bakery_dining_outlined;
+  if (n.contains('snack') || n.contains('munch') || n.contains('chips') || n.contains('biscuit')) return Icons.fastfood_outlined;
+  if (n.contains('sweet') || n.contains('chocolate') || n.contains('cake')) return Icons.cake_outlined;
+  if (n.contains('beverage') || n.contains('drink') || n.contains('juice') || n.contains('soft drink')) return Icons.local_drink_outlined;
+  if (n.contains('tea') || n.contains('coffee')) return Icons.coffee_outlined;
+  if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return Icons.set_meal_outlined;
+  if (n.contains('baby') || n.contains('child') || n.contains('diaper')) return Icons.child_care_outlined;
+  if (n.contains('care') || n.contains('beauty') || n.contains('face') || n.contains('personal')) return Icons.face_retouching_natural_outlined;
+  if (n.contains('kitchen')) return Icons.kitchen_outlined;
+  if (n.contains('home') || n.contains('clean') || n.contains('household')) return Icons.cleaning_services_outlined;
+  if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return Icons.pets_outlined;
+  if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined; 
+  if (n.contains('spice') || n.contains('masala') || n.contains('powder')) return Icons.flare_outlined;
+  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.shopping_basket_outlined;
+
   return Icons.category_outlined;
 }
 
@@ -350,13 +364,12 @@ class _HomePageViewState extends State<HomePageView> {
         
         if (state is FetchHomeCategoriesState && state.status == Status.success) {
            GlobalData.categoriesDrawerData = state.getCategoriesData;
-           widget.homePageBloc?.add(FetchCMSDataEvent());
            setState(() {});
         }
 
         if (state is AddToCartState) {
           if (state.status == Status.success) {
-            GlobalData.cartCountController.sink.add(state.graphQlBaseModel?.cart?.itemsQty ?? 0);
+            GlobalData.updateCartState(state.graphQlBaseModel?.cart);
             appStoragePref.setCartCount(state.graphQlBaseModel?.cart?.itemsQty ?? 0);
             ShowMessage.successNotification(state.successMsg ?? "Item added to cart successfully", context);
           } else if (state.status == Status.fail) {
@@ -405,18 +418,9 @@ class _HomePageViewState extends State<HomePageView> {
                   child: CustomScrollView(
                   controller: _scrollController, 
                   slivers: [
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: _CategoryHeaderDelegate(
-                        categories: cats.isEmpty ? const [{'name': 'Loading…'}] : cats,
-                        selectedIndex: _selectedCatIndex,
-                        onTap: (i, cat) {
-                          if (cats.isEmpty) return;
-                          setState(() => _selectedCatIndex = i);
-                          _openCategory(cat);
-                        },
-                      ),
-                    ),
+                    // 🟢 REMOVED: Horizontal Scroll Header (Replaced by Grid below)
+                    
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                     const SliverToBoxAdapter(child: SizedBox(height: 6)),
 
@@ -430,20 +434,56 @@ class _HomePageViewState extends State<HomePageView> {
                       ),
                     ),
 
+                    // 🟢 NEW: Trendy 2-Row Category Grid
+                    if (cats.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                              child: Text(
+                                "Shop by Category",
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ),
+                            BlinkitCategoryGrid(
+                              categories: cats.map((cat) => {
+                                'title': _catLabel(cat),
+                                'image': _catBannerUrl(cat).isNotEmpty ? _catBannerUrl(cat) : _catBannerUrl(cat), // Backend mapping
+                                'slug': _catSlug(cat),
+                                'icon': _categoryIconFor(_catLabel(cat)),
+                                'cat': cat // Keep original for navigation
+                              }).toList(),
+                              onTap: (slug, title) {
+                                // Recursive search via _handleSeeAll to support all category depths
+                                _handleSeeAll(title);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
                     for (final s in sections) ...[
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 2), // 🟢 Reduced Padding (Gap)
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), 
                           child: Row(
                             children: [
                               Expanded(
                                 child: Text(
                                   s.title,
                                   style: const TextStyle(
-                                    fontSize: 15, // 🟢 Reduced size
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'Roboto', // 🟢 Modern Font
-                                    color: Colors.black87,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Roboto', 
+                                    color: Colors.black,
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                               ),
@@ -481,8 +521,31 @@ class _HomePageViewState extends State<HomePageView> {
                                 isRecentProduct: false,
                                 callPreCache: widget.callPreCache,
                                 useGrid: true,
-                                onAddToCart: (id) =>
-                                    widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added")),
+                                onAddToCart: (id) {
+                                  if (id > 0) {
+                                    widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added"));
+                                  } else {
+                                    // 🟢 Decrement Logic
+                                    int pid = -id;
+                                    final cartMap = GlobalData.cartItemsController.value;
+                                    final info = cartMap[pid.toString()];
+                                    if (info != null) {
+                                      int currentQty = info['qty'] ?? 0;
+                                      String? cartItemId = info['cartItemId']?.toString();
+                                      if (cartItemId != null) {
+                                        if (currentQty > 1) {
+                                           context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                             [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
+                                           ));
+                                        } else {
+                                           context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                                             cartItemId: int.parse(cartItemId)
+                                           ));
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
                                 onAddToWishlist: (String id, bool isInWishlist, dynamic product) async {
                                    if (widget.isLogin) {
                                       try { (product as dynamic).isInWishlist = !isInWishlist; } catch (_) {}
@@ -544,60 +607,70 @@ class _HomePageViewState extends State<HomePageView> {
                              setState(() {}); // Refresh home on return
                           });
                         },
-                        child: Container(
-                          height: 50,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF27C16B), // Blinkit Green
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              )
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "$count ${count == 1 ? 'Item' : 'Items'}",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ColorFilter.mode(Colors.black.withOpacity(0.01), BlendMode.dstIn), // Optional slight tint
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xE627C16B), // 90% Opacity Blinkit Green
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5), // Trendy glass border
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.12),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "$count ${count == 1 ? 'Item' : 'Items'}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12
+                                          ),
+                                        ),
+                                        const Text(
+                                          "View Total",
+                                          style: TextStyle(
+                                            color: Colors.white70, 
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                        )
+                                      ],
                                     ),
-                                  ),
-                                  const Text(
-                                    "View Total", // We don't have total price here easily without fetching cart
-                                    style: TextStyle(
-                                      color: Colors.white70, 
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500
+                                    Row(
+                                      children: const [
+                                        Text(
+                                          "View Cart",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.arrow_right, color: Colors.white),
+                                      ],
                                     ),
-                                  )
-                                ],
+                                  ],
+                                ),
                               ),
-                              Row(
-                                children: const [
-                                  Text(
-                                    "View Cart",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_right, color: Colors.white),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       );
@@ -713,7 +786,8 @@ class _HomePageViewState extends State<HomePageView> {
               subCategories = children.map((child) => {
                   'title': _catLabel(child),
                   'image': _catBannerUrl(child).isNotEmpty ? _catBannerUrl(child) : _catBannerUrl(foundRootCat), // Fallback to parent if child has no image
-                  'link': _catSlug(child) // Use slug for navigation
+                  'link': _catSlug(child), // Use slug for navigation
+                  'icon': _categoryIconFor(_catLabel(child))
               }).toList();
           } else {
              // 3. Fallback to Mock Data (if Real Category not found)

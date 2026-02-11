@@ -35,10 +35,13 @@ class _LogoutButtonState extends State<LogoutButton> {
         _onPressedLogout();
       },
       title: MaterialButton(
-        color: Theme.of(context).colorScheme.onBackground,
+        color: Colors.white,
         elevation: 0.0,
-        textColor: Theme.of(context).colorScheme.secondaryContainer,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        textColor: const Color(0xFF27C16B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          side: const BorderSide(color: Color(0xFF27C16B), width: 1.5),
+        ),
         padding: const EdgeInsets.symmetric(vertical: 12.0),
         onPressed: () {
           checkInternetConnection().then((value) {
@@ -52,7 +55,8 @@ class _LogoutButtonState extends State<LogoutButton> {
         child: Text(
           StringConstants.logOutTitle.localized().toUpperCase(),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: Theme.of(context).colorScheme.secondaryContainer,
+            color: const Color(0xFF27C16B),
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -66,7 +70,8 @@ class _LogoutButtonState extends State<LogoutButton> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
           title: Text(
             StringConstants.logOutTitle.localized(),
             style: Theme.of(context).textTheme.headlineSmall,
@@ -106,8 +111,10 @@ class _LogoutButtonState extends State<LogoutButton> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return Dialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
             child: Container(
-              color: Theme.of(context).colorScheme.background,
+              color: Colors.white,
               padding: const EdgeInsets.all(AppSizes.spacingWide),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

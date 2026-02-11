@@ -60,6 +60,10 @@ class _ProductScreenState extends State<ProductScreen> {
     
     productScreenBLoc = context.read<ProductScreenBLoc>();
     productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId));
+    
+    // 🟢 SYNC CART: Ensure +/- buttons have info immediately
+    context.read<CartScreenBloc>().add(FetchCartDataEvent());
+    
     super.initState();
   }
 
@@ -167,9 +171,11 @@ class _ProductScreenState extends State<ProductScreen> {
             addToCartModel = state.response;
             ShowMessage.successNotification(state.successMsg ?? "", context);
             
-            // 🟢 FIX 3: Update Global Cart Count on Success
-            GlobalData.cartCountController.sink
-                .add(addToCartModel?.cart?.itemsQty ?? 0);
+            // 🟢 SYNC
+            GlobalData.updateCartState(addToCartModel?.cart);
+            if (addToCartModel?.cart != null) {
+              appStoragePref.setCartCount(addToCartModel!.cart!.itemsQty ?? 0);
+            }
           }
         }
         // ... (Keep existing listeners for Wishlist, Compare, Download) ...
