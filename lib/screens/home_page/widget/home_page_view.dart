@@ -5,6 +5,7 @@
  */
 
 import 'dart:async'; 
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; 
@@ -606,60 +607,70 @@ class _HomePageViewState extends State<HomePageView> {
                              setState(() {}); // Refresh home on return
                           });
                         },
-                        child: Container(
-                          height: 50,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF27C16B), // Blinkit Green
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              )
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "$count ${count == 1 ? 'Item' : 'Items'}",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ColorFilter.mode(Colors.black.withOpacity(0.01), BlendMode.dstIn), // Optional slight tint
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xE627C16B), // 90% Opacity Blinkit Green
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5), // Trendy glass border
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.12),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "$count ${count == 1 ? 'Item' : 'Items'}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12
+                                          ),
+                                        ),
+                                        const Text(
+                                          "View Total",
+                                          style: TextStyle(
+                                            color: Colors.white70, 
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                        )
+                                      ],
                                     ),
-                                  ),
-                                  const Text(
-                                    "View Total", // We don't have total price here easily without fetching cart
-                                    style: TextStyle(
-                                      color: Colors.white70, 
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500
+                                    Row(
+                                      children: const [
+                                        Text(
+                                          "View Cart",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.arrow_right, color: Colors.white),
+                                      ],
                                     ),
-                                  )
-                                ],
+                                  ],
+                                ),
                               ),
-                              Row(
-                                children: const [
-                                  Text(
-                                    "View Cart",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_right, color: Colors.white),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       );

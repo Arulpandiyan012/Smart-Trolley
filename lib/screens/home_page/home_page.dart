@@ -339,7 +339,13 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(130), // Slightly reduced height
           child: Container(
-            color: Colors.white, // Flat White Background
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFF9C4), Colors.white], // Subtle soft yellow to white gradient
+              ),
+            ),
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -361,9 +367,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Text(
                                     "Delivery in 11 minutes", 
                                     style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w900,
                                       fontSize: 18,
-                                      color: Colors.black87,
+                                      color: const Color(0xFF2E7D32), // Direct Blinkit Green highlight
                                       height: 1.0, 
                                     ),
                                   ),
@@ -439,13 +445,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.grey[200]!),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
