@@ -162,7 +162,7 @@ class MobiKulTheme {
             fontFamily: fontFamily),
       ),
       dividerTheme: const DividerThemeData(color: Colors.black12),
-      bottomAppBarTheme: const BottomAppBarThemeData(color: Color(0xFF2A65B3)));
+      bottomAppBarTheme: const BottomAppBarTheme(color: Color(0xFF2A65B3)));
 
   static final ThemeData darkTheme = ThemeData(
       scaffoldBackgroundColor: _darkPrimaryVariantColor,
@@ -271,7 +271,7 @@ class MobiKulTheme {
             fontFamily: fontFamily),
       ),
       dividerTheme: const DividerThemeData(color: Colors.grey),
-      bottomAppBarTheme: const BottomAppBarThemeData(color: _darkOnPrimaryColor));
+      bottomAppBarTheme: const BottomAppBarTheme(color: _darkOnPrimaryColor));
 
   getColor(double rating) {
     if (rating <= 1.0) {

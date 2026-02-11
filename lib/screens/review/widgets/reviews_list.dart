@@ -54,126 +54,99 @@ class _ReviewsListState extends State<ReviewsList> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Product Image
                   (widget.reviewData?.product?.images ?? []).isNotEmpty
                       ? Card(
                           clipBehavior: Clip.antiAliasWithSaveLayer,
                           margin: EdgeInsets.zero,
                           elevation: 0,
                           child: ImageView(
-                            url: widget.reviewData?.product?.images?[0].url ??
-                                "",
-                            width: MediaQuery.of(context).size.width / 4.5,
-                            height: MediaQuery.of(context).size.width / 5,
+                            url: widget.reviewData?.product?.images?[0].url ?? "",
+                            width: 80, // Fixed legible size
+                            height: 80,
                           ),
                         )
                       : ImageView(
                           url: "",
-                          width: MediaQuery.of(context).size.width / 4.5,
-                          height: MediaQuery.of(context).size.width / 5,
+                          width: 80,
+                          height: 80,
                         ),
+                  
                   const SizedBox(width: AppSizes.spacingNormal),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Row(
-                              children: List.generate(
-                                  5,
-                                  (index) => (index >=
-                                          num.parse(widget.reviewData?.rating
-                                                  .toString() ??
-                                              ""))
-                                      ? Icon(
-                                          Icons.star_border,
-                                          color: ReviewColorHelper.getColor(
-                                              double.parse(widget
-                                                      .reviewData?.rating
-                                                      .toString() ??
-                                                  "")),
-                                          size: 16.0,
-                                        )
-                                      : Icon(
-                                          Icons.star,
-                                          color: ReviewColorHelper.getColor(
-                                              double.parse(widget
-                                                      .reviewData?.rating
-                                                      .toString() ??
-                                                  "")),
-                                          size: 16.0,
-                                        ))),
-                          const SizedBox(width: AppSizes.spacingNormal),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 3,
-                            child: Text(widget.reviewData?.title ?? "",
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: AppSizes.spacingNormal),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 6.0,
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width / 1.5,
-                        child: HtmlWidget(widget.reviewData?.comment ?? ""),
-                      ),
-                      const SizedBox(
-                        height: 8.0,
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            StringConstants.reviewBy.localized(),
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left:4.0),
-                            child: Text(widget.reviewData?.customer?.name ?? "",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                )),
-                          ),
-                        ],
-                      ),
-                    ],
+                  
+                  // Text Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Rating & Title
+                        Row(
+                          children: [
+                            Row(
+                              children: List.generate(5, (index) {
+                                double rating = double.tryParse(widget.reviewData?.rating?.toString() ?? "0") ?? 0;
+                                return Icon(
+                                  index < rating ? Icons.star : Icons.star_border,
+                                  color: ReviewColorHelper.getColor(rating),
+                                  size: 16.0,
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(
+                              widget.reviewData?.title ?? "",
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            )),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 6),
+                        
+                        // Comment
+                        HtmlWidget(widget.reviewData?.comment ?? ""),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Review By
+                        Row(
+                          children: [
+                            Text(
+                              StringConstants.reviewBy.localized(),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(child: Text(
+                              widget.reviewData?.customer?.name ?? "",
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            )),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Date (Right Aligned originally, but let's keep it simple here)
+                        Row(
+                           mainAxisAlignment: MainAxisAlignment.end,
+                           children: [
+                              Text("${StringConstants.date.localized()}: ", 
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)
+                              ),
+                              Flexible(
+                                child: Text(
+                                  widget.reviewData?.createdAt ?? "",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              )
+                           ],
+                        )
+                      ],
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(
-                height: 8.0,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Row(
-                  //   children: [
-                  //     Text("${StringConstants.email.localized()}:",
-                  //         style: const TextStyle(
-                  //             fontSize: 14, fontWeight: FontWeight.w500)),
-                  //     Text(widget.reviewData?.customerName ?? "",
-                  //         style: const TextStyle(
-                  //             fontSize: 14, fontWeight: FontWeight.w400)),
-                  //   ],
-                  // ),
-                  Row(
-                    children: [
-                      Text("${StringConstants.date.localized()}:",
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500)),
-                      Text(
-                        widget.reviewData?.createdAt ?? "",
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(width: AppSizes.spacingNormal),
-                    ],
-                  )
                 ],
               ),
               const SizedBox(height: AppSizes.spacingNormal),
