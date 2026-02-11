@@ -235,7 +235,7 @@ class BlinkitProductCard extends StatelessWidget {
                                       if (isLoggedIn) {
                                         if (data?.type == "simple" || data?.type == "virtual") {
                                           if (onAddToCart != null) {
-                                            onAddToCart!(int.parse(data?.id ?? "0"), 1);
+                                            onAddToCart!(int.tryParse(data?.id ?? "0") ?? 0, 1);
                                           }
                                         } else {
                                           ShowMessage.warningNotification("Select Options", context);
@@ -258,9 +258,9 @@ class BlinkitProductCard extends StatelessWidget {
                                             [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
                                           ));
                                         } else {
-                                          context.read<CartScreenBloc>().add(RemoveCartItemEvent(
-                                            cartItemId: int.parse(cartItemId!)
-                                          ));
+                                           context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                                             cartItemId: int.tryParse(cartItemId ?? "") ?? 0
+                                           ));
                                         }
                                       }
                                     },

@@ -209,7 +209,7 @@ class CompareList extends StatelessWidget {
                                                  ));
                                               } else {
                                                  context.read<CartScreenBloc>().add(RemoveCartItemEvent(
-                                                   cartItemId: int.parse(cartItemId)
+                                                   cartItemId: int.tryParse(cartItemId ?? "") ?? 0
                                                  ));
                                               }
                                             }
