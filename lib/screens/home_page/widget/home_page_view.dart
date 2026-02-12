@@ -817,18 +817,28 @@ class _HomePageViewState extends State<HomePageView> {
              }
           } catch (_) {}
 
-          // 2. Map to the next available Product List
-          // We assume GlobalData.allProducts is populated in the same order as these carousels.
-          // (Note: There is a potential race condition in fetching, but we follow existing pattern).
-          if (productListIndex < productLists.length) {
-             final resp = productLists[productListIndex];
-             final products = (resp?.data as List?)?.cast<dynamic>() ?? const [];
+          // 2. Map to the tagged Product List (Robust Fix for Race Condition)
+          // Search for the product list that was tagged with this section title
+          var resp = productLists.firstWhereOrNull((p) => (p as dynamic).sectionId == title);
+          
+          // Fallback to index-based mapping if tag not found (backward compatibility)
+          if (resp == null && productListIndex < productLists.length) {
+             // Only use fallback if the candidate doesn't have a mismatched sectionIds
+             // (i.e., don't use a list tagged for "Vegetables" to fill "Grocery")
+             final candidate = productLists[productListIndex];
+             if ((candidate as dynamic).sectionId == null) {
+                resp = candidate;
+                productListIndex++;
+             }
+          }
+
+          if (resp != null) {
+             final products = (resp.data as List?)?.cast<dynamic>() ?? const [];
              
              // Only add section if it has products
              if (products.isNotEmpty) {
                 sections.add(_Section(title, "product_carousel", products));
              }
-             productListIndex++;
           }
        }
     }

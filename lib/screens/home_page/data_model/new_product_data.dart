@@ -23,8 +23,9 @@ class NewProductsModel extends HiveObject {
   PaginatorInfo? paginatorInfo;
   @HiveField(1)
   List<NewProducts>? data;
+  String? sectionId; // Runtime tag for matching responses to sections
 
-  NewProductsModel({this.data});
+  NewProductsModel({this.data, this.sectionId});
 
   factory NewProductsModel.fromJson(Map<String, dynamic> json) =>
       _$NewProductsModelFromJson(json);
