@@ -15,6 +15,9 @@ import '../utils/index.dart' hide Translations;
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_event.dart';
 
 import 'package:bagisto_app_demo/screens/home_page/widget/blinkit_category_grid.dart'; // 🟢 NEW IMPORT
+import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_screen.dart'; // 🟢 For See All Nav
+import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_bloc.dart'; // 🟢 For Provider
+import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repository.dart'; // 🟢 For Repo
 import 'new_product_view.dart';
 import 'reach_top.dart'; 
 
@@ -294,29 +297,7 @@ class _HomePageViewState extends State<HomePageView> {
     }
   }
 
-  void _handleSeeAll(String title) {
-    final allCats = widget.getCategoriesData?.data ?? [];
-    
-    dynamic findCat(List<dynamic> list, String target) {
-      for (final c in list) {
-        if (_catLabel(c).toLowerCase() == target.toLowerCase()) return c;
-        final kids = _catChildren(c);
-        if (kids.isNotEmpty) {
-          final found = findCat(kids, target);
-          if (found != null) return found;
-        }
-      }
-      return null;
-    }
 
-    final match = findCat(allCats, title);
-    if (match != null) {
-      _openCategory(match);
-      return;
-    }
-
-    debugPrint("Category not found for title: $title");
-  }
 
   String? _imageFromAny(dynamic img) {
     try {
@@ -853,6 +834,32 @@ class _HomePageViewState extends State<HomePageView> {
     // I will exclude the "All Products" aggregation unless requested, to keep the UI clean.
     
     return sections;
+  }
+  void _handleSeeAll(String title) {
+    String? slugToPass;
+    
+    // 🟢 Try to find matching Category by Title
+    // This restores functionality for "Farm Fresh Vegetables" etc.
+    try {
+      final allCats = GlobalData.categoriesDrawerData?.data ?? [];
+      for (var c in allCats) {
+         if (_catLabel(c).toLowerCase().contains(title.toLowerCase()) || 
+             title.toLowerCase().contains(_catLabel(c).toLowerCase())) {
+             // Exact or fuzzy match
+             slugToPass = _catSlug(c);
+             break;
+         }
+      }
+    } catch (_) {}
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (context) => CategoryBloc(CategoriesRepo()), 
+          child: SidebarCategoryScreen(initialSlug: slugToPass),
+        ),
+      ),
+    );
   }
 }
 
