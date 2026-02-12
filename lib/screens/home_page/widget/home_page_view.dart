@@ -421,13 +421,14 @@ class _HomePageViewState extends State<HomePageView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                               child: Text(
                                 "Shop by Category",
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
+                                  fontFamily: 'Roboto',
                                   color: Colors.black,
                                   letterSpacing: -0.2,
                                 ),
