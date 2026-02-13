@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
+import 'package:skeleton_loader/skeleton_loader.dart';
 
 class BlinkitCategoryGrid extends StatelessWidget {
   final List<dynamic> categories; // Expects list of maps {title, image, link}
@@ -44,7 +45,45 @@ class BlinkitCategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (categories.isEmpty) return const SizedBox.shrink();
+    if (categories.isEmpty) {
+      return SkeletonLoader(
+        highlightColor: Theme.of(context).highlightColor,
+        baseColor: Theme.of(context).scaffoldBackgroundColor,
+        builder: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4, 
+            childAspectRatio: 0.74, 
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: 8,
+          itemBuilder: (context, index) {
+            return Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 12,
+                  width: 40,
+                  color: Colors.white,
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),

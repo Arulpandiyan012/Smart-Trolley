@@ -76,13 +76,13 @@ class BlinkitProductCard extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12, left: 8, right: 8),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
+              borderRadius: BorderRadius.circular(16), // 🟢 More rounded for modern feel
+              border: Border.all(color: Colors.grey[100]!),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03), 
-                  blurRadius: 4, 
-                  offset: const Offset(0, 2)
+                  color: Colors.black.withOpacity(0.04), 
+                  blurRadius: 8, 
+                  offset: const Offset(0, 4)
                 ),
               ],
             ),
@@ -95,23 +95,22 @@ class BlinkitProductCard extends StatelessWidget {
                     // 1. LEFT: IMAGE SECTION
                     // ==============================
                     Container(
-                      width: 88, 
-                      padding: const EdgeInsets.all(8),
+                      width: 100, // 🟢 Slightly wider
+                      padding: const EdgeInsets.all(10),
                       child: Stack(
                         children: [
                           Center(
                             child: SizedBox(
-                              height: 80, 
-                              width: 80,
+                              height: 85, 
+                              width: 85,
                               child: ImageView(url: imageUrl, fit: BoxFit.contain),
                             ),
                           ),
                           
-                          // 🟢 FIX: SALE BADGE MOVED TO TOP-RIGHT
                           if (data?.isInSale ?? false)
                             Positioned(
                               top: 0,
-                              right: 0, // Changed from left: 0 to right: 0
+                              right: 0,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                                 decoration: BoxDecoration(
@@ -136,14 +135,15 @@ class BlinkitProductCard extends StatelessWidget {
                     // 2. RIGHT: DETAILS SECTION
                     // ==============================
                     Expanded(
-                      child: Padding(
+                      child: Container(
+                        height: 135, // 🟢 Fixed height to ensure alignment
                         padding: const EdgeInsets.fromLTRB(4, 12, 12, 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Timer Tag
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF4F6F8),
                                 borderRadius: BorderRadius.circular(4),
@@ -152,8 +152,8 @@ class BlinkitProductCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
                                   Icon(Icons.timer_outlined, size: 10, color: Colors.black54),
-                                  SizedBox(width: 3),
-                                  Text("12 MINS", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
+                                  SizedBox(width: 4),
+                                  Text("12 MINS", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.black54)),
                                 ],
                               ),
                             ),
@@ -165,9 +165,10 @@ class BlinkitProductCard extends StatelessWidget {
                               maxLines: 2, 
                               overflow: TextOverflow.ellipsis, 
                               style: const TextStyle(
-                                fontWeight: FontWeight.w600, 
-                                fontSize: 13, 
-                                height: 1.2,
+                                fontWeight: FontWeight.w700, 
+                                fontSize: 13.5, 
+                                height: 1.1,
+                                letterSpacing: -0.2,
                                 color: Colors.black87
                               )
                             ),
@@ -176,55 +177,59 @@ class BlinkitProductCard extends StatelessWidget {
                             // Unit
                             Text(
                               "1 Unit", 
-                              style: TextStyle(color: Colors.grey[500], fontSize: 11)
+                              style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)
                             ),
                             
-                            const SizedBox(height: 12), 
+                            const SizedBox(height: 6), // 🟢 Price now directly under unit
 
-                            // BOTTOM ROW: Price & Button
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.end, 
+                            // 🟢 PRICE SECTION (Modern Vertical Stack)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // PRICE COLUMN (With FittedBox to prevent overflow)
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                if (hasDiscount)
+                                  Text(
+                                    originalPrice, 
+                                    style: const TextStyle(
+                                      decoration: TextDecoration.lineThrough,
+                                      color: Colors.grey,
+                                      fontSize: 10,
+                                    )
+                                  ),
+                                  
+                                Text.rich(
+                                  TextSpan(
                                     children: [
-                                      if (hasDiscount)
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(
-                                            originalPrice, 
-                                            style: const TextStyle(
-                                              decoration: TextDecoration.lineThrough,
-                                              color: Colors.grey,
-                                              fontSize: 11,
-                                            )
-                                          ),
+                                      TextSpan(
+                                        text: "₹",
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto', 
+                                          fontWeight: FontWeight.w800, 
+                                          fontSize: 14, 
+                                          color: const Color(0xFF1B5E20)
                                         ),
-                                        
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          sellingPrice, 
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700, 
-                                            fontSize: 14, 
-                                            color: Colors.black
-                                          )
-                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: sellingPrice.replaceAll("₹", "").trim(), 
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900, 
+                                          fontSize: 17, // 🟢 Bold and Clear
+                                          color: Color(0xFF1B5E20)
+                                        )
                                       ),
                                     ],
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                
-                                const SizedBox(width: 4), 
+                              ],
+                            ),
+                            
+                            const Spacer(), 
 
-                                // ADD BUTTON
+                            // 🟢 BOTTOM ROW (ADD BUTTON MOVED HERE)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
                                 SizedBox(
                                   width: 72, 
                                   height: 32, 

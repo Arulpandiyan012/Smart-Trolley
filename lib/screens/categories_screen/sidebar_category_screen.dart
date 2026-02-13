@@ -214,7 +214,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     if (n.contains('vegetable') || n.contains('farm')) return Icons.eco_outlined;
     if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return Icons.set_meal_outlined;
     if (n.contains('egg')) return Icons.egg_outlined; 
-    if (n.contains('grocery') || n.contains('staple')) return Icons.shopping_bag_outlined;
+    if (n.contains('grocery') || n.contains('staple')) return Icons.local_grocery_store_outlined;
     if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined;
     if (n.contains('spice') || n.contains('masala')) return Icons.whatshot_outlined;
     if (n.contains('snack') || n.contains('chip') || n.contains('biscuit') || n.contains('namkeen')) return Icons.fastfood_outlined;
@@ -224,7 +224,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     if (n.contains('home') || n.contains('clean') || n.contains('detergent') || n.contains('wash')) return Icons.cleaning_services_outlined;
     if (n.contains('baby') || n.contains('diaper')) return Icons.child_care_outlined;
     if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return Icons.pets_outlined;
-    if (n.contains('kitchen')) return Icons.kitchen_outlined;
+    if (n.contains('kitchen')) return Icons.flatware_outlined;
     if (n.contains('pharmacy') || n.contains('medicin') || n.contains('health')) return Icons.medication_outlined;
     if (n.contains('book') || n.contains('stationery') || n.contains('office')) return Icons.menu_book_outlined;
     if (n.contains('electr') || n.contains('mobile') || n.contains('phone')) return Icons.devices_outlined;
@@ -244,7 +244,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
         title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0.5,
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: true, 
       ),
       body: _categories.isEmpty
           ? _buildEmptyState()
@@ -253,12 +253,13 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
               children: [
                 // LEFT: SIDEBAR
                 Container(
-                  width: 64, 
+                  width: 90, // 🟢 Widened for better Trendy look
                   decoration: BoxDecoration(
                     color: Theme.of(context).canvasColor, 
-                    border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
+                    border: Border(right: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5))),
                   ),
                   child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: _categories.length,
                     itemBuilder: (context, index) {
                       return _buildSidebarItem(index);
@@ -531,46 +532,69 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
     return GestureDetector(
       onTap: () => _onSidebarItemSelected(index),
-      child: Container(
-        height: 100,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).cardColor : Colors.transparent,
-          border: isSelected 
-              ? Border(left: BorderSide(color: activeColor, width: 4))
-              : Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5), width: 1)),
+          borderRadius: BorderRadius.circular(16),
+          gradient: isSelected 
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    activeColor.withOpacity(0.95),
+                    activeColor,
+                    activeColor.withOpacity(0.85),
+                  ],
+                )
+              : null,
+          boxShadow: isSelected 
+              ? [
+                  BoxShadow(
+                    color: activeColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              height: 40, width: 40, 
-              padding: const EdgeInsets.all(4),
+              height: 44, width: 44, 
+              padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).dividerColor.withOpacity(0.1),
+                color: isSelected ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.05),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? Colors.white.withOpacity(0.4) : Colors.transparent,
+                  width: 1,
+                ),
               ),
               child: ClipOval(
                 child: imgUrl.isNotEmpty 
                     ? ImageView(url: imgUrl, fit: BoxFit.cover) 
                     : Icon(
                         _categoryIconFor(name), 
-                        color: isSelected ? activeColor : Theme.of(context).dividerColor, 
-                        size: 20
+                        color: isSelected ? Colors.white : Colors.black87, // 🟢 Improved unselected visibility
+                        size: 22
                       ),
               ),
             ),
             const SizedBox(height: 6),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
                 name,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 9, 
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontSize: 10, 
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : Colors.black87, // 🟢 Improved unselected visibility
                 ),
               ),
             )

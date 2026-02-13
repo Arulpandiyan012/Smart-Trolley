@@ -109,12 +109,12 @@ IconData _categoryIconFor(String name) {
   if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return Icons.set_meal_outlined;
   if (n.contains('baby') || n.contains('child') || n.contains('diaper')) return Icons.child_care_outlined;
   if (n.contains('care') || n.contains('beauty') || n.contains('face') || n.contains('personal')) return Icons.face_retouching_natural_outlined;
-  if (n.contains('kitchen')) return Icons.kitchen_outlined;
+  if (n.contains('kitchen')) return Icons.flatware_outlined;
   if (n.contains('home') || n.contains('clean') || n.contains('household')) return Icons.cleaning_services_outlined;
   if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return Icons.pets_outlined;
   if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined; 
   if (n.contains('spice') || n.contains('masala') || n.contains('powder')) return Icons.flare_outlined;
-  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.shopping_basket_outlined;
+  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.local_grocery_store_outlined;
 
   return Icons.category_outlined;
 }
@@ -417,40 +417,39 @@ class _HomePageViewState extends State<HomePageView> {
                     ),
 
                     // 🟢 NEW: Trendy 2-Row Category Grid
-                    if (cats.isNotEmpty)
-                      SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                              child: Text(
-                                "Shop by Category",
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Roboto',
-                                  color: Theme.of(context).textTheme.titleMedium?.color,
-                                  letterSpacing: -0.2,
-                                ),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                            child: Text(
+                              "Shop by Category",
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Roboto',
+                                color: Theme.of(context).textTheme.titleMedium?.color,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                            BlinkitCategoryGrid(
-                              categories: cats.map((cat) => {
-                                'title': _catLabel(cat),
-                                'image': _catBannerUrl(cat).isNotEmpty ? _catBannerUrl(cat) : _catBannerUrl(cat), // Backend mapping
-                                'slug': _catSlug(cat),
-                                'icon': _categoryIconFor(_catLabel(cat)),
-                                'cat': cat // Keep original for navigation
-                              }).toList(),
-                              onTap: (slug, title) {
-                                // Recursive search via _handleSeeAll to support all category depths
-                                _handleSeeAll(title);
-                              },
-                            ),
-                          ],
-                        ),
+                          ),
+                          BlinkitCategoryGrid(
+                            categories: cats.map((cat) => {
+                              'title': _catLabel(cat),
+                              'image': _catBannerUrl(cat).isNotEmpty ? _catBannerUrl(cat) : _catBannerUrl(cat), // Backend mapping
+                              'slug': _catSlug(cat),
+                              'icon': _categoryIconFor(_catLabel(cat)),
+                              'cat': cat // Keep original for navigation
+                            }).toList(),
+                            onTap: (slug, title) {
+                              // Recursive search via _handleSeeAll to support all category depths
+                              _handleSeeAll(title);
+                            },
+                          ),
+                        ],
                       ),
+                    ),
 
                     for (final s in sections) ...[
                       SliverToBoxAdapter(
