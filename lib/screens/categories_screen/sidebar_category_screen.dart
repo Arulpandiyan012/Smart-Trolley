@@ -16,7 +16,8 @@ import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_state.dart
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart'; // For CartStatus
 
 class SidebarCategoryScreen extends StatefulWidget {
-  const SidebarCategoryScreen({Key? key}) : super(key: key);
+  final String? initialSlug;
+  const SidebarCategoryScreen({Key? key, this.initialSlug}) : super(key: key);
 
   @override
   State<SidebarCategoryScreen> createState() => _SidebarCategoryScreenState();
@@ -27,6 +28,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   List<dynamic> _categories = [];
   List<dynamic> _subCategories = []; 
   int _selectedSidebarIndex = 0;
+// ... (code omitted) ...
+
   int _selectedSubCatIndex = -1; 
   
   // Logic
@@ -83,15 +86,36 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   }
 
   void _loadCategories() {
-    if (GlobalData.categoriesDrawerData != null) {
-      final list = GlobalData.categoriesDrawerData!.data ?? [];
-      if (list.isNotEmpty) {
+    // Helper to process list
+    void processList(List<dynamic> list) {
         if (mounted) {
           setState(() {
             _categories = list;
-            _onSidebarItemSelected(0); 
+            int initialIndex = 0;
+            if (widget.initialSlug != null) {
+               try {
+                 int idx = _categories.indexWhere((c) {
+                   // Try to match slug
+                   String? s;
+                   try { s = _getSlug(c); } catch(_) {}
+                   if (s == widget.initialSlug) return true;
+                   
+                   // Fallback to ID match if slug fails (just in case title was passed as ID)
+                   // But we should stick to slug.
+                   return false;
+                 });
+                 if (idx != -1) initialIndex = idx;
+               } catch (_) {}
+            }
+            _onSidebarItemSelected(initialIndex); 
           });
         }
+    }
+
+    if (GlobalData.categoriesDrawerData != null) {
+      final list = GlobalData.categoriesDrawerData!.data ?? [];
+      if (list.isNotEmpty) {
+        processList(list);
         return;
       }
     }
@@ -101,12 +125,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
       GlobalData.categoriesDrawerData = offlineData;
       final list = offlineData.data ?? [];
       if (list.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _categories = list;
-            _onSidebarItemSelected(0);
-          });
-        }
+        processList(list);
       }
     }
   }
@@ -421,6 +440,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                                       subCategoryBloc: _categoryBloc,
                                       
                                       onAddToCart: (int productId, int quantity) {
+                                          GlobalData.optimisticUpdateCart(productId, quantity);
                                           _categoryBloc?.add(AddToCartSubCategoryEvent(productId, quantity));
                                       },
 

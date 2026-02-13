@@ -359,28 +359,18 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
   // 3. ADD BUTTON
   // =========================================================
   Widget _buildBlinkitAddButton() {
-    return BlocBuilder<CartScreenBloc, CartScreenBaseState>(
-      buildWhen: (prev, curr) => curr is FetchCartDataState,
-      builder: (context, state) {
+    return StreamBuilder<Map<String, Map<String, dynamic>>>(
+      stream: GlobalData.cartItemsController.stream,
+      builder: (context, snapshot) {
         int currentQty = 0;
         String? cartItemId;
 
-        if (state is FetchCartDataState && state.status == CartStatus.success) {
-           var cartItem = state.cartDetailsModel?.items?.firstWhere(
-              (item) => item.productId == widget.productData?.id, 
-              orElse: () => Items() 
-           );
-           if (cartItem != null && cartItem.id != null) {
-              currentQty = cartItem.quantity ?? 0;
-              cartItemId = cartItem.id;
-           }
+        final cartMap = snapshot.data ?? GlobalData.cartItemsController.value;
+        final info = cartMap[widget.productData?.id?.toString() ?? ""];
+        if (info != null) {
+          currentQty = info['qty'] ?? 0;
+          cartItemId = info['cartItemId']?.toString();
         }
-
-        // Just use local quantity if cart logic fails or is empty, 
-        // but prefer cart truth.
-        // If currentQty > 0, we are in cart. 
-        // If currentQty == 0, check local _quantity (but local _quantity is user selection before add?)
-        // Actually Blinkit usually adds 1 immediately on "ADD".
         
         bool hasItems = currentQty > 0;
 
@@ -400,6 +390,9 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                       onTap: () {
                          // DECREASE
                          if (cartItemId != null) {
+                            int pid = int.tryParse(widget.productData?.id?.toString() ?? "0") ?? 0;
+                            GlobalData.optimisticUpdateCart(pid, -1);
+
                             if (currentQty > 1) {
                               context.read<CartScreenBloc>().add(UpdateCartEvent(
                                 [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
@@ -421,6 +414,9 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                       onTap: () {
                          // INCREASE
                          if (cartItemId != null) {
+                            int pid = int.tryParse(widget.productData?.id?.toString() ?? "0") ?? 0;
+                            GlobalData.optimisticUpdateCart(pid, 1);
+                            
                             context.read<CartScreenBloc>().add(UpdateCartEvent(
                               [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
                             ));
@@ -434,13 +430,6 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                   onTap: () {
                     // ADD INITIAL (1)
                     _addToCart(); 
-                    // Note: _addToCart calls Bloc AddToCartProductEvent. 
-                    // We might need to listen to that success to refresh CartBloc?
-                    // ProductScreen already listens to AddToCartProductState and updates GlobalData.cartCountController.
-                    // But it should also trigger CartScreenBloc fetch!
-                    
-                    // Trigger a delayed cart fetch or handled by success listener?
-                    // Ideally ProductScreen should context.read<CartScreenBloc>().add(FetchCartDataEvent()) on success.
                   },
                   child: const Center(
                     child: Text(
@@ -599,6 +588,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
         
         onAddToCart: (int id) {
            if (id > 0) {
+             GlobalData.optimisticUpdateCart(id, 1);
              widget.productScreenBLoc?.add(AddToCartProductEvent(
                1, id.toString(), [], [], [], [], null, ""
              ));
@@ -610,6 +600,9 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
              if (info != null) {
                int currentQty = info['qty'] ?? 0;
                String? cartItemId = info['cartItemId']?.toString();
+               
+               GlobalData.optimisticUpdateCart(pid, -1);
+               
                if (cartItemId != null) {
                  if (currentQty > 1) {
                     context.read<CartScreenBloc>().add(UpdateCartEvent(
@@ -644,6 +637,8 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
      print("❌ Error: Product ID is missing");
      return;
   }
+
+  GlobalData.optimisticUpdateCart(int.parse(safeProductId), 1);
 
   widget.productScreenBLoc?.add(
     AddToCartProductEvent(

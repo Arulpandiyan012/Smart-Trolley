@@ -543,6 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await Future.wait(customHomeData!.themeCustomization!.map((element) async {
       List<Map<String, dynamic>> filters = [];
       if (element.type == "category_carousel") {
+        // ... (existing code for category carousel)
         element.translations
             ?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale)
             ?.options
@@ -552,6 +553,15 @@ class _HomeScreenState extends State<HomeScreen> {
         });
         homePageBloc?.add(FetchHomePageCategoriesEvent(filters: filters));
       } else if (element.type == "product_carousel") {
+        // Get section title for tagging
+        String sectionTitle = "";
+        try {
+          final trans = element.translations?.firstWhereOrNull(
+            (e) => e.localeCode == GlobalData.locale
+          );
+          sectionTitle = trans?.options?.title ?? "";
+        } catch (_) {}
+        
         element.translations
             ?.firstWhereOrNull((e) => e.localeCode == GlobalData.locale)
             ?.options
@@ -559,7 +569,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ?.forEach((f) {
           filters.add({"key": '"${f.key}"', "value": '"${f.value}"'});
         });
-        homePageBloc?.add(FetchAllProductsEvent(filters));
+        
+        // 🟢 FIX: Force sort by 'created_at-desc' for New Products section
+        if (sectionTitle.toLowerCase().contains("new products")) {
+          // Remove existing sort filter if any
+          filters.removeWhere((f) => f['key'].toString().contains('sort'));
+          
+          // 🟢 REMOVE 'new' FILTER too (User wants chronologically new, not manually marked 'new')
+          filters.removeWhere((f) => f['key'].toString().contains('new'));
+
+          // Add correct sort filter
+          filters.add({"key": '"sort"', "value": '"created_at-desc"'});
+        }
+        
+        // Pass sectionTitle as ID to solve race condition
+        homePageBloc?.add(FetchAllProductsEvent(filters, sectionId: sectionTitle));
       }
       await Future.delayed(const Duration(milliseconds: 100));
     }));

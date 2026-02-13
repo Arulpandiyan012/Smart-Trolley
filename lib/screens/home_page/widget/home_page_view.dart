@@ -15,6 +15,9 @@ import '../utils/index.dart' hide Translations;
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_event.dart';
 
 import 'package:bagisto_app_demo/screens/home_page/widget/blinkit_category_grid.dart'; // 🟢 NEW IMPORT
+import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_screen.dart'; // 🟢 For See All Nav
+import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_bloc.dart'; // 🟢 For Provider
+import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repository.dart'; // 🟢 For Repo
 import 'new_product_view.dart';
 import 'reach_top.dart'; 
 
@@ -294,29 +297,7 @@ class _HomePageViewState extends State<HomePageView> {
     }
   }
 
-  void _handleSeeAll(String title) {
-    final allCats = widget.getCategoriesData?.data ?? [];
-    
-    dynamic findCat(List<dynamic> list, String target) {
-      for (final c in list) {
-        if (_catLabel(c).toLowerCase() == target.toLowerCase()) return c;
-        final kids = _catChildren(c);
-        if (kids.isNotEmpty) {
-          final found = findCat(kids, target);
-          if (found != null) return found;
-        }
-      }
-      return null;
-    }
 
-    final match = findCat(allCats, title);
-    if (match != null) {
-      _openCategory(match);
-      return;
-    }
-
-    debugPrint("Category not found for title: $title");
-  }
 
   String? _imageFromAny(dynamic img) {
     try {
@@ -440,13 +421,14 @@ class _HomePageViewState extends State<HomePageView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                               child: Text(
                                 "Shop by Category",
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
+                                  fontFamily: 'Roboto',
                                   color: Colors.black,
                                   letterSpacing: -0.2,
                                 ),
@@ -521,8 +503,9 @@ class _HomePageViewState extends State<HomePageView> {
                                 isRecentProduct: false,
                                 callPreCache: widget.callPreCache,
                                 useGrid: true,
-                                onAddToCart: (id) {
+                                 onAddToCart: (id) {
                                   if (id > 0) {
+                                    GlobalData.optimisticUpdateCart(id, 1);
                                     widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added"));
                                   } else {
                                     // 🟢 Decrement Logic
@@ -532,6 +515,9 @@ class _HomePageViewState extends State<HomePageView> {
                                     if (info != null) {
                                       int currentQty = info['qty'] ?? 0;
                                       String? cartItemId = info['cartItemId']?.toString();
+                                      
+                                      GlobalData.optimisticUpdateCart(pid, -1);
+                                      
                                       if (cartItemId != null) {
                                         if (currentQty > 1) {
                                            context.read<CartScreenBloc>().add(UpdateCartEvent(
@@ -817,18 +803,28 @@ class _HomePageViewState extends State<HomePageView> {
              }
           } catch (_) {}
 
-          // 2. Map to the next available Product List
-          // We assume GlobalData.allProducts is populated in the same order as these carousels.
-          // (Note: There is a potential race condition in fetching, but we follow existing pattern).
-          if (productListIndex < productLists.length) {
-             final resp = productLists[productListIndex];
-             final products = (resp?.data as List?)?.cast<dynamic>() ?? const [];
+          // 2. Map to the tagged Product List (Robust Fix for Race Condition)
+          // Search for the product list that was tagged with this section title
+          var resp = productLists.firstWhereOrNull((p) => (p as dynamic).sectionId == title);
+          
+          // Fallback to index-based mapping if tag not found (backward compatibility)
+          if (resp == null && productListIndex < productLists.length) {
+             // Only use fallback if the candidate doesn't have a mismatched sectionIds
+             // (i.e., don't use a list tagged for "Vegetables" to fill "Grocery")
+             final candidate = productLists[productListIndex];
+             if ((candidate as dynamic).sectionId == null) {
+                resp = candidate;
+                productListIndex++;
+             }
+          }
+
+          if (resp != null) {
+             final products = (resp.data as List?)?.cast<dynamic>() ?? const [];
              
              // Only add section if it has products
              if (products.isNotEmpty) {
                 sections.add(_Section(title, "product_carousel", products));
              }
-             productListIndex++;
           }
        }
     }
@@ -843,6 +839,32 @@ class _HomePageViewState extends State<HomePageView> {
     // I will exclude the "All Products" aggregation unless requested, to keep the UI clean.
     
     return sections;
+  }
+  void _handleSeeAll(String title) {
+    String? slugToPass;
+    
+    // 🟢 Try to find matching Category by Title
+    // This restores functionality for "Farm Fresh Vegetables" etc.
+    try {
+      final allCats = GlobalData.categoriesDrawerData?.data ?? [];
+      for (var c in allCats) {
+         if (_catLabel(c).toLowerCase().contains(title.toLowerCase()) || 
+             title.toLowerCase().contains(_catLabel(c).toLowerCase())) {
+             // Exact or fuzzy match
+             slugToPass = _catSlug(c);
+             break;
+         }
+      }
+    } catch (_) {}
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (context) => CategoryBloc(CategoriesRepo()), 
+          child: SidebarCategoryScreen(initialSlug: slugToPass),
+        ),
+      ),
+    );
   }
 }
 

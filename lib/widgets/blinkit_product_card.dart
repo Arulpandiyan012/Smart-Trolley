@@ -240,6 +240,7 @@ class BlinkitProductCard extends StatelessWidget {
                                     },
                                     onIncrease: () {
                                       if (cartItemId != null) {
+                                        GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, 1);
                                         context.read<CartScreenBloc>().add(UpdateCartEvent(
                                           [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
                                         ));
@@ -247,6 +248,7 @@ class BlinkitProductCard extends StatelessWidget {
                                     },
                                     onDecrease: () {
                                       if (cartItemId != null) {
+                                        GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, -1);
                                         if (currentQty > 1) {
                                           context.read<CartScreenBloc>().add(UpdateCartEvent(
                                             [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
