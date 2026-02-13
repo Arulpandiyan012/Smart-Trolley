@@ -42,127 +42,50 @@ class MobiKulTheme {
   static const Color _darkOnPrimaryColor = Colors.white;
 
   static final ThemeData lightTheme = ThemeData(
-      highlightColor: skeletonLoaderColorLight,
-      scaffoldBackgroundColor: _lightPrimaryVariantColor,
-      // 🟢 1. Apply Font Globally
-      fontFamily: fontFamily, 
-      
-      appBarTheme: AppBarTheme(
-        elevation: 0.5,
-        actionsIconTheme: const IconThemeData(
-          color: MobiKulTheme.appbarTextColor,
-        ),
-        backgroundColor: primaryColor,
-        shadowColor: const Color(0xFFBDBDBD),
-        titleTextStyle: TextStyle(
-          color: MobiKulTheme.appbarTextColor,
-          fontSize: 18,
-          // 🟢 2. Apply to AppBar
-          fontFamily: fontFamily, 
-          fontWeight: FontWeight.w700, 
-        ),
-        iconTheme: const IconThemeData(color: MobiKulTheme.appbarTextColor),
+    useMaterial3: true,
+    highlightColor: skeletonLoaderColorLight,
+    scaffoldBackgroundColor: const Color(0xFFF5F7FA), // Blinkit Light Grey
+    primaryColor: const Color(0xFF27C16B),
+    colorScheme: ColorScheme.fromSwatch().copyWith(
+      primary: const Color(0xFF27C16B),
+      secondary: const Color(0xFF27C16B),
+      brightness: Brightness.light,
+    ),
+    appBarTheme: AppBarTheme(
+      elevation: 0.5,
+      actionsIconTheme: const IconThemeData(
+        color: MobiKulTheme.appbarTextColor,
       ),
-      textSelectionTheme: const TextSelectionThemeData(
-          selectionColor: Color(0xFFC8E6C9), cursorColor: Colors.green),
-      colorScheme: const ColorScheme.light(
-        primary: _lightPrimaryColor,
-        secondary: primaryColor,
-        secondaryContainer: _lightPrimaryVariantColor,
-        onBackground: MobiKulTheme.accentColor,
-        onPrimary: Colors.black87,
+      backgroundColor: primaryColor,
+      shadowColor: const Color(0xFFBDBDBD),
+      titleTextStyle: TextStyle(
+        color: MobiKulTheme.appbarTextColor,
+        fontSize: 18,
+        fontFamily: fontFamily,
+        fontWeight: FontWeight.w700,
       ),
-      checkboxTheme: CheckboxThemeData(
-        side: MaterialStateBorderSide.resolveWith(
-            (states) => const BorderSide(color: accentColor)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      iconTheme: const IconThemeData(color: MobiKulTheme.appbarTextColor),
+    ),
+    textSelectionTheme: const TextSelectionThemeData(
+      selectionColor: Color(0xFFC8E6C9), 
+      cursorColor: Colors.green,
+    ),
+    checkboxTheme: CheckboxThemeData(
+      side: MaterialStateBorderSide.resolveWith(
+        (states) => const BorderSide(color: accentColor),
       ),
-      iconTheme: const IconThemeData(
-        color: _lightOnPrimaryColor,
-      ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: _lightOnPrimaryColor),
-      
-      // 🟢 3. Define Global Text Styles
-      textTheme: TextTheme(
-        displayLarge: TextStyle(
-            fontSize: 24.0,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        displayMedium: TextStyle(
-            fontSize: 22.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        displaySmall: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        headlineLarge: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        headlineMedium: TextStyle(
-            fontSize: 18.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        headlineSmall: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        titleLarge: TextStyle(
-            fontSize: 18.0,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        titleMedium: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        titleSmall: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        labelLarge: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        labelMedium: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        labelSmall: TextStyle(
-            fontSize: 12.0,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-            fontFamily: fontFamily),
-        bodyLarge: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w400,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        bodyMedium: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w400,
-            color: Colors.black87,
-            fontFamily: fontFamily),
-        bodySmall: TextStyle(
-            fontSize: 12.0,
-            fontWeight: FontWeight.w400,
-            color: Colors.black54,
-            fontFamily: fontFamily),
-      ),
-      dividerTheme: const DividerThemeData(color: Colors.black12),
-      bottomAppBarTheme: const BottomAppBarThemeData(color: Color(0xFF2A65B3)));
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+    ),
+    iconTheme: const IconThemeData(
+      color: _lightOnPrimaryColor,
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: _lightOnPrimaryColor,
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
+    dividerTheme: const DividerThemeData(color: Colors.black12),
+    bottomAppBarTheme: const BottomAppBarThemeData(color: Color(0xFF2A65B3)),
+  );
 
   static final ThemeData darkTheme = ThemeData(
       scaffoldBackgroundColor: _darkPrimaryVariantColor,
@@ -170,9 +93,13 @@ class MobiKulTheme {
       // 🟢 4. Apply to Dark Mode as well
       fontFamily: fontFamily,
       appBarTheme: AppBarTheme(
+        elevation: 0,
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: TextStyle(
             fontSize: 18,
             fontFamily: fontFamily,
+            color: Colors.white,
             fontWeight: FontWeight.w700),
       ),
       checkboxTheme: CheckboxThemeData(
@@ -193,83 +120,7 @@ class MobiKulTheme {
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: _darkOnPrimaryColor),
-      textTheme: TextTheme(
-        displayLarge: TextStyle(
-            fontSize: 24.0,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        displayMedium: TextStyle(
-            fontSize: 22.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        displaySmall: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        headlineLarge: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        headlineMedium: TextStyle(
-            fontSize: 18.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        headlineSmall: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        titleLarge: TextStyle(
-            fontSize: 18.0,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        titleMedium: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        titleSmall: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        labelLarge: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        labelMedium: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        labelSmall: TextStyle(
-            fontSize: 12.0,
-            fontWeight: FontWeight.w500,
-            color: Colors.white70,
-            fontFamily: fontFamily),
-        bodyLarge: TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w400,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        bodyMedium: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w400,
-            color: Colors.white,
-            fontFamily: fontFamily),
-        bodySmall: TextStyle(
-            fontSize: 12.0,
-            fontWeight: FontWeight.w400,
-            color: Colors.white70,
-            fontFamily: fontFamily),
-      ),
+      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       dividerTheme: const DividerThemeData(color: Colors.grey),
       bottomAppBarTheme: const BottomAppBarThemeData(color: _darkOnPrimaryColor));
 

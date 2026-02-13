@@ -188,31 +188,9 @@ class _BagistoAppState extends State<BagistoApp> {
                 ),
               ],
               child: MaterialApp(
-                theme: ThemeData(
-                  useMaterial3: true,
-                  scaffoldBackgroundColor: const Color(0xFFF5F7FA), // Blinkit Light Grey
-                  primaryColor: const Color(0xFF27C16B), // Blinkit Bright Green
-                  colorScheme: ColorScheme.fromSwatch().copyWith(
-                    primary: const Color(0xFF27C16B),
-                    secondary: const Color(0xFF27C16B),
-                  ),
-                  textTheme: GoogleFonts.poppinsTextTheme(
-                    Theme.of(context).textTheme,
-                  ),
-                  appBarTheme: const AppBarTheme(
-                    elevation: 0,
-                    backgroundColor: Colors.white,
-                    iconTheme: IconThemeData(color: Colors.black),
-                    titleTextStyle: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ),
+                theme: MobiKulTheme.lightTheme,
                 darkTheme: MobiKulTheme.darkTheme,
-                themeMode: ThemeMode.light,
+                themeMode: themeNotifier.isDark == "true" ? ThemeMode.dark : ThemeMode.light,
                 initialRoute: appRoot,
                 onGenerateRoute: generateRoute,
                 title: defaultAppTitle,
