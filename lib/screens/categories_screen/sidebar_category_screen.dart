@@ -440,6 +440,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                                       subCategoryBloc: _categoryBloc,
                                       
                                       onAddToCart: (int productId, int quantity) {
+                                          GlobalData.optimisticUpdateCart(productId, quantity);
                                           _categoryBloc?.add(AddToCartSubCategoryEvent(productId, quantity));
                                       },
 

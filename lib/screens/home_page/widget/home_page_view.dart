@@ -503,8 +503,9 @@ class _HomePageViewState extends State<HomePageView> {
                                 isRecentProduct: false,
                                 callPreCache: widget.callPreCache,
                                 useGrid: true,
-                                onAddToCart: (id) {
+                                 onAddToCart: (id) {
                                   if (id > 0) {
+                                    GlobalData.optimisticUpdateCart(id, 1);
                                     widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added"));
                                   } else {
                                     // 🟢 Decrement Logic
@@ -514,6 +515,9 @@ class _HomePageViewState extends State<HomePageView> {
                                     if (info != null) {
                                       int currentQty = info['qty'] ?? 0;
                                       String? cartItemId = info['cartItemId']?.toString();
+                                      
+                                      GlobalData.optimisticUpdateCart(pid, -1);
+                                      
                                       if (cartItemId != null) {
                                         if (currentQty > 1) {
                                            context.read<CartScreenBloc>().add(UpdateCartEvent(

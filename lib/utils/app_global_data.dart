@@ -88,4 +88,31 @@ class GlobalData {
     cartItemsController.add(itemMap);
     debugPrint("📦 GLOBAL CART SYNC: count=$count, items=${itemMap.length}");
   }
+
+  // 🟢 NEW: Optimistic Update for instant UI feedback
+  static void optimisticUpdateCart(int productId, int delta) {
+    // 1. Update Cart Items Map
+    final currentMap = Map<String, Map<String, dynamic>>.from(cartItemsController.value);
+    final pid = productId.toString();
+    
+    final info = currentMap[pid] ?? {"qty": 0, "cartItemId": null};
+    int oldQty = info['qty'] ?? 0;
+    int newQty = oldQty + delta;
+    
+    if (newQty <= 0) {
+      currentMap.remove(pid);
+    } else {
+      currentMap[pid] = {
+        "qty": newQty,
+        "cartItemId": info['cartItemId']
+      };
+    }
+    cartItemsController.add(currentMap);
+
+    // 2. Update Total Count
+    int currentCount = cartCountController.value;
+    cartCountController.add(currentCount + delta);
+    
+    debugPrint("⚡ OPTIMISTIC CART UPDATE: pid=$pid, delta=$delta, newQty=$newQty");
+  }
 }
