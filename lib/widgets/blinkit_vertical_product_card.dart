@@ -174,16 +174,26 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                             onAddToWishlist!(productId.toString(), active, data);
                           }
                         },
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
-                          child: Icon(
-                            active ? Icons.favorite : Icons.favorite_border,
-                            size: 16,
-                            color: active ? Colors.red : Theme.of(context).dividerColor,
+                          child: Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle, 
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              active ? Icons.favorite : Icons.favorite_border,
+                              size: 16,
+                              color: active ? Colors.red : Colors.black54, // Darker grey for visibility
+                            ),
                           ),
-                        ),
                       );
                     },
                   ),
