@@ -383,13 +383,13 @@ class _HomePageViewState extends State<HomePageView> {
       },
       builder: (context, state) {
         return ColoredBox(
-          color: const Color(0xFFC8E6C9), 
+          color: Theme.of(context).scaffoldBackgroundColor, 
           child: SafeArea(
             top: false,
             child: Stack(
               children: [
                 RefreshIndicator(
-                  color: const Color(0xFF27C16B),
+                  color: Theme.of(context).primaryColor,
                   onRefresh: () async {
                      widget.homePageBloc?.add(FetchHomeCustomData());
                      widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
@@ -425,11 +425,11 @@ class _HomePageViewState extends State<HomePageView> {
                               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                               child: Text(
                                 "Shop by Category",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
                                   fontFamily: 'Roboto',
-                                  color: Colors.black,
+                                  color: Theme.of(context).textTheme.titleMedium?.color,
                                   letterSpacing: -0.2,
                                 ),
                               ),
@@ -460,11 +460,11 @@ class _HomePageViewState extends State<HomePageView> {
                               Expanded(
                                 child: Text(
                                   s.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Roboto', 
-                                    color: Colors.black,
+                                    color: Theme.of(context).textTheme.titleMedium?.color,
                                     letterSpacing: -0.2,
                                   ),
                                 ),

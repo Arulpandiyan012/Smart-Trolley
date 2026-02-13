@@ -11,38 +11,41 @@ class BlinkitCategoryGrid extends StatelessWidget {
     this.onTap,
   }) : super(key: key);
 
-  Color _getCategoryBgColor(String name) {
+  Color _getCategoryBgColor(String name, BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final n = name.toLowerCase();
     
-    if (n.contains('fruit') || n.contains('seasonal') || n.contains('apple')) return const Color(0xFFE8F5E9); // Light Green/Fruit
-    if (n.contains('veg') || n.contains('farm') || n.contains('spa')) return const Color(0xFFF1F8E9); // Soft Lime
-    if (n.contains('dairy') || n.contains('egg') || n.contains('milk') || n.contains('breakfast')) return const Color(0xFFE3F2FD); // Light Blue
-    if (n.contains('bread') || n.contains('bakery') || n.contains('pavana')) return const Color(0xFFF3E5F5); // Light Purple/Bakery
-    if (n.contains('snack') || n.contains('munch') || n.contains('chips') || n.contains('biscuit')) return const Color(0xFFFFF3E0); // Light Orange
-    if (n.contains('beverage') || n.contains('drink') || n.contains('juice') || n.contains('soft drink')) return const Color(0xFFF3E5F5); // Light Purple
-    if (n.contains('sweet') || n.contains('chocolate') || n.contains('bakery') || n.contains('cake')) return const Color(0xFFFCE4EC); // Light Pink
-    if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return const Color(0xFFFFEBEE); // Light Red
-    if (n.contains('tea') || n.contains('coffee')) return const Color(0xFFEFEBE9); // Light Brown
-    if (n.contains('baby') || n.contains('child') || n.contains('diaper')) return const Color(0xFFE0F7FA); // Light Cyan
-    if (n.contains('care') || n.contains('beauty') || n.contains('face') || n.contains('personal')) return const Color(0xFFFFF7FB); // Very Soft Pink/Care
-    if (n.contains('kitchen')) return const Color(0xFFE0F2F1); // Teal Light/Kitchen
-    if (n.contains('home') || n.contains('clean') || n.contains('household')) return const Color(0xFFFFFDE7); // Light Yellow
-    if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return const Color(0xFFFFECB3); // Amber/Light Pet
-    if (n.contains('oil') || n.contains('ghee')) return const Color(0xFFF1F4F9); // Soft Blue-Grey/Oil
-    if (n.contains('spice') || n.contains('masala') || n.contains('powder')) return const Color(0xFFFFF3E0); // Light Orange/Clay for Spice
-    if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return const Color(0xFFF5F5F5); // Greyish Grocery
-    
-    return const Color(0xFFF4F6F8); // Default Greyish
+    Color baseColor;
+    if (n.contains('fruit') || n.contains('seasonal') || n.contains('apple')) baseColor = const Color(0xFFE8F5E9); 
+    else if (n.contains('veg') || n.contains('farm') || n.contains('spa')) baseColor = const Color(0xFFF1F8E9); 
+    else if (n.contains('dairy') || n.contains('egg') || n.contains('milk') || n.contains('breakfast')) baseColor = const Color(0xFFE3F2FD); 
+    else if (n.contains('bread') || n.contains('bakery') || n.contains('pavana')) baseColor = const Color(0xFFF3E5F5); 
+    else if (n.contains('snack') || n.contains('munch') || n.contains('chips') || n.contains('biscuit')) baseColor = const Color(0xFFFFF3E0); 
+    else if (n.contains('beverage') || n.contains('drink') || n.contains('juice') || n.contains('soft drink')) baseColor = const Color(0xFFF3E5F5); 
+    else if (n.contains('sweet') || n.contains('chocolate') || n.contains('bakery') || n.contains('cake')) baseColor = const Color(0xFFFCE4EC); 
+    else if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) baseColor = const Color(0xFFFFEBEE); 
+    else if (n.contains('tea') || n.contains('coffee')) baseColor = const Color(0xFFEFEBE9); 
+    else if (n.contains('baby') || n.contains('child') || n.contains('diaper')) baseColor = const Color(0xFFE0F7FA); 
+    else if (n.contains('care') || n.contains('beauty') || n.contains('face') || n.contains('personal')) baseColor = const Color(0xFFFFF7FB); 
+    else if (n.contains('kitchen')) baseColor = const Color(0xFFE0F2F1); 
+    else if (n.contains('home') || n.contains('clean') || n.contains('household')) baseColor = const Color(0xFFFFFDE7); 
+    else if (n.contains('pet') || n.contains('dog') || n.contains('cat')) baseColor = const Color(0xFFFFECB3); 
+    else if (n.contains('oil') || n.contains('ghee')) baseColor = const Color(0xFFF1F4F9); 
+    else if (n.contains('spice') || n.contains('masala') || n.contains('powder')) baseColor = const Color(0xFFFFF3E0); 
+    else if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) baseColor = const Color(0xFFF5F5F5); 
+    else baseColor = const Color(0xFFF4F6F8);
+
+    if (isDark) {
+      // In dark mode, we want a very subtle version of these colors
+      return Color.alphaBlend(baseColor.withOpacity(0.1), const Color(0xFF1E1E1E));
+    }
+    return baseColor;
   }
 
   @override
   Widget build(BuildContext context) {
     if (categories.isEmpty) return const SizedBox.shrink();
 
-    // To ensure a "2-row" look, we might want to limit items or wrap in a specific height
-    // but a GridView with crossAxisCount already handles rows.
-    // Trendy look usually has 4 or 5 items per row.
-    
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
@@ -53,7 +56,7 @@ class BlinkitCategoryGrid extends StatelessWidget {
         crossAxisSpacing: 8,
         mainAxisSpacing: 12,
       ),
-      itemCount: categories.length > 8 ? 8 : categories.length, // Limit to 8 for neat 2-row look if many
+      itemCount: categories.length > 8 ? 8 : categories.length, 
       itemBuilder: (context, index) {
         final cat = categories[index];
         final title = cat['title'] ?? '';
@@ -66,14 +69,13 @@ class BlinkitCategoryGrid extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Column(
             children: [
-              // Image/Icon Container with Pastel Background
               Expanded(
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: _getCategoryBgColor(title),
-                    borderRadius: BorderRadius.circular(16), // Trendy rounded
-                    border: Border.all(color: Colors.black.withOpacity(0.02), width: 1),
+                    color: _getCategoryBgColor(title, context),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05), width: 1),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
@@ -87,14 +89,13 @@ class BlinkitCategoryGrid extends StatelessWidget {
                         : Icon(
                             icon ?? Icons.category_outlined,
                             size: 28,
-                            color: Colors.black54,
+                            color: Theme.of(context).dividerColor,
                           ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 6),
-              // Title
               SizedBox(
                 height: 28,
                 child: Text(
@@ -102,11 +103,11 @@ class BlinkitCategoryGrid extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     height: 1.1,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
               ),

@@ -213,7 +213,7 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
                         BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)
                       ],
                     ),
-                    child: const Icon(Icons.edit_outlined, size: 20, color: Colors.green),
+                    child: Icon(Icons.edit_outlined, size: 20, color: Theme.of(context).primaryColor),
                   ),
                 ),
               ),
@@ -233,9 +233,9 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey[900] : const Color(0xFFFFF9E1),
+          color: isDark ? Theme.of(context).cardColor : const Color(0xFFFFF9E1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFFFE082).withOpacity(0.5)),
+          border: Border.all(color: isDark ? Theme.of(context).dividerColor : const Color(0xFFFFE082).withOpacity(0.5)),
         ),
         child: Row(
           children: [
@@ -256,9 +256,9 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
                     children: [
                       Text(
                         isBirthdaySet ? dob! : "Enter details", 
-                        style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold, fontSize: 14)
+                        style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold, fontSize: 14)
                       ),
-                      if (!isBirthdaySet) Icon(Icons.play_arrow, size: 12, color: Colors.green[700]),
+                      if (!isBirthdaySet) Icon(Icons.play_arrow, size: 12, color: Theme.of(context).primaryColor),
                     ],
                   ),
                 ],
@@ -267,7 +267,7 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
             Icon(
               isBirthdaySet ? Icons.cake_outlined : Icons.cake, 
               size: 48, 
-              color: isBirthdaySet ? Colors.green[300] : const Color(0xFFFFAB40)
+              color: isBirthdaySet ? Theme.of(context).primaryColor.withOpacity(0.7) : const Color(0xFFFFAB40)
             ),
           ],
         ),
@@ -340,8 +340,8 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
               child: Row(
                 children: [
                   Text(isDark ? "DARK" : "LIGHT", 
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
-                  const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.blueAccent),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
+                  Icon(Icons.keyboard_arrow_down, size: 16, color: Theme.of(context).primaryColor),
                 ],
               ),
             ),
@@ -379,9 +379,9 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
 
   Widget _buildThemeOption(BuildContext ctx, String label, IconData icon, bool isSelected, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: isSelected ? Colors.green : Colors.grey),
+      leading: Icon(icon, color: isSelected ? Theme.of(context).primaryColor : Colors.grey),
       title: Text(label, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-      trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.green) : null,
+      trailing: isSelected ? Icon(Icons.check_circle, color: Theme.of(context).primaryColor) : null,
       onTap: onTap,
     );
   }
@@ -396,7 +396,7 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.visibility_off_outlined, color: Colors.green, size: 24),
+          Icon(Icons.visibility_off_outlined, color: Theme.of(context).primaryColor, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -420,7 +420,7 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
           Switch(
             value: false,
             onChanged: (v) {},
-            activeColor: Colors.green,
+            activeColor: Theme.of(context).primaryColor,
           ),
         ],
       ),
@@ -484,11 +484,11 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
   Widget _buildFooter() {
     return Column(
       children: [
-        Image.asset(AssetConstants.placeHolder, height: 40, color: Colors.grey[300]), // Blinkit grey logo
+        Image.asset(AssetConstants.placeHolder, height: 40, color: Theme.of(context).dividerColor), // Blinkit grey logo
         const SizedBox(height: 8),
         Text(
           "v1.0.0",
-          style: TextStyle(fontSize: 12, color: Colors.grey[400], fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5), fontWeight: FontWeight.w600),
         ),
       ],
     );

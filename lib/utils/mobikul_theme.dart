@@ -43,12 +43,18 @@ class MobiKulTheme {
 
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
+    brightness: Brightness.light,
     highlightColor: skeletonLoaderColorLight,
     scaffoldBackgroundColor: const Color(0xFFF5F7FA), // Blinkit Light Grey
+    cardColor: Colors.white,
+    canvasColor: Colors.white,
     primaryColor: const Color(0xFF27C16B),
     colorScheme: ColorScheme.fromSwatch().copyWith(
       primary: const Color(0xFF27C16B),
       secondary: const Color(0xFF27C16B),
+      surface: Colors.white,
+      onSurface: Colors.black,
+      secondaryContainer: const Color(0xFFF5F7FA), // Light background for sections
       brightness: Brightness.light,
     ),
     appBarTheme: AppBarTheme(
@@ -56,7 +62,7 @@ class MobiKulTheme {
       actionsIconTheme: const IconThemeData(
         color: MobiKulTheme.appbarTextColor,
       ),
-      backgroundColor: primaryColor,
+      backgroundColor: Colors.white,
       shadowColor: const Color(0xFFBDBDBD),
       titleTextStyle: TextStyle(
         color: MobiKulTheme.appbarTextColor,
@@ -88,41 +94,51 @@ class MobiKulTheme {
   );
 
   static final ThemeData darkTheme = ThemeData(
-      scaffoldBackgroundColor: _darkPrimaryVariantColor,
-      highlightColor: skeletonLoaderColorDark,
-      // 🟢 4. Apply to Dark Mode as well
-      fontFamily: fontFamily,
-      appBarTheme: AppBarTheme(
-        elevation: 0,
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontFamily: fontFamily,
-            color: Colors.white,
-            fontWeight: FontWeight.w700),
-      ),
-      checkboxTheme: CheckboxThemeData(
-        side: MaterialStateBorderSide.resolveWith(
-            (states) => const BorderSide(color: _darkOnPrimaryColor)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      ),
-      colorScheme: const ColorScheme.dark(
-        primary: _darkPrimaryColor,
-        secondary: accentColor,
-        secondaryContainer: _darkPrimaryVariantColor,
-        onPrimary: Colors.white,
-        onBackground: _darkOnPrimaryColor,
-        background: Colors.black,
-      ),
-      iconTheme: const IconThemeData(
-        color: _darkOnPrimaryColor,
-      ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: _darkOnPrimaryColor),
-      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
-      dividerTheme: const DividerThemeData(color: Colors.grey),
-      bottomAppBarTheme: const BottomAppBarThemeData(color: _darkOnPrimaryColor));
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: Colors.black,
+    highlightColor: skeletonLoaderColorDark,
+    cardColor: const Color(0xFF121212),
+    canvasColor: Colors.black,
+    fontFamily: fontFamily,
+    primaryColor: const Color(0xFF27C16B),
+    colorScheme: const ColorScheme.dark(
+      primary: Color(0xFF27C16B),
+      secondary: accentColor,
+      surface: Color(0xFF1E1E1E),
+      onSurface: Colors.white,
+      onBackground: Colors.white,
+      background: Colors.black,
+      secondaryContainer: Color(0xFF121212), // Slightly lighter black for sections
+    ),
+    appBarTheme: AppBarTheme(
+      elevation: 0,
+      backgroundColor: Colors.black,
+      iconTheme: const IconThemeData(color: Colors.white),
+      titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontFamily: fontFamily,
+          color: Colors.white,
+          fontWeight: FontWeight.w700),
+    ),
+    checkboxTheme: CheckboxThemeData(
+      side: MaterialStateBorderSide.resolveWith(
+          (states) => const BorderSide(color: _darkOnPrimaryColor)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+    ),
+    textSelectionTheme: const TextSelectionThemeData(
+      selectionColor: Color(0xFF1B5E20),
+      cursorColor: Color(0xFF27C16B),
+    ),
+    iconTheme: const IconThemeData(
+      color: _darkOnPrimaryColor,
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: _darkOnPrimaryColor),
+    textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+    dividerTheme: const DividerThemeData(color: Colors.white24),
+    bottomAppBarTheme: const BottomAppBarThemeData(color: Color(0xFF121212)),
+  );
 
   getColor(double rating) {
     if (rating <= 1.0) {

@@ -127,12 +127,12 @@ class BlinkitVerticalProductCard extends StatelessWidget {
       child: Container(
         width: width,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[100]!),
+          border: Border.all(color: Theme.of(context).dividerColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Theme.of(context).shadowColor.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -149,9 +149,9 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                   ),
                   child: (imageUrl != null && imageUrl.isNotEmpty)
                       ? ImageView(url: imageUrl, fit: BoxFit.contain)
@@ -181,7 +181,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           child: Icon(
                             active ? Icons.favorite : Icons.favorite_border,
                             size: 16,
-                            color: active ? Colors.red : Colors.grey[400],
+                            color: active ? Colors.red : Theme.of(context).dividerColor,
                           ),
                         ),
                       );
@@ -256,14 +256,13 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                         return InkWell(
                           onTap: () => onAddToCart?.call(productId),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                             decoration: BoxDecoration(
-                              border: Border.all(color: const Color(0xFF27C16B).withOpacity(0.5), width: 1),
+                              color: Theme.of(context).primaryColor,
                               borderRadius: BorderRadius.circular(8),
-                              color: const Color(0xFFF7FFF9),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF27C16B).withOpacity(0.1),
+                                  color: Theme.of(context).primaryColor.withOpacity(0.3),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -271,7 +270,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                             ),
                             child: const Text(
                               "ADD",
-                              style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w900, fontSize: 10),
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
                             ),
                           ),
                         );
@@ -290,10 +289,10 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Colors.black87),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Theme.of(context).textTheme.titleSmall?.color),
                   ),
                   const SizedBox(height: 2),
-                  Text("1 Unit", style: TextStyle(color: Colors.grey[600], fontSize: 10)),
+                  Text("1 Unit", style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 10)),
                   const SizedBox(height: 4),
                   Builder(
                     builder: (context) {
@@ -324,7 +323,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                               return Icon(
                                 index < rating.round() ? Icons.star : Icons.star_border,
                                 size: 11,
-                                color: index < rating.round() ? const Color(0xFFF5C518) : Colors.grey[300],
+                                color: index < rating.round() ? Colors.amber : Theme.of(context).dividerColor,
                               );
                             }),
                           ),
@@ -332,7 +331,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           if (reviewCount > 0)
                             Text(
                               "($reviewCount)",
-                              style: TextStyle(fontSize: 9, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 9, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w500),
                             ),
                         ],
                       );
@@ -342,28 +341,28 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(vertical: 2),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0F2F5), 
+                      color: Theme.of(context).dividerColor.withOpacity(0.1), 
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.timer_outlined, size: 10, color: Colors.black45),
-                        SizedBox(width: 4),
-                        Text("12 MINS", style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Colors.black87)),
+                      children: [
+                        Icon(Icons.timer_outlined, size: 10, color: Theme.of(context).textTheme.bodySmall?.color),
+                        const SizedBox(width: 4),
+                        Text("12 MINS", style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Theme.of(context).textTheme.bodySmall?.color)),
                       ],
                     ),
                   ),
                   Text.rich(
                     TextSpan(
                       children: [
-                        const TextSpan(
+                        TextSpan(
                           text: "₹",
-                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color),
                         ),
                         TextSpan(
                           text: priceText.replaceAll("₹", "").trim(),
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black87),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.titleSmall?.color),
                         ),
                       ],
                     ),

@@ -239,10 +239,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Categories", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0.5,
         automaticallyImplyLeading: false, 
       ),
@@ -254,9 +254,9 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 // LEFT: SIDEBAR
                 Container(
                   width: 64, 
-                  decoration: const BoxDecoration(
-                    color: const Color(0xFFF5F7FA), // Flat light grey
-                    border: const Border(right: BorderSide(color: Colors.black12)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).canvasColor, 
+                    border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
                   ),
                   child: ListView.builder(
                     itemCount: _categories.length,
@@ -274,7 +274,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                       if (_subCategories.isNotEmpty)
                         Container(
                           height: 50,
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -292,10 +292,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
+                                    color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).cardColor,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: isSelected ? const Color(0xFF2E7D32) : Colors.grey[300]!,
+                                      color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).dividerColor,
                                     ),
                                   ),
                                   child: Text(
@@ -303,7 +303,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? const Color(0xFF2E7D32) : Colors.black87,
+                                      color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodySmall?.color,
                                     ),
                                   ),
                                 ),
@@ -312,12 +312,12 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                           ),
                         ),
 
-                      const Divider(height: 1, thickness: 1),
+                      Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor),
 
                       // 2. FILTER & SORT
                       Container(
                         height: 40,
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         child: Row(
                           children: [
                             Expanded(
@@ -527,17 +527,17 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     final bool isSelected = _selectedSidebarIndex == index;
     final String name = _getName(cat);
     final String imgUrl = _getImage(cat);
-    const Color activeColor = Color(0xFF2E7D32); 
+    final Color activeColor = Theme.of(context).primaryColor;
 
     return GestureDetector(
       onTap: () => _onSidebarItemSelected(index),
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? Theme.of(context).cardColor : Colors.transparent,
           border: isSelected 
-              ? const Border(left: BorderSide(color: activeColor, width: 4))
-              : const Border(bottom: BorderSide(color: Colors.white30, width: 1)),
+              ? Border(left: BorderSide(color: activeColor, width: 4))
+              : Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5), width: 1)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -546,7 +546,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
               height: 40, width: 40, 
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFE8F5E9) : Colors.white.withOpacity(0.3),
+                color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).dividerColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: ClipOval(
@@ -554,7 +554,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                     ? ImageView(url: imgUrl, fit: BoxFit.cover) 
                     : Icon(
                         _categoryIconFor(name), 
-                        color: isSelected ? activeColor : Colors.black54, 
+                        color: isSelected ? activeColor : Theme.of(context).dividerColor, 
                         size: 20
                       ),
               ),
@@ -570,7 +570,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 style: TextStyle(
                   fontSize: 9, 
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: Colors.black87,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
             )

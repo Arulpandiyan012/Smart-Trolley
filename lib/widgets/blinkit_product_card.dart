@@ -69,12 +69,12 @@ class BlinkitProductCard extends StatelessWidget {
           child: Container(
             margin: const EdgeInsets.only(bottom: 12, left: 8, right: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
+              border: Border.all(color: Theme.of(context).dividerColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03), 
+                  color: Theme.of(context).shadowColor.withOpacity(0.05), 
                   blurRadius: 4, 
                   offset: const Offset(0, 2)
                 ),
@@ -139,15 +139,15 @@ class BlinkitProductCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF4F6F8),
+                                color: Theme.of(context).dividerColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(Icons.timer_outlined, size: 10, color: Colors.black54),
-                                  SizedBox(width: 3),
-                                  Text("12 MINS", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
+                                children: [
+                                  Icon(Icons.timer_outlined, size: 10, color: Theme.of(context).textTheme.bodySmall?.color),
+                                  const SizedBox(width: 3),
+                                  Text("12 MINS", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodySmall?.color)),
                                 ],
                               ),
                             ),
@@ -158,11 +158,11 @@ class BlinkitProductCard extends StatelessWidget {
                               data?.name ?? "",
                               maxLines: 2, 
                               overflow: TextOverflow.ellipsis, 
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600, 
                                 fontSize: 13, 
                                 height: 1.2,
-                                color: Colors.black87
+                                color: Theme.of(context).textTheme.titleSmall?.color
                               )
                             ),
                             const SizedBox(height: 4),
@@ -170,7 +170,7 @@ class BlinkitProductCard extends StatelessWidget {
                             // Unit
                             Text(
                               "1 Unit", 
-                              style: TextStyle(color: Colors.grey[500], fontSize: 11)
+                              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11)
                             ),
                             
                             const SizedBox(height: 12), 
@@ -192,9 +192,9 @@ class BlinkitProductCard extends StatelessWidget {
                                           alignment: Alignment.centerLeft,
                                           child: Text(
                                             originalPrice, 
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               decoration: TextDecoration.lineThrough,
-                                              color: Colors.grey,
+                                              color: Theme.of(context).dividerColor,
                                               fontSize: 11,
                                             )
                                           ),
@@ -205,10 +205,10 @@ class BlinkitProductCard extends StatelessWidget {
                                         alignment: Alignment.centerLeft,
                                         child: Text(
                                           sellingPrice, 
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w700, 
                                             fontSize: 14, 
-                                            color: Colors.black
+                                            color: Theme.of(context).textTheme.titleMedium?.color
                                           )
                                         ),
                                       ),
