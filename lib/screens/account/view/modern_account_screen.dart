@@ -9,6 +9,7 @@ import 'package:bagisto_app_demo/data_model/app_route_arguments.dart';
 import 'package:bagisto_app_demo/utils/assets_constants.dart';
 import 'package:provider/provider.dart';
 import 'package:bagisto_app_demo/utils/theme_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ModernAccountScreen extends StatefulWidget {
   const ModernAccountScreen({super.key});
@@ -96,20 +97,22 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
                     [
                       _buildListTile(Icons.language_outlined, "Language", () => Navigator.pushNamed(context, languageScreen)),
                       _buildListTile(Icons.currency_exchange_outlined, "Currency", () => Navigator.pushNamed(context, currencyScreen)),
-                      _buildListTile(Icons.share_outlined, "Share the app", () {}),
+                      _buildListTile(Icons.payment_outlined, "Payment settings", () => Navigator.pushNamed(context, paymentSettings)),
+                      _buildListTile(Icons.share_outlined, "Share the app", () => _shareApp()),
                       _buildListTile(Icons.info_outline, "About us", () => Navigator.pushNamed(context, cmsScreen, arguments: CmsDataContent(title: "About Us", id: 1, index: 0))),
                       _buildListTile(Icons.contact_support_outlined, "Contact us", () => Navigator.pushNamed(context, contactUsScreen)),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildSectionGroup(
-                    "Account Actions",
-                    [
-                      _buildListTile(Icons.lock_outline, "Account privacy", () {}),
-                      _buildListTile(Icons.notifications_none_outlined, "Notification preferences", () {}),
-                      _buildListTile(Icons.power_settings_new_outlined, "Log out", () => _showLogoutDialog()),
-                    ],
-                  ),
+                  if (isLoggedIn)
+                    _buildSectionGroup(
+                      "Account Actions",
+                      [
+                        _buildListTile(Icons.lock_outline, "Account privacy", () {}),
+                        _buildListTile(Icons.notifications_none_outlined, "Notification preferences", () {}),
+                        _buildListTile(Icons.power_settings_new_outlined, "Log out", () => _showLogoutDialog()),
+                      ],
+                    ),
                   const SizedBox(height: 40),
                   _buildFooter(),
                   const SizedBox(height: 40),
@@ -174,7 +177,7 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    isLoggedIn ? (name ?? "User") : "Guest",
+                    isLoggedIn ? (name ?? "User") : "Welcome to Smart Trolley",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22, 
@@ -182,18 +185,28 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
                       color: Theme.of(context).textTheme.titleLarge?.color
                     ),
                   ),
+                  const SizedBox(height: 8),
                   if (isLoggedIn && (phone?.isNotEmpty == true || email?.isNotEmpty == true))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        phone ?? email ?? "",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13, 
-                          color: Theme.of(context).textTheme.bodySmall?.color, 
-                          fontWeight: FontWeight.w500
-                        ),
+                    Text(
+                      phone ?? email ?? "",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13, 
+                        color: Theme.of(context).textTheme.bodySmall?.color, 
+                        fontWeight: FontWeight.w500
                       ),
+                    )
+                  else if (!isLoggedIn)
+                    ElevatedButton(
+                      onPressed: () => Navigator.pushNamed(context, signIn),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: const Text("LOGIN / SIGN UP", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                 ],
               ),
@@ -457,7 +470,14 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
 
   Widget _buildListTile(IconData icon, String label, VoidCallback onTap) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        if (!isLoggedIn && (label.contains("Address") || label.contains("Dashboard") || label.contains("reviews") || label.contains("wishlist") || label.contains("orders"))) {
+           ShowMessage.warningNotification("Please login to access $label", context);
+           Navigator.pushNamed(context, signIn);
+        } else {
+           onTap();
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -520,5 +540,13 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
     GlobalData.profileUpdateStream.add({});
     GlobalData.optimisticClearCart();
     Navigator.of(context).pushNamedAndRemoveUntil(home, (route) => false);
+  }
+
+  void _shareApp() {
+    const String appLink = "https://play.google.com/store/apps/details?id=com.thesmartedgetech.smarttrolley"; // Replace with your actual app link
+    Share.share(
+      "Check out Smart Trolley for amazing deals on groceries and more! Download here: $appLink",
+      subject: "Download Smart Trolley App",
+    );
   }
 }

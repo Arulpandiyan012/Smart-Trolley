@@ -24,6 +24,7 @@ import 'reach_top.dart';
 import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments, categoryScreen;
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:cached_network_image/cached_network_image.dart'; 
 
 String _catLabel(dynamic cat) {
   try { final v = (cat as dynamic).name;  if (v is String && v.trim().isNotEmpty) return v.trim(); } catch (_) {}
@@ -695,12 +696,13 @@ class _HomePageViewState extends State<HomePageView> {
     if (bannerUrls.isEmpty) return _bannerFallback();
 
     if (bannerUrls.length == 1) {
-      return Image.network(
-        bannerUrls.first,
+      return CachedNetworkImage(
+        imageUrl: bannerUrls.first,
         height: 80, 
         width: double.infinity,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _bannerFallback(),
+        placeholder: (_, __) => _bannerFallback(),
+        errorWidget: (_, __, ___) => _bannerFallback(),
       );
     }
 
@@ -885,7 +887,7 @@ class _BannerCarouselState extends State<_BannerCarousel> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+    _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
       if (_currentPage < widget.imageUrls.length - 1) {
         _currentPage++;
       } else {
@@ -895,11 +897,19 @@ class _BannerCarouselState extends State<_BannerCarousel> {
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           _currentPage,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeIn,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
         );
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (var url in widget.imageUrls) {
+      precacheImage(CachedNetworkImageProvider(url), context);
+    }
   }
 
   @override
@@ -924,11 +934,15 @@ class _BannerCarouselState extends State<_BannerCarousel> {
               setState(() => _currentPage = page);
             },
             itemBuilder: (context, index) {
-              return Image.network(
-                widget.imageUrls[index],
+              return CachedNetworkImage(
+                imageUrl: widget.imageUrls[index],
                 fit: BoxFit.cover,
                 width: double.infinity,
-                errorBuilder: (c, o, s) => Container(color: Colors.grey[200]),
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[100],
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+                errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
               );
             },
           ),

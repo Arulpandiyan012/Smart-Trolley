@@ -44,6 +44,7 @@ const String languageScreen = "languageScreen";
 const String contactUsScreen = "contactUsScreen";
 const String otpExplanation = "otpExplanation";
 const String modernAccount = "modernAccount";
+const String paymentSettings = "paymentSettings";
 
 
 
