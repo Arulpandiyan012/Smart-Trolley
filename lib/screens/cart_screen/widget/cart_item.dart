@@ -211,6 +211,11 @@ class CartListItem extends StatelessWidget {
 
   // --- Helper to update quantity immediately ---
   void _updateQty(var item, int newQty) {
+    // 🟠 OPTIMISTIC UPDATE
+    int pid = int.tryParse(item?.product?.id ?? "0") ?? 0;
+    int currentQty = item?.quantity ?? 0;
+    GlobalData.optimisticUpdateCart(pid, newQty - currentQty);
+
     // 1. Create payload
     List<Map<dynamic, String>> updateItem = [{
       "cartItemId": item?.id.toString() ?? "",
@@ -252,8 +257,15 @@ class CartListItem extends StatelessWidget {
             TextButton(
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pop();
+                  
+                  // 🟠 OPTIMISTIC REMOVE
+                  var item = cartDetailsModel.items?[itemIndex];
+                  int pid = int.tryParse(item?.product?.id ?? "0") ?? 0;
+                  int qty = item?.quantity ?? 0;
+                  GlobalData.optimisticUpdateCart(pid, -qty);
+
                   cartScreenBloc?.add(RemoveCartItemEvent(
-                      cartItemId: int.tryParse(cartDetailsModel.items?[itemIndex].id ?? "") ?? 0));
+                      cartItemId: int.tryParse(item?.id ?? "") ?? 0));
                 },
                 child: Text(StringConstants.yes.localized(), style: const TextStyle(color: Colors.red)))
           ],

@@ -219,9 +219,9 @@ class _CartScreenState extends State<CartScreen> {
         if (state is RemoveAllCartItemState) {
           if (state.status == CartStatus.success) {
             _cartDetailsModel = null; // 🟢 Force clear UI
-            GlobalData.cartCountController.sink.add(0);
+            GlobalData.optimisticClearCart(); // 🟢 SYNC ALL SCREENS
             setState(() {});
-            ShowMessage.successNotification(state.limitMsg ?? "Cart cleared", context); // 🟢 Uses your new field
+            ShowMessage.successNotification(state.limitMsg ?? "Cart cleared", context); 
           } else if (state.status == CartStatus.fail) {
             ShowMessage.errorNotification(state.error ?? "", context);
           }

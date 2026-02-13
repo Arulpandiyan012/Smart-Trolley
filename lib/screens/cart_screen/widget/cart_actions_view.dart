@@ -88,6 +88,7 @@ class CartActionsView extends StatelessWidget {
             TextButton(
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pop();
+                  GlobalData.optimisticClearCart(); // 🟠 INSTANT UI RESET
                   cartScreenBloc?.add(RemoveAllCartItemEvent());
                 },
                 child: Text(

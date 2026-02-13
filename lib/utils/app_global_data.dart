@@ -115,4 +115,11 @@ class GlobalData {
     
     debugPrint("⚡ OPTIMISTIC CART UPDATE: pid=$pid, delta=$delta, newQty=$newQty");
   }
+
+  // 🟢 NEW: Clear Cart instantly
+  static void optimisticClearCart() {
+    cartCountController.add(0);
+    cartItemsController.add({});
+    debugPrint("⚡ OPTIMISTIC CART CLEAR");
+  }
 }
