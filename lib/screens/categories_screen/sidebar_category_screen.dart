@@ -583,7 +583,9 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                   fontSize: 10, 
                   height: 1.2,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.black87 : (Theme.of(context).brightness == Brightness.light ? Colors.black54 : Theme.of(context).textTheme.bodySmall?.color), 
+                  color: isSelected 
+                      ? (Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white)
+                      : (Theme.of(context).brightness == Brightness.light ? Colors.black54 : Theme.of(context).textTheme.bodySmall?.color), 
                 ),
               ),
             )
