@@ -99,29 +99,80 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
   
-  // Extract Categories from GlobalData to simple list
-  List<Map<String, String>> _getCategoryOptions() {
-      final List<Map<String, String>> options = [];
-      try {
-         final cats = GlobalData.categoriesDrawerData?.data ?? [];
-         for(var c in cats) {
-            String name = c.name ?? "Cat";
-            String id = c.id ?? "0";
-            options.add({"id": id, "name": name});
-            // Children
-            if (c.children != null) {
-               for (var child in c.children!) {
-                   options.add({"id": child.id ?? "0", "name": "-- ${child.name}"});
+  List<Map<String, dynamic>> _categories = []; // 🟢 Local State
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories(); // 🟢 Fetch on Init
+  }
+
+  // Fetch Categories Directly from Vendor API
+  Future<void> _fetchCategories() async {
+     try {
+        final resp = await Dio().post(_apiUrl, data: {"action": "get_categories"});
+        if (resp.data['success'] == true) {
+           setState(() {
+              _categories = List<Map<String, dynamic>>.from(resp.data['data']);
+           });
+        }
+     } catch(e) {
+        print("Error fetching categories: $e");
+     }
+  }
+
+  // Add Category Dialog
+  Future<void> _showAddCategoryDialog() async {
+    final TextEditingController _catNameCtrl = TextEditingController();
+    
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add New Category"),
+        content: TextField(
+          controller: _catNameCtrl,
+          decoration: const InputDecoration(hintText: "Category Name (e.g. Dairy)"),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+               if (_catNameCtrl.text.isEmpty) return;
+               Navigator.pop(context); // Close dialog
+               
+               setState(() => _isLoading = true);
+               try {
+                  final resp = await Dio().post(_apiUrl, data: {
+                    "action": "add_category",
+                    "name": _catNameCtrl.text
+                  });
+                  
+                  if (resp.data['success'] == true) {
+                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                       content: Text("Category Added! Updating list..."),
+                       backgroundColor: Colors.green
+                     ));
+                     // 🟢 REFRESH LIST INSTANTLY
+                     await _fetchCategories();
+                  } else {
+                     throw resp.data['message'];
+                  }
+               } catch(e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed: $e"), backgroundColor: Colors.red));
+               } finally {
+                  setState(() => _isLoading = false);
                }
-            }
-         }
-      } catch (_) {}
-      return options;
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B)),
+            child: const Text("Add", style: TextStyle(color: Colors.white)),
+          )
+        ],
+      )
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = _getCategoryOptions();
 
     return Scaffold(
       appBar: AppBar(
@@ -191,20 +242,31 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 16),
 
-              DropdownButtonFormField<String>(
-                isExpanded: true, // 🟢 Fix Overflow
-                decoration: const InputDecoration(labelText: "Category", border: OutlineInputBorder()),
-                value: _selectedCategoryId,
-                items: categories.map((c) => DropdownMenuItem(
-                  value: c['id'], 
-                  child: Text(
-                    c['name']!, 
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: "Category", border: OutlineInputBorder()),
+                      value: _selectedCategoryId,
+                      items: _categories.map((c) => DropdownMenuItem(
+                        value: c['id'].toString(), 
+                        child: Text(
+                          c['name']!, 
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        )
+                      )).toList(),
+                      onChanged: (v) => setState(() => _selectedCategoryId = v),
+                      hint: const Text("Select Category"),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle, color: Color(0xFF27C16B), size: 32),
+                    tooltip: "Add New Category",
+                    onPressed: _showAddCategoryDialog,
                   )
-                )).toList(),
-                onChanged: (v) => setState(() => _selectedCategoryId = v),
-                hint: const Text("Select Category"),
+                ],
               ),
               const SizedBox(height: 16),
 

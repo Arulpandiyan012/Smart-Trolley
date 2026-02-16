@@ -177,6 +177,15 @@ class SharedPreferenceHelper {
     return configurationStorage.read("customerGender") ?? "";
   }
 
+  // 🟢 Newsletter Persistence
+  setCustomerNewsletter(bool isSubscribed) {
+    configurationStorage.write("customerNewsletter", isSubscribed);
+  }
+
+  bool getCustomerNewsletter() {
+    return configurationStorage.read("customerNewsletter") ?? false;
+  }
+
   bool getCustomerLoggedIn() {
     return configurationStorage.read(customerLoggedIn) ?? false;
   }
