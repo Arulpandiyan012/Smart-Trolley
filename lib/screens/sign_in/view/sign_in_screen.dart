@@ -27,6 +27,7 @@ class _SignInScreenState extends State<SignInScreen> {
   bool isLoggingIn = false; 
   String? verificationId;
   String _countryCode = '+91';
+  bool isButtonPressed = false; 
 
   // --- IMAGE ASSETS FOR 4 ROWS ---
   
@@ -292,20 +293,42 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 16),
 
-                    // 4. BUTTON
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: otpSent ? Colors.black : Colors.grey, 
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
+                    // 4. TRENDY BUTTON
+                    GestureDetector(
+                      onTapDown: (_) => setState(() => isButtonPressed = true),
+                      onTapUp: (_) => setState(() => isButtonPressed = false),
+                      onTapCancel: () => setState(() => isButtonPressed = false),
+                      onTap: isLoggingIn ? null : _onSubmit,
+                      child: AnimatedScale(
+                        scale: isButtonPressed ? 0.96 : 1.0,
+                        duration: const Duration(milliseconds: 100),
+                        child: Container(
+                          width: double.infinity,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF2E7D32), Color(0xFF27C16B)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF27C16B).withOpacity(0.3),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: isLoggingIn 
+                              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)) 
+                              : Text(
+                                  otpSent ? "Verify & Login" : "Continue", 
+                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)
+                                ),
+                          ),
                         ),
-                        onPressed: isLoggingIn ? null : _onSubmit,
-                        child: isLoggingIn 
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                          : Text(otpSent ? "Verify & Login" : "Continue", style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
                     
