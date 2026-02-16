@@ -6,6 +6,7 @@ import 'package:bagisto_app_demo/screens/home_page/home_page.dart';
 import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_screen.dart'; 
 import 'package:bagisto_app_demo/screens/orders/screen/order_list.dart'; 
 import 'package:bagisto_app_demo/screens/dashboard/view/dashboard.dart'; 
+import 'package:bagisto_app_demo/screens/account/view/modern_account_screen.dart'; 
 // 🟢 NEW: Import Cart Screen & Logic
 import 'package:bagisto_app_demo/screens/cart_screen/cart_screen.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart'; 
@@ -52,7 +53,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
     ),
 
     // 4: Profile
-    const DashboardScreen(),
+    ModernAccountScreen(),
   ];
 
   void _onTabTapped(int index) {

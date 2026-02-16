@@ -32,10 +32,10 @@ class BlinkitBottomCartBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -55,9 +55,9 @@ class BlinkitBottomCartBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7FFF9),
+                color: Theme.of(context).primaryColor.withOpacity(0.05),
                 border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200),
+                  bottom: BorderSide(color: Theme.of(context).dividerColor),
                 ),
                  borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
@@ -69,11 +69,11 @@ class BlinkitBottomCartBar extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF27C16B).withOpacity(0.3)),
+                      border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
                     ),
-                    child: const Icon(Icons.home_filled, color: Color(0xFF27C16B), size: 16),
+                    child: Icon(Icons.home_filled, color: Theme.of(context).primaryColor, size: 16),
                   ),
                   const SizedBox(width: 12),
                   
@@ -88,21 +88,21 @@ class BlinkitBottomCartBar extends StatelessWidget {
                                 title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: Colors.black87
+                                  color: Theme.of(context).textTheme.titleSmall?.color
                                 ),
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.black54)
+                            Icon(Icons.keyboard_arrow_down, size: 16, color: Theme.of(context).textTheme.bodySmall?.color)
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
                           currentAddress ?? "Select an address",
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -116,14 +116,14 @@ class BlinkitBottomCartBar extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF27C16B)),
+                        border: Border.all(color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(6),
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                       ),
-                      child: const Text(
+                      child: Text(
                         "CHANGE",
                         style: TextStyle(
-                          color: Color(0xFF27C16B),
+                          color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 10,
                         ),
@@ -144,16 +144,16 @@ class BlinkitBottomCartBar extends StatelessWidget {
                     children: [
                       Text(
                         cartDetailsModel.formattedPrice?.grandTotal.toString() ?? "",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
-                          color: Colors.black87
+                          color: Theme.of(context).textTheme.titleLarge?.color
                         ),
                       ),
                       Text(
                         "TOTAL PAYABLE",
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -167,7 +167,7 @@ class BlinkitBottomCartBar extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: onProceedTap,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF27C16B),
+                          backgroundColor: Theme.of(context).primaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

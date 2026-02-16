@@ -66,9 +66,20 @@ class _DashboardScreenState extends State<DashboardScreen>
         backgroundColor: Colors.white, // Clean white background
         // 🟢 Remove Header Title as requested
         appBar: AppBar(
-          toolbarHeight: 0, 
           elevation: 0,
           backgroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: const Text(
+            "Account Dashboard",
+            style: TextStyle(
+              color: Colors.black87, 
+              fontSize: 18, 
+              fontWeight: FontWeight.bold
+            ),
+          ),
         ),
         body: dashboardView(),
       ),

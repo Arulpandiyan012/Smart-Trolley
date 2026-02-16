@@ -24,6 +24,7 @@ import 'reach_top.dart';
 import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments, categoryScreen;
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:cached_network_image/cached_network_image.dart'; 
 
 String _catLabel(dynamic cat) {
   try { final v = (cat as dynamic).name;  if (v is String && v.trim().isNotEmpty) return v.trim(); } catch (_) {}
@@ -108,12 +109,12 @@ IconData _categoryIconFor(String name) {
   if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return Icons.set_meal_outlined;
   if (n.contains('baby') || n.contains('child') || n.contains('diaper')) return Icons.child_care_outlined;
   if (n.contains('care') || n.contains('beauty') || n.contains('face') || n.contains('personal')) return Icons.face_retouching_natural_outlined;
-  if (n.contains('kitchen')) return Icons.kitchen_outlined;
+  if (n.contains('kitchen')) return Icons.flatware_outlined;
   if (n.contains('home') || n.contains('clean') || n.contains('household')) return Icons.cleaning_services_outlined;
   if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return Icons.pets_outlined;
   if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined; 
   if (n.contains('spice') || n.contains('masala') || n.contains('powder')) return Icons.flare_outlined;
-  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.shopping_basket_outlined;
+  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.local_grocery_store_outlined;
 
   return Icons.category_outlined;
 }
@@ -383,13 +384,13 @@ class _HomePageViewState extends State<HomePageView> {
       },
       builder: (context, state) {
         return ColoredBox(
-          color: const Color(0xFFC8E6C9), 
+          color: Theme.of(context).scaffoldBackgroundColor, 
           child: SafeArea(
             top: false,
             child: Stack(
               children: [
                 RefreshIndicator(
-                  color: const Color(0xFF27C16B),
+                  color: Theme.of(context).primaryColor,
                   onRefresh: () async {
                      widget.homePageBloc?.add(FetchHomeCustomData());
                      widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
@@ -416,40 +417,39 @@ class _HomePageViewState extends State<HomePageView> {
                     ),
 
                     // 🟢 NEW: Trendy 2-Row Category Grid
-                    if (cats.isNotEmpty)
-                      SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                              child: Text(
-                                "Shop by Category",
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Roboto',
-                                  color: Colors.black,
-                                  letterSpacing: -0.2,
-                                ),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                            child: Text(
+                              "Shop by Category",
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Roboto',
+                                color: Theme.of(context).textTheme.titleMedium?.color,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                            BlinkitCategoryGrid(
-                              categories: cats.map((cat) => {
-                                'title': _catLabel(cat),
-                                'image': _catBannerUrl(cat).isNotEmpty ? _catBannerUrl(cat) : _catBannerUrl(cat), // Backend mapping
-                                'slug': _catSlug(cat),
-                                'icon': _categoryIconFor(_catLabel(cat)),
-                                'cat': cat // Keep original for navigation
-                              }).toList(),
-                              onTap: (slug, title) {
-                                // Recursive search via _handleSeeAll to support all category depths
-                                _handleSeeAll(title);
-                              },
-                            ),
-                          ],
-                        ),
+                          ),
+                          BlinkitCategoryGrid(
+                            categories: cats.map((cat) => {
+                              'title': _catLabel(cat),
+                              'image': _catBannerUrl(cat).isNotEmpty ? _catBannerUrl(cat) : _catBannerUrl(cat), // Backend mapping
+                              'slug': _catSlug(cat),
+                              'icon': _categoryIconFor(_catLabel(cat)),
+                              'cat': cat // Keep original for navigation
+                            }).toList(),
+                            onTap: (slug, title) {
+                              // Recursive search via _handleSeeAll to support all category depths
+                              _handleSeeAll(title);
+                            },
+                          ),
+                        ],
                       ),
+                    ),
 
                     for (final s in sections) ...[
                       SliverToBoxAdapter(
@@ -460,11 +460,11 @@ class _HomePageViewState extends State<HomePageView> {
                               Expanded(
                                 child: Text(
                                   s.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Roboto', 
-                                    color: Colors.black,
+                                    color: Theme.of(context).textTheme.titleMedium?.color,
                                     letterSpacing: -0.2,
                                   ),
                                 ),
@@ -695,12 +695,13 @@ class _HomePageViewState extends State<HomePageView> {
     if (bannerUrls.isEmpty) return _bannerFallback();
 
     if (bannerUrls.length == 1) {
-      return Image.network(
-        bannerUrls.first,
+      return CachedNetworkImage(
+        imageUrl: bannerUrls.first,
         height: 80, 
         width: double.infinity,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _bannerFallback(),
+        placeholder: (_, __) => _bannerFallback(),
+        errorWidget: (_, __, ___) => _bannerFallback(),
       );
     }
 
@@ -885,7 +886,7 @@ class _BannerCarouselState extends State<_BannerCarousel> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+    _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
       if (_currentPage < widget.imageUrls.length - 1) {
         _currentPage++;
       } else {
@@ -895,11 +896,19 @@ class _BannerCarouselState extends State<_BannerCarousel> {
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           _currentPage,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeIn,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
         );
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (var url in widget.imageUrls) {
+      precacheImage(CachedNetworkImageProvider(url), context);
+    }
   }
 
   @override
@@ -924,11 +933,15 @@ class _BannerCarouselState extends State<_BannerCarousel> {
               setState(() => _currentPage = page);
             },
             itemBuilder: (context, index) {
-              return Image.network(
-                widget.imageUrls[index],
+              return CachedNetworkImage(
+                imageUrl: widget.imageUrls[index],
                 fit: BoxFit.cover,
                 width: double.infinity,
-                errorBuilder: (c, o, s) => Container(color: Colors.grey[200]),
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[100],
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+                errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
               );
             },
           ),

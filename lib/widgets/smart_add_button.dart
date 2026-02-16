@@ -24,13 +24,13 @@ class SmartAddButton extends StatelessWidget {
         height: 32, width: 75,
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFF27C16B)),
         ),
         child: const SizedBox(
             height: 14, 
             width: 14, 
-            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF27C16B))
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
         ),
       );
     }
@@ -43,19 +43,23 @@ class SmartAddButton extends StatelessWidget {
           height: 32, width: 75,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).primaryColor,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFF27C16B)),
             boxShadow: [
-              BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 2, offset: const Offset(0, 1))
+              BoxShadow(
+                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
             ],
           ),
           child: const Text(
               "ADD", 
               style: TextStyle(
-                  color: Color(0xFF27C16B), 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 13
+                  color: Colors.white, 
+                  fontWeight: FontWeight.w900, 
+                  fontSize: 13,
+                  letterSpacing: 0.5
               )
           ),
         ),
@@ -66,8 +70,15 @@ class SmartAddButton extends StatelessWidget {
     return Container(
       height: 32, width: 85,
       decoration: BoxDecoration(
-        color: const Color(0xFF27C16B),
+        color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.circular(6),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

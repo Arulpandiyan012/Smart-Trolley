@@ -253,27 +253,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) => buildView(context);
 
-  Widget _drawerData(BuildContext context) {
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: DrawerListView(
-        isLoggedIn: isLoggedIn,
-        customerUserName: customerUserName ?? "Guest",
-        image: image,
-        customerLanguage: customerLanguage,
-        customerCurrency: customerCurrency ?? "",
-        customerDetails: customerDetails,
-        currencyLanguageList: currencyLanguageList,
-        loginCallback: (isLogged) {
-          setState(() {
-             isLoggedIn = isLogged;
-             _fetchSharedPreferenceData(); 
-          });
-        },
-      ),
-    );
-  }
-
   Widget buildView(BuildContext context) {
     return BlocConsumer<HomePageBloc, HomePageBaseState>(
       listener: (context, state) {
@@ -334,7 +313,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget buildContainer(BuildContext context) {
     return Scaffold(
         backgroundColor: const Color(0xFFF8F8F8),
-        endDrawer: _drawerData(context),
 
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(130), // Slightly reduced height
@@ -414,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Profile Icon (Blinkit style is minimal, usually just profile icon)
                         Builder(
                           builder: (ctx) => InkWell(
-                            onTap: () => Scaffold.of(ctx).openEndDrawer(),
+                            onTap: () => Navigator.pushNamed(context, modernAccount),
                             child: Container(
                               height: 38, width: 38,
                               decoration: BoxDecoration(

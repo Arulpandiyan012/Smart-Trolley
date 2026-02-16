@@ -83,7 +83,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: CommonAppBar(widget.title ?? ""),
         body: _setSubCategoryData(context));
   }
@@ -232,8 +232,8 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
           Container(
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              color: Theme.of(context).cardColor,
+              border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
             ),
             child: Row(
               children: [
@@ -243,23 +243,23 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.swap_vert, size: 18, color: Colors.black54),
+                        Icon(Icons.swap_vert, size: 18, color: Theme.of(context).textTheme.bodySmall?.color),
                         const SizedBox(width: 6),
-                        const Text("Sort", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text("Sort", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color)),
                       ],
                     ),
                   ),
                 ),
-                Container(width: 1, height: 24, color: Colors.grey[300]),
+                Container(width: 1, height: 24, color: Theme.of(context).dividerColor),
                 Expanded(
                   child: InkWell(
                     onTap: () => _openFilterScreen(),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.tune, size: 18, color: Colors.black54),
+                        Icon(Icons.tune, size: 18, color: Theme.of(context).textTheme.bodySmall?.color),
                         const SizedBox(width: 6),
-                        const Text("Filters", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text("Filters", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color)),
                       ],
                     ),
                   ),

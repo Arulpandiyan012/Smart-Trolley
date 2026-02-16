@@ -13,6 +13,8 @@ import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart'
 import 'package:bagisto_app_demo/screens/account/bloc/account_info_bloc.dart';
 import 'package:bagisto_app_demo/screens/account/bloc/account_info_repository.dart';
 import 'package:bagisto_app_demo/screens/account/view/account_screen.dart';
+import 'package:bagisto_app_demo/screens/account/view/modern_account_screen.dart';
+import 'package:bagisto_app_demo/screens/account/view/payment_settings_screen.dart';
 import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_bloc.dart';
 import 'package:bagisto_app_demo/screens/add_edit_address/bloc/add_edit_address_repository.dart';
 import 'package:bagisto_app_demo/screens/address_list/bloc/address_bloc.dart';
@@ -390,6 +392,12 @@ case checkoutScreen:
       return MaterialPageRoute(
         builder: (_) => const OtpExplanationScreen(),
       );
+    
+    case modernAccount:
+      return MaterialPageRoute(builder: (_) => ModernAccountScreen());
+      
+    case paymentSettings:
+      return MaterialPageRoute(builder: (_) => const PaymentSettingsScreen());
 
     default:
       return MaterialPageRoute(
