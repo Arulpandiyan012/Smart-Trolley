@@ -165,7 +165,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen>
           builder: (BuildContext context) {
             return Dialog(
               child: Container(
-                color: Theme.of(context).colorScheme.background,
+                color: Theme.of(context).cardColor,
                 padding: const EdgeInsets.all(
                   AppSizes.spacingWide,
                 ),

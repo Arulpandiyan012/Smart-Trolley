@@ -464,9 +464,17 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
   }
 
   Widget _buildFooter() {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
-        Image.asset(AssetConstants.placeHolder, height: 40, color: Theme.of(context).dividerColor), // Blinkit grey logo
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Image.asset(AssetConstants.placeHolder, height: isDark ? 40 : 50),
+        ),
         const SizedBox(height: 8),
         Text(
           "v1.0.0",

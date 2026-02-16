@@ -79,7 +79,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true, 
       body: Stack(
         children: [
@@ -92,7 +92,7 @@ class _SignInScreenState extends State<SignInScreen> {
             right: 0,
             height: screenHeight * 0.70, // 70% Height
             child: Container(
-              color: const Color(0xFFFDFDFD), 
+              color: Theme.of(context).scaffoldBackgroundColor, 
               child: Stack(
                 children: [
                   Column(
@@ -152,8 +152,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withOpacity(0.0),
-                            Colors.white, 
+                            Theme.of(context).scaffoldBackgroundColor.withOpacity(0.0),
+                            Theme.of(context).scaffoldBackgroundColor, 
                           ],
                         ),
                       ),
@@ -175,13 +175,13 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)
                   ]
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+                child: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color, size: 24),
               ),
             ),
           ),
@@ -193,9 +193,9 @@ class _SignInScreenState extends State<SignInScreen> {
             alignment: Alignment.bottomCenter,
             child: Container(
               width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.white, blurRadius: 30, spreadRadius: 20, offset: Offset(0, -20))],
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [BoxShadow(color: Theme.of(context).scaffoldBackgroundColor, blurRadius: 30, spreadRadius: 20, offset: const Offset(0, -20))],
               ),
               padding: const EdgeInsets.only(left: 24, right: 24, bottom: 20, top: 10),
               child: SafeArea(
@@ -210,9 +210,13 @@ class _SignInScreenState extends State<SignInScreen> {
                     Center(
                       child: Container(
                         padding: const EdgeInsets.all(12), 
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE8F5E9), // Light Green
+                        decoration: BoxDecoration(
+                          color: Colors.white, 
                           shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black.withOpacity(0.08), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 4))
+                          ]
                         ),
                         child: Image.asset(
                           'assets/images/SmartTrolley.png', 
@@ -230,7 +234,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     // 2. HEADLINE
                     Text(
                       otpSent ? "Verification Code" : "Log in or Sign up",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[800], fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.titleSmall?.color, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 20),
 
@@ -240,15 +244,15 @@ class _SignInScreenState extends State<SignInScreen> {
                         height: 50,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!), 
+                          border: Border.all(color: Theme.of(context).dividerColor), 
                         ),
                         child: Row(
                           children: [
-                            const Text("+91", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text("+91", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
                             const SizedBox(width: 12),
-                            Container(width: 1, height: 24, color: Colors.grey[300]),
+                            Container(width: 1, height: 24, color: Theme.of(context).dividerColor),
                             const SizedBox(width: 12),
                             Expanded(
                               child: TextField(
@@ -279,7 +283,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             counterText: "",
                             hintText: "- - - - - -",
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
                             contentPadding: const EdgeInsets.symmetric(vertical: 10),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
@@ -315,7 +319,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: Text(
                         StringConstants.whatIsOtp.localized(),
                         style: TextStyle(
-                          color: Colors.grey[700],
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -327,7 +331,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     Text(
                       "By continuing, you agree to our Terms of Service & Privacy Policy",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6)),
                     ),
                     
                     const SizedBox(height: 10),
@@ -336,7 +340,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       onPressed: () {
                          Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorLoginScreen()));
                       },
-                      child: const Text("Are you a Vendor? Login here", style: TextStyle(color: Colors.blueGrey, fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text("Are you a Vendor? Login here", style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -360,7 +364,9 @@ class _SignInScreenState extends State<SignInScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: bgColor, 
+          color: Theme.of(context).brightness == Brightness.dark 
+            ? Color.alphaBlend(bgColor.withOpacity(0.1), const Color(0xFF1A1A1A)) 
+            : bgColor, 
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

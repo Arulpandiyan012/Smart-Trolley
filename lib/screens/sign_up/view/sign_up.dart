@@ -268,7 +268,7 @@ class _SignUpScreenState extends State<SignUpScreen> with EmailValidator {
                   child: Text(
                     StringConstants.signUpConfirmPasswordWarningMsg.localized(),
                     style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         fontWeight: FontWeight.w500,
                         fontSize: 16.0),
                   ),

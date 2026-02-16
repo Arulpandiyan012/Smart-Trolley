@@ -103,7 +103,7 @@ class BlinkitCategoryGrid extends StatelessWidget {
         final link = cat['link'] ?? '';
         final icon = cat['icon'] as IconData?;
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final bgColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9);
+        final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
         final iconColor = isDark ? const Color(0xFF66BB6A) : const Color(0xFF2E7D32);
 
         return InkWell(
@@ -116,14 +116,20 @@ class BlinkitCategoryGrid extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    color: bgColor, // Theme-aware background
+                    color: bgColor, 
                     boxShadow: [
-                      // Subtle shadow for depth
+                      // --- 3D Depth Shadows ---
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                        spreadRadius: -2,
+                        color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                        spreadRadius: 0,
                       ),
                     ],
                   ),
