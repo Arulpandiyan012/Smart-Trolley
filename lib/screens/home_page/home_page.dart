@@ -397,15 +397,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 38, width: 38,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.grey[100],
+                                color: Colors.white,
+                                border: Border.all(color: Colors.black.withOpacity(0.08), width: 1.2),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))
+                                ],
                               ),
                               child: Center(
                                   child: isLoggedIn && image != null 
                                     ? CircleAvatar(
+                                        backgroundColor: Colors.white,
                                         backgroundImage: ImageView.getImageProvider(image), 
                                         radius: 18
                                       )
-                                    : const Icon(Icons.person, color: Colors.black87, size: 24),
+                                    : Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Image.asset(AssetConstants.placeHolder, fit: BoxFit.contain),
+                                      ),
                               ),
                             ),
                           ),
