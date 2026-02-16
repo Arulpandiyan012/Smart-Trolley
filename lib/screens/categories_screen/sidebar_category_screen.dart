@@ -255,8 +255,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 Container(
                   width: 90, // 🟢 Widened for better Trendy look
                   decoration: BoxDecoration(
-                    color: Theme.of(context).canvasColor, 
-                    border: Border(right: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5))),
+                    color: Theme.of(context).brightness == Brightness.light 
+                        ? const Color(0xFFC1E09C) // Lighter Yellow-ish Green 
+                        : Theme.of(context).canvasColor, 
+                    border: Border(right: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.05))),
                   ),
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -428,7 +430,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                               }
 
                               return Container(
-                                color: Colors.white,
+                                color: Theme.of(context).scaffoldBackgroundColor,
                                 padding: const EdgeInsets.symmetric(horizontal: 8),
                                 child: ListView.builder(
                                   controller: _listController,
@@ -534,52 +536,38 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
       onTap: () => _onSidebarItemSelected(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: isSelected 
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    activeColor.withOpacity(0.95),
-                    activeColor,
-                    activeColor.withOpacity(0.85),
-                  ],
-                )
-              : null,
-          boxShadow: isSelected 
-              ? [
-                  BoxShadow(
-                    color: activeColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ]
+          color: isSelected && Theme.of(context).brightness == Brightness.light
+              ? Colors.white.withOpacity(0.5)
+              : Colors.transparent,
+          borderRadius: BorderRadius.zero,
+          border: isSelected 
+              ? Border(left: BorderSide(color: activeColor, width: 4))
               : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              height: 44, width: 44, 
-              padding: const EdgeInsets.all(2),
+              height: 48, width: 48, 
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.05),
+                color: isSelected 
+                    ? Colors.white 
+                    : (Theme.of(context).brightness == Brightness.light ? const Color(0xFFAAD57B) : Theme.of(context).dividerColor.withOpacity(0.05)),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.white.withOpacity(0.4) : Colors.transparent,
-                  width: 1,
-                ),
+                boxShadow: isSelected 
+                    ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                    : null,
               ),
               child: ClipOval(
                 child: imgUrl.isNotEmpty 
                     ? ImageView(url: imgUrl, fit: BoxFit.cover) 
                     : Icon(
                         _categoryIconFor(name), 
-                        color: isSelected ? Colors.white : Colors.black87, // 🟢 Improved unselected visibility
-                        size: 22
+                        color: isSelected ? activeColor : (Theme.of(context).brightness == Brightness.light ? Colors.green.shade800 : Theme.of(context).textTheme.bodySmall?.color), 
+                        size: 24
                       ),
               ),
             ),
@@ -593,8 +581,9 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 10, 
+                  height: 1.2,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : Colors.black87, // 🟢 Improved unselected visibility
+                  color: isSelected ? Colors.black87 : (Theme.of(context).brightness == Brightness.light ? Colors.black54 : Theme.of(context).textTheme.bodySmall?.color), 
                 ),
               ),
             )

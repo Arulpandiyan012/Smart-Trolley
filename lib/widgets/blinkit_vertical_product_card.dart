@@ -226,8 +226,9 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           return Container(
                             height: 24,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF27C16B),
+                              color: Colors.white.withOpacity(0.9), // Transparent/Frosted
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFF27C16B)), // Green Border
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -235,27 +236,23 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                                 InkWell(
                                   onTap: () {
                                     if (onAddToCart != null) {
-                                      // Logically represent decrement by passing negative or 0
-                                      // But let's check how the parent handles it.
-                                      // We might need a new callback or use id with a flag.
-                                      // For now, let's assume parent might need specific decrement handler.
-                                      onAddToCart?.call(-productId); // 🟢 CONVENTION: Negative ID means decrement
+                                      onAddToCart?.call(-productId); 
                                     }
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 6),
-                                    child: Icon(Icons.remove, color: Colors.white, size: 12),
+                                    child: Icon(Icons.remove, color: Color(0xFF27C16B), size: 12), // Green Icon
                                   ),
                                 ),
                                 Text(
                                   "$currentQty",
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                                  style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold, fontSize: 10), // Green Text
                                 ),
                                 InkWell(
                                   onTap: () => onAddToCart?.call(productId),
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 6),
-                                    child: Icon(Icons.add, color: Colors.white, size: 12),
+                                    child: Icon(Icons.add, color: Color(0xFF27C16B), size: 12), // Green Icon
                                   ),
                                 ),
                               ],
@@ -266,22 +263,20 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                         return InkWell(
                           onTap: () => onAddToCart?.call(productId),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
+                              color: Colors.white.withOpacity(0.9), // Transparent/Frosted
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF27C16B)), // Green Border
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                  color: Colors.black.withOpacity(0.05),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Text(
-                              "ADD",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
-                            ),
+                            child: const Icon(Icons.add, color: Color(0xFF27C16B), size: 18), // Green Icon
                           ),
                         );
                       }

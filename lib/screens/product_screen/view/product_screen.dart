@@ -72,7 +72,7 @@ class _ProductScreenState extends State<ProductScreen> {
     return ScaffoldMessenger(
       key: scaffoldMessengerKey,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5), // Match main theme background
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         
         // 🟢 FIX 1: Use FloatingActionButton for the "View Cart" bar
         // This allows it to float OVER the content (using the SizedBox(100) as padding)

@@ -383,8 +383,9 @@ class _HomePageViewState extends State<HomePageView> {
         }
       },
       builder: (context, state) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return ColoredBox(
-          color: Theme.of(context).scaffoldBackgroundColor, 
+          color: isDark ? const Color(0xFF121212) : const Color(0xFFC8E6CA), // Dark mode: dark grey, Light mode: soft mint green 
           child: SafeArea(
             top: false,
             child: Stack(
@@ -933,15 +934,28 @@ class _BannerCarouselState extends State<_BannerCarousel> {
               setState(() => _currentPage = page);
             },
             itemBuilder: (context, index) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               return CachedNetworkImage(
                 imageUrl: widget.imageUrls[index],
                 fit: BoxFit.cover,
                 width: double.infinity,
                 placeholder: (context, url) => Container(
-                  color: Colors.grey[100],
-                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: isDark ? Colors.white54 : Colors.grey,
+                    ),
+                  ),
                 ),
-                errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
+                errorWidget: (context, url, error) => Container(
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[200],
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: isDark ? Colors.white38 : Colors.grey[400],
+                    size: 32,
+                  ),
+                ),
               );
             },
           ),

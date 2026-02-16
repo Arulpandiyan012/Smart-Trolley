@@ -85,21 +85,26 @@ class _CartScreenState extends State<CartScreen> {
     return ScaffoldMessenger(
       key: scaffoldMessengerKey,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F8),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
           elevation: 0.5,
+          surfaceTintColor: Colors.transparent,
           centerTitle: false,
           automaticallyImplyLeading: false,
           leading: widget.isFromBottomNav 
               ? null 
               : IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
                   onPressed: () => Navigator.pop(context),
                 ),
           title: Text(
             StringConstants.cart.localized(),
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.black, 
+              fontWeight: FontWeight.bold, 
+              fontSize: 18
+            ),
           ),
         ),
         body: _cartScreenData(context),

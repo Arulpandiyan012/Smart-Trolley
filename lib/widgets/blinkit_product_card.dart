@@ -69,12 +69,12 @@ class BlinkitProductCard extends StatelessWidget {
           child: Container(
             margin: const EdgeInsets.only(bottom: 12, left: 8, right: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16), // 🟢 Modern Rounded Corners
-              border: Border.all(color: Colors.grey[100]!),
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(16), 
+              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04), 
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.04), 
                   blurRadius: 8, 
                   offset: const Offset(0, 4)
                 ),
@@ -141,15 +141,28 @@ class BlinkitProductCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF4F6F8),
+                                color: Theme.of(context).brightness == Brightness.dark 
+                                    ? Colors.white10 
+                                    : const Color(0xFFF4F6F8),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(Icons.timer_outlined, size: 10, color: Colors.black54),
-                                  SizedBox(width: 4),
-                                  Text("12 MINS", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.black54)),
+                                children: [
+                                  Icon(
+                                    Icons.timer_outlined, 
+                                    size: 10, 
+                                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "12 MINS", 
+                                    style: TextStyle(
+                                      fontSize: 9, 
+                                      fontWeight: FontWeight.w800, 
+                                      color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
+                                    )
+                                  ),
                                 ],
                               ),
                             ),
@@ -160,12 +173,12 @@ class BlinkitProductCard extends StatelessWidget {
                               data?.name ?? "",
                               maxLines: 2, 
                               overflow: TextOverflow.ellipsis, 
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700, 
                                 fontSize: 13.5, 
                                 height: 1.1,
                                 letterSpacing: -0.2,
-                                color: Colors.black87
+                                color: Theme.of(context).textTheme.titleSmall?.color
                               )
                             ),
                             const SizedBox(height: 4),
@@ -201,15 +214,19 @@ class BlinkitProductCard extends StatelessWidget {
                                           fontFamily: 'Roboto', 
                                           fontWeight: FontWeight.w800, 
                                           fontSize: 14, 
-                                          color: const Color(0xFF1B5E20)
+                                          color: Theme.of(context).brightness == Brightness.dark 
+                                              ? const Color(0xFF81C784) 
+                                              : const Color(0xFF1B5E20)
                                         ),
                                       ),
                                       TextSpan(
                                         text: sellingPrice.replaceAll("₹", "").trim(), 
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w900, 
-                                          fontSize: 17, // 🟢 Bold & Visible
-                                          color: Color(0xFF1B5E20)
+                                          fontSize: 17, 
+                                          color: Theme.of(context).brightness == Brightness.dark 
+                                              ? const Color(0xFF81C784) 
+                                              : const Color(0xFF1B5E20)
                                         )
                                       ),
                                     ],
@@ -293,6 +310,7 @@ class BlinkitProductCard extends StatelessWidget {
                            }
                         },
                         child: _buildIconContainer(
+                          context: context, 
                           icon: (data?.isInWishlist ?? false) ? Icons.favorite : Icons.favorite_border,
                           color: (data?.isInWishlist ?? false) ? Colors.red : Colors.grey[400]!,
                         ),
@@ -308,6 +326,7 @@ class BlinkitProductCard extends StatelessWidget {
                           }
                         },
                         child: _buildIconContainer(
+                          context: context, 
                           icon: Icons.compare_arrows, 
                           color: Colors.grey[400]!,
                         ),
@@ -323,12 +342,12 @@ class BlinkitProductCard extends StatelessWidget {
     );
   }
   
-  Widget _buildIconContainer({required IconData icon, required Color color}) {
+  Widget _buildIconContainer({required BuildContext context, required IconData icon, required Color color}) {
     return Container(
       width: 26,
       height: 26,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -337,7 +356,7 @@ class BlinkitProductCard extends StatelessWidget {
             offset: const Offset(0, 1),
           ),
         ],
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Icon(
         icon,

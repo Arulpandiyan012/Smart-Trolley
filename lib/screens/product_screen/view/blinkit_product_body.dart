@@ -54,7 +54,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
           _buildBlinkitCarousel(), 
           
           Container(
-            color: Colors.white, 
+            color: Theme.of(context).cardColor, 
             width: double.infinity,
             padding: const EdgeInsets.only(bottom: 16),
             child: Column(
@@ -143,7 +143,10 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
               return Image.network(
                 image.url ?? "",
                 fit: BoxFit.cover,
-                errorBuilder: (ctx, _, __) => Container(color: Colors.grey[200], child: const Icon(Icons.broken_image, color: Colors.grey)),
+                errorBuilder: (ctx, _, __) => Container(
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey[200], 
+                  child: Icon(Icons.broken_image, color: Theme.of(context).hintColor)
+                ),
               );
             }).toList(),
           );
@@ -153,7 +156,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
         Container(
           height: 380, 
           width: double.infinity,
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           padding: const EdgeInsets.only(top: 60), 
           child: Column(
             children: [
@@ -263,7 +266,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -273,7 +276,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
             ),
           ],
         ),
-        child: Icon(icon, size: 22, color: color),
+        child: Icon(icon, size: 22, color: color == Colors.black87 ? Theme.of(context).iconTheme.color : color),
       ),
     );
   }
@@ -293,17 +296,25 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F6F8),
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF4F6F8),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.timer_outlined, size: 12, color: Colors.black54),
+              children: [
+                Icon(
+                  Icons.timer_outlined, 
+                  size: 12, 
+                  color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
+                ),
                 SizedBox(width: 4),
                 Text(
                   "12 mins", 
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54)
+                  style: TextStyle(
+                    fontSize: 10, 
+                    fontWeight: FontWeight.bold, 
+                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
+                  )
                 ),
               ],
             ),
@@ -312,10 +323,10 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
 
           Text(
             widget.productData?.name ?? "",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17, 
               fontWeight: FontWeight.w600, 
-              color: Colors.black87,
+              color: Theme.of(context).textTheme.titleLarge?.color,
               height: 1.3,
               fontFamily: 'sans-serif', 
             ),
@@ -339,7 +350,11 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                 children: [
                   Text(
                     finalPrice,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF81C784) : Colors.black
+                    ),
                   ),
                   const Text(
                     "(Inclusive of all taxes)",
@@ -378,7 +393,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
           height: 36, 
           width: 100,
           decoration: BoxDecoration(
-            color: hasItems ? const Color(0xFF27C16B) : Colors.white,
+            color: hasItems ? const Color(0xFF27C16B) : Theme.of(context).cardColor,
             border: Border.all(color: const Color(0xFF27C16B)),
             borderRadius: BorderRadius.circular(8),
           ),
