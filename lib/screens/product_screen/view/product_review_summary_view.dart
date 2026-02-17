@@ -56,12 +56,16 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
     return Theme(
       data:Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        iconColor: Colors.black87, // 🟢 FIX: Visible Icon
-        collapsedIconColor: Colors.black87,
+        iconColor: Theme.of(context).iconTheme.color, // 🟢 Theme-aware
+        collapsedIconColor: Theme.of(context).iconTheme.color,
         tilePadding:const EdgeInsets.symmetric(horizontal: AppSizes.spacingLarge) ,
         title: Text(
           StringConstants.customerRating.localized(),
-          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600, fontSize: AppSizes.spacingLarge),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge?.color, 
+            fontWeight: FontWeight.w700, 
+            fontSize: 18,
+          ),
         ),
         initiallyExpanded: true,
         children: [
@@ -84,7 +88,7 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                                   "${widget.averageRating?.toString() ?? ''} ${StringConstants.star.localized()}",
                                   style: TextStyle(
                                       fontSize: 18,
-                                      color: Colors.grey[800],
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
                                       fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
                               RatingBar(
@@ -99,7 +103,7 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                                   "${widget.review?.length.toString() ?? ''} Reviews",
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     fontSize: 12,
-                                    color: Colors.grey[800] // 🟢 Explicit Color
+                                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
                                   )),
                               const SizedBox(height: 8),
                             ]),
@@ -138,7 +142,7 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                               icon: const Icon(Icons.edit_note, size: 20),
                               label: Text(
                                 StringConstants.writeReview.localized().toUpperCase(), 
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5)
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5)
                               ),
                           ),
                         )),
@@ -169,16 +173,16 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                               size: 14,
                             ),
                             const Spacer(),
-                            Text(item.createdAt ?? "", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            Text(item.createdAt ?? "", style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(item.title ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                        Text(item.title ?? "", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.titleSmall?.color)),
                         const SizedBox(height: 4),
-                        Text(item.comment ?? "", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                        Text(item.comment ?? "", style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color)),
                         const SizedBox(height: 6),
                         Text("${StringConstants.reviewBy.localized()} ${item.customerName ?? item.title ?? 'Guest'}", 
-                            style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6), fontStyle: FontStyle.italic)),
                       ],
                     ),
                   );
@@ -244,16 +248,16 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                                 size: 14,
                               ),
                               const Spacer(),
-                              Text(item.createdAt ?? "", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                              Text(item.createdAt ?? "", style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(item.title ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                          Text(item.title ?? "", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.titleSmall?.color)),
                           const SizedBox(height: 4),
-                          Text(item.comment ?? "", style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                          Text(item.comment ?? "", style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color)),
                           const SizedBox(height: 6),
                           Text("${StringConstants.reviewBy.localized()} ${item.customerName ?? item.title ?? 'Guest'}", 
-                              style: TextStyle(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6), fontStyle: FontStyle.italic)),
                         ],
                       );
                     },

@@ -80,11 +80,9 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
             ),
           ),
           
-          const SizedBox(height: 16), 
-          
           _buildRelatedProductsList(), 
           
-          const SizedBox(height: 100), 
+          const SizedBox(height: 40), 
         ],
       ),
     );
@@ -129,10 +127,10 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
     bool isInWishlist = widget.productData?.isInWishlist ?? false;
     
     Widget imageWidget = images.isEmpty
-        ? Container(height: 280, color: Colors.grey[100])
+        ? Container(height: 320, color: Colors.grey[50]) // 🟢 Slightly taller
         : CarouselSlider(
             options: CarouselOptions(
-              height: 280, 
+              height: 320, // 🟢 Increased height for immersion
               viewportFraction: 1.0,
               enableInfiniteScroll: false,
               onPageChanged: (index, reason) {
@@ -140,12 +138,18 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
               },
             ),
             items: images.map((image) {
-              return Image.network(
-                image.url ?? "",
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, _, __) => Container(
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey[200], 
-                  child: Icon(Icons.broken_image, color: Theme.of(context).hintColor)
+              return Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                ),
+                child: Image.network(
+                  image.url ?? "",
+                  fit: BoxFit.cover, // 🟢 fills entire width to eliminate gaps
+                  errorBuilder: (ctx, _, __) => Container(
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey[100], 
+                    child: Icon(Icons.broken_image, color: Theme.of(context).hintColor)
+                  ),
                 ),
               );
             }).toList(),
@@ -154,30 +158,34 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
     return Stack(
       children: [
         Container(
-          height: 380, 
+          height: 400, // 🟢 Increased to 400
           width: double.infinity,
           color: Theme.of(context).cardColor,
-          padding: const EdgeInsets.only(top: 60), 
+          padding: const EdgeInsets.only(top: 40), 
           child: Column(
             children: [
               imageWidget,
               if (images.length > 1)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: images.asMap().entries.map((entry) {
-                    return Container(
-                      width: 6.0,
-                      height: 6.0,
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 12.0, horizontal: 3.0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _currentImageIndex == entry.key
-                            ? const Color(0xFF27C16B)
-                            : Colors.grey.withOpacity(0.3),
-                      ),
-                    );
-                  }).toList(),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: images.asMap().entries.map((entry) {
+                      bool isCurrent = _currentImageIndex == entry.key;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: isCurrent ? 16.0 : 6.0, // 🟢 Modern pill indicator
+                        height: 6.0,
+                        margin: const EdgeInsets.symmetric(horizontal: 3.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          color: isCurrent
+                              ? const Color(0xFF27C16B)
+                              : Colors.grey.withOpacity(0.3),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
             ],
           ),
@@ -264,19 +272,19 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: Colors.white.withOpacity(0.9), // 🟢 Frosted feel
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              spreadRadius: 1,
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(icon, size: 22, color: color == Colors.black87 ? Theme.of(context).iconTheme.color : color),
+        child: Icon(icon, size: 20, color: color == Colors.black87 ? Colors.black87 : color),
       ),
     );
   }
@@ -294,52 +302,59 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF4F6F8),
-              borderRadius: BorderRadius.circular(6),
+              color: const Color(0xFFF0F9F4), // 🟢 Light vibrant green
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2F3E9)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.timer_outlined, 
-                  size: 12, 
-                  color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
+                  size: 14, 
+                  color: Color(0xFF1B8A4E),
                 ),
-                SizedBox(width: 4),
-                Text(
-                  "12 mins", 
+                const SizedBox(width: 6),
+                const Text(
+                  "12 MINS", 
                   style: TextStyle(
-                    fontSize: 10, 
-                    fontWeight: FontWeight.bold, 
-                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
+                    fontSize: 11, 
+                    fontWeight: FontWeight.w900, 
+                    color: Color(0xFF1B8A4E),
+                    letterSpacing: 0.5,
                   )
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           Text(
             widget.productData?.name ?? "",
             style: TextStyle(
-              fontSize: 17, 
-              fontWeight: FontWeight.w600, 
+              fontSize: 22, // 🟢 Increased hierarchy
+              fontWeight: FontWeight.w800, 
               color: Theme.of(context).textTheme.titleLarge?.color,
-              height: 1.3,
-              fontFamily: 'sans-serif', 
+              height: 1.2,
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           if (widget.productData?.sku != null)
             Text(
               "1 Unit", 
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 14, 
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+                letterSpacing: 0.2,
+              ),
             ),
             
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -390,12 +405,20 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
         bool hasItems = currentQty > 0;
 
         return Container(
-          height: 36, 
-          width: 100,
+          height: 40, 
+          width: 110,
           decoration: BoxDecoration(
-            color: hasItems ? const Color(0xFF27C16B) : Theme.of(context).cardColor,
-            border: Border.all(color: const Color(0xFF27C16B)),
-            borderRadius: BorderRadius.circular(8),
+            color: hasItems ? const Color(0xFF27C16B) : Colors.white,
+            border: Border.all(color: const Color(0xFF27C16B), width: 1.5),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              if (hasItems) 
+                BoxShadow(
+                  color: const Color(0xFF27C16B).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+            ],
           ),
           child: hasItems
               ? Row(
@@ -419,11 +442,11 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                             }
                          }
                       },
-                      child: const Icon(Icons.remove, color: Colors.white, size: 18),
+                      child: const Icon(Icons.remove, color: Colors.white, size: 20),
                     ),
                     Text(
                       "$currentQty",
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
                     ),
                     InkWell(
                       onTap: () {
@@ -437,7 +460,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                             ));
                          }
                       },
-                      child: const Icon(Icons.add, color: Colors.white, size: 18),
+                      child: const Icon(Icons.add, color: Colors.white, size: 20),
                     ),
                   ],
                 )
@@ -446,13 +469,28 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                     // ADD INITIAL (1)
                     _addToCart(); 
                   },
-                  child: const Center(
-                    child: Text(
-                      "ADD",
-                      style: TextStyle(
-                        color: Color(0xFF27C16B),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF27C16B), // 🟢 Solid green for premium feel
+                      borderRadius: BorderRadius.circular(8),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF27C16B),
+                          const Color(0xFF1E9955),
+                        ],
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "ADD",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
@@ -477,25 +515,34 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                 _isDescriptionExpanded = !_isDescriptionExpanded;
               });
             },
-            child: Row(
-              children: [
-                const Text(
-                  "View product details",
-                  style: TextStyle(
-                    color: Color(0xFF27C16B), 
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      "View product details",
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleMedium?.color, 
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  _isDescriptionExpanded 
-                      ? Icons.keyboard_arrow_up 
-                      : Icons.keyboard_arrow_down,
-                  color: const Color(0xFF27C16B),
-                  size: 20,
-                ),
-              ],
+                  Icon(
+                    _isDescriptionExpanded 
+                        ? Icons.keyboard_arrow_up 
+                        : Icons.keyboard_arrow_down,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.6),
+                    size: 24,
+                  ),
+                ],
+              ),
             ),
           ),
           if (_isDescriptionExpanded) ...[
@@ -552,22 +599,30 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Text(
             "Top products in this category",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 18, 
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Roboto',
+              letterSpacing: -0.4,
+            ),
           ),
         ),
         SizedBox(
-          height: 260, // 🟢 Reduced from 320 to 260 for compact layout
+          height: 215, // 🟢 Further reduced to 215 to eliminate bottom white space
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8), // Added bottom padding for card shadow safety
             itemCount: relatedProducts.length,
             itemBuilder: (context, index) {
               var item = relatedProducts[index];
-              return _buildRelatedProductCard(item); 
+              return Padding(
+                padding: const EdgeInsets.only(right: 12), // 🟢 Gap between cards
+                child: _buildRelatedProductCard(item),
+              );
             },
           ),
         ),

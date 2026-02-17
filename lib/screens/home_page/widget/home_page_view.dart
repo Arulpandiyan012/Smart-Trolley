@@ -403,9 +403,7 @@ class _HomePageViewState extends State<HomePageView> {
                   slivers: [
                     // 🟢 REMOVED: Horizontal Scroll Header (Replaced by Grid below)
                     
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                    const SliverToBoxAdapter(child: SizedBox(height: 6)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     SliverToBoxAdapter(
                       child: Padding(
@@ -423,15 +421,15 @@ class _HomePageViewState extends State<HomePageView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                             child: Text(
                               "Shop by Category",
                               style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
                                 fontFamily: 'Roboto',
-                                color: Theme.of(context).textTheme.titleMedium?.color,
-                                letterSpacing: -0.2,
+                                color: Theme.of(context).textTheme.titleLarge?.color,
+                                letterSpacing: -0.4,
                               ),
                             ),
                           ),
@@ -455,18 +453,18 @@ class _HomePageViewState extends State<HomePageView> {
                     for (final s in sections) ...[
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4), 
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8), 
                           child: Row(
                             children: [
                               Expanded(
                                 child: Text(
                                   s.title,
                                   style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
                                     fontFamily: 'Roboto', 
-                                    color: Theme.of(context).textTheme.titleMedium?.color,
-                                    letterSpacing: -0.2,
+                                    color: Theme.of(context).textTheme.titleLarge?.color,
+                                    letterSpacing: -0.4,
                                   ),
                                 ),
                               ),

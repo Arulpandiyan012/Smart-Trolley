@@ -139,13 +139,14 @@ class BlinkitVerticalProductCard extends StatelessWidget {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  height: 80,
+                  height: 84,
                   width: double.infinity,
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
@@ -285,7 +286,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -343,7 +344,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     },
                   ),
                   Container(
-                    margin: const EdgeInsets.symmetric(vertical: 2),
+                    margin: const EdgeInsets.only(top: 2, bottom: 2),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
                       color: Theme.of(context).dividerColor.withOpacity(0.1), 
