@@ -88,6 +88,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // 🔴 OPTIMIZATION: Wait 3s before triggering location/address to avoid thread hammer
     Future.delayed(const Duration(seconds: 3), () => _loadInitialAddress()); 
 
+    // 🟢 INITIAL WISHLIST SYNC (Addresses "takes time to reflect on restart")
+    if (appStoragePref.getCustomerLoggedIn()) {
+      Future.delayed(const Duration(seconds: 1), () => _initialWishlistSync());
+    }
+
     // 🟢 Listen for profile updates (Image, Name, and Full Model)
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
       if (!mounted) return;
@@ -110,6 +115,22 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  // 🟢 HELPER: Sync Wishlist on Startup
+  void _initialWishlistSync() async {
+    try {
+      final data = await ApiClient().getWishList();
+      if (data?.data != null) {
+        Set<String> ids = {};
+        for (var item in data!.data!) {
+          if (item.productId != null) ids.add(item.productId!);
+        }
+        GlobalData.syncWishlist(ids);
+      }
+    } catch (e) {
+      debugPrint("Wishlist Sync Error: $e");
+    }
   }
 
   // 🟢 HELPER: Sync Cart Count

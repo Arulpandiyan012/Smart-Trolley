@@ -124,7 +124,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
   // =========================================================
   Widget _buildBlinkitCarousel() {
     var images = widget.productData?.images ?? [];
-    bool isInWishlist = widget.productData?.isInWishlist ?? false;
+    final productId = widget.productData?.id?.toString() ?? "";
     
     Widget imageWidget = images.isEmpty
         ? Container(height: 320, color: Colors.grey[50]) // 🟢 Slightly taller
@@ -243,25 +243,30 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
         Positioned(
           right: 16.0,
           top: 280.0, 
-          child: _buildCircleIcon(
-            icon: isInWishlist ? Icons.favorite : Icons.favorite_border,
-            color: isInWishlist ? Colors.red : Colors.grey,
-            onTap: () {
-              if (appStoragePref.getCustomerLoggedIn()) {
-                setState(() {
-                  widget.productData?.isInWishlist = !isInWishlist;
-                });
-                if (isInWishlist) {
-                  widget.productScreenBLoc?.add(RemoveFromWishlistEvent(
-                      widget.productData?.id, null)); 
-                } else {
-                  widget.productScreenBLoc?.add(AddToWishListProductEvent(
-                      widget.productData?.id, null)); 
-                }
-              } else {
-                ShowMessage.warningNotification("Please login to add to wishlist", context);
-              }
-            },
+          child: StreamBuilder<Set<String>>(
+            stream: GlobalData.wishlistUpdateStream,
+            builder: (context, snapshot) {
+              final currentWishlist = snapshot.data ?? GlobalData.wishlistProductIds;
+              bool active = currentWishlist.contains(productId);
+
+              return _buildCircleIcon(
+                icon: active ? Icons.favorite : Icons.favorite_border,
+                color: active ? Colors.red : Colors.grey,
+                onTap: () {
+                  if (appStoragePref.getCustomerLoggedIn()) {
+                    if (active) {
+                      widget.productScreenBLoc?.add(RemoveFromWishlistEvent(
+                          widget.productData?.id, null)); 
+                    } else {
+                      widget.productScreenBLoc?.add(AddToWishListProductEvent(
+                          widget.productData?.id, null)); 
+                    }
+                  } else {
+                    ShowMessage.warningNotification("Please login to add to wishlist", context);
+                  }
+                },
+              );
+            }
           ),
         ),
       ],

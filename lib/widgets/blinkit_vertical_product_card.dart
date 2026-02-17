@@ -166,8 +166,11 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     builder: (context, snapshot) {
                       final currentWishlist = snapshot.data ?? GlobalData.wishlistProductIds;
                       bool active = currentWishlist.contains(productId.toString());
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        active = active || isInWishlist;
+                      
+                      // 🟢 If we don't have global data yet (snapshot is null/empty), 
+                      // we can fallback to the data model's value as a hint.
+                      if (currentWishlist.isEmpty && isInWishlist) {
+                        active = true;
                       }
                       return InkWell(
                         onTap: () {

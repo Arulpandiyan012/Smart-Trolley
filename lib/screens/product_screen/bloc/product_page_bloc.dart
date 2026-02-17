@@ -83,55 +83,57 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
             error: StringConstants.somethingWrong.localized()));
       }
     } else if (event is AddToWishListProductEvent) {
+      final pid = event.productId ?? "";
+      // 🟢 Optimistic Update
+      GlobalData.toggleWishlistOptimistic(pid, true);
+      
       try {
         AddWishListModel? addWishListModel =
-        await repository!.callWishListDeleteItem(event.productId ?? "");
-        if (addWishListModel?.success == true) {
-          if (event.productData != null) {
-            if (event.productData?.isInWishlist == true) {
-              event.productData?.isInWishlist = false;
-            } else {
-              event.productData?.isInWishlist = true;
-            }
-          } else {
-            event.productData?.isInWishlist =
-            !(event.productData?.isInWishlist ?? true);
-          }
-
+        await repository!.callWishListDeleteItem(pid);
+        debugPrint("❤️ WISHLIST ADD API: success=${addWishListModel?.success}, status=${addWishListModel?.status}");
+        
+        if (addWishListModel?.success == true || addWishListModel?.status == true) {
+          // 🟢 Final Sync (just in case)
+          // The repository usually returns the updated wishlist state or success.
+          // We rely on the FetchWishlist later or just assume success here.
           emit(AddToWishListProductState.success(
               response: addWishListModel,
               productDeletedId: event.productId,
               successMsg: addWishListModel!.message));
         } else {
-          emit(
-              AddToWishListProductState.fail(error: addWishListModel?.graphqlErrors));
+          // 🔴 Rollback on failure
+          GlobalData.toggleWishlistOptimistic(pid, false);
+          emit(AddToWishListProductState.fail(error: addWishListModel?.graphqlErrors));
         }
       } catch (e) {
+        // 🔴 Rollback on error
+        GlobalData.toggleWishlistOptimistic(pid, false);
         emit(AddToWishListProductState.fail(
             error: StringConstants.somethingWrong.localized()));
       }
     } else if (event is RemoveFromWishlistEvent) {
+      final pid = event.productId ?? "";
+      // 🟢 Optimistic Update
+      GlobalData.toggleWishlistOptimistic(pid, false);
+
       try {
         AddToCartModel? removeFromWishlist =
-        await repository?.removeItemFromWishlist(event.productId ?? "");
-        if (removeFromWishlist?.status == true) {
-          if (event.productData != null) {
-            if (event.productData?.isInWishlist == true) {
-              event.productData?.isInWishlist = false;
-            } else {
-              event.productData?.isInWishlist = true;
-            }
-          } else {
-            event.productData?.isInWishlist =
-            !(event.productData?.isInWishlist ?? true);
-          }
+        await repository?.removeItemFromWishlist(pid);
+        debugPrint("💔 WISHLIST REMOVE API: success=${removeFromWishlist?.success}, status=${removeFromWishlist?.status}");
 
+        if (removeFromWishlist?.status == true || removeFromWishlist?.success == true) {
           emit(RemoveFromWishlistState.success(
               productDeletedId: event.productId,
               successMsg: removeFromWishlist?.message,
               response: removeFromWishlist));
+        } else {
+          // 🔴 Rollback on failure
+          GlobalData.toggleWishlistOptimistic(pid, true);
+          emit(RemoveFromWishlistState.fail(error: removeFromWishlist?.message));
         }
       } catch (e) {
+        // 🔴 Rollback on error
+        GlobalData.toggleWishlistOptimistic(pid, true);
         emit(RemoveFromWishlistState.fail(
             error: StringConstants.somethingWrong.localized()));
       }
