@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 import 'package:bagisto_app_demo/screens/home_page/data_model/theme_customization.dart'; 
 import 'package:bagisto_app_demo/screens/home_page/widget/home_page_view.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 import 'package:bagisto_app_demo/screens/home_page/widget/delivery_location_page.dart';
 import 'package:bagisto_app_demo/utils/current_location_manager.dart';
@@ -139,37 +139,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadInitialAddress() async {
     setState(() => _addrLoading = true);
+    final location = loc.Location();
+    
     try {
-      // Add timeout protection to prevent crashes
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+      // 1. Check if service is enabled
+      bool serviceEnabled = await location.serviceEnabled()
           .timeout(const Duration(seconds: 3), onTimeout: () => false);
       
       if (!serviceEnabled) {
         debugPrint('📍 Location services disabled');
-        setState(() => _addrLoading = false);
+        if (mounted) setState(() => _addrLoading = false);
         return;
       }
 
-      var permission = await Geolocator.checkPermission()
-          .timeout(const Duration(seconds: 3));
+      // 2. Check permissions
+      loc.PermissionStatus permission = await location.hasPermission()
+          .timeout(const Duration(seconds: 3), onTimeout: () => loc.PermissionStatus.denied);
       
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission()
-            .timeout(const Duration(seconds: 5));
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission()
+            .timeout(const Duration(seconds: 5), onTimeout: () => loc.PermissionStatus.denied);
       }
 
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        debugPrint('📍 Location permission denied');
-        setState(() => _addrLoading = false);
+      if (permission != loc.PermissionStatus.granted) {
+        debugPrint('📍 Location permission not granted');
+        if (mounted) setState(() => _addrLoading = false);
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 10));
+      // 3. Get current position
+      final locData = await location.getLocation()
+          .timeout(const Duration(seconds: 10));
 
-      final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude)
+      final lat = locData.latitude;
+      final lng = locData.longitude;
+
+      if (lat == null || lng == null) {
+        if (mounted) setState(() => _addrLoading = false);
+        return;
+      }
+
+      // 4. Resolve address
+      final placemarks = await placemarkFromCoordinates(lat, lng)
           .timeout(const Duration(seconds: 5));
 
       if (placemarks.isNotEmpty) {
@@ -185,8 +196,8 @@ class _HomeScreenState extends State<HomeScreen> {
         
         CurrentLocationManager.setLocation(
           fullAddress, 
-          pos.latitude, 
-          pos.longitude,
+          lat, 
+          lng,
           cityVal: p.locality ?? p.subAdministrativeArea,
           stateVal: p.administrativeArea,
           countryVal: p.isoCountryCode ?? "IN",
@@ -195,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
         debugPrint('📍 Location loaded: $fullAddress');
       }
     } catch (e) {
-      // Catch all errors including DeadSystemException
+      // Catch all errors including Play Services issues
       debugPrint('📍 Location error (non-fatal): $e');
     } finally {
       if (mounted) setState(() => _addrLoading = false);

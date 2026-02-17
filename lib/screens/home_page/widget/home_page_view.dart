@@ -673,11 +673,19 @@ class _HomePageViewState extends State<HomePageView> {
   }
 
   Widget _buildPromoBanner(theme.ThemeCustomDataModel? data) {
-    final sliders = data?.themeCustomization ?? const [];
+    if (data == null || data.themeCustomization == null) return _bannerFallback();
+    
+    final sliders = data.themeCustomization!;
     final List<String> bannerUrls = [];
 
     for (final e in sliders) {
-      final trans = e.translations?.firstWhereOrNull((t) => t.localeCode == GlobalData.locale);
+      // 🟢 Filter for Banner-like types
+      if (e.type != "image_carousel" && e.type != "slider" && e.type != "image_slider") continue;
+
+      // 🟢 Resilient Locale: Try preferred, then fallback to first available
+      final trans = e.translations?.firstWhereOrNull((t) => t.localeCode == GlobalData.locale) 
+                   ?? e.translations?.firstOrNull;
+      
       final imgs = trans?.options?.images;
       
       if (imgs != null && imgs.isNotEmpty) {
@@ -698,7 +706,7 @@ class _HomePageViewState extends State<HomePageView> {
     if (bannerUrls.length == 1) {
       return CachedNetworkImage(
         imageUrl: bannerUrls.first,
-        height: 80, 
+        height: 160, // 🟢 Increased height for better visibility
         width: double.infinity,
         fit: BoxFit.cover,
         placeholder: (_, __) => _bannerFallback(),
@@ -711,19 +719,27 @@ class _HomePageViewState extends State<HomePageView> {
 
   Widget _bannerFallback() {
     return Container(
-      height: 80,
-      decoration: const BoxDecoration(
+      height: 160, // 🟢 Match height
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE8F5E9), Color(0xFFF1F8E9)],
+          colors: [Colors.white, const Color(0xFFF1F8E9)],
         ),
       ),
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.all(16),
-      child: const Text(
-        "Fresh deals near you",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.local_offer_outlined, color: Colors.green.withOpacity(0.3), size: 32),
+          const SizedBox(height: 8),
+          Text(
+            "Exclusive deals for you",
+            style: TextStyle(fontSize: 14, color: Colors.green.shade800, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
@@ -922,7 +938,7 @@ class _BannerCarouselState extends State<_BannerCarousel> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 80, 
+      height: 160, 
       width: double.infinity,
       child: Stack(
         alignment: Alignment.bottomCenter,
