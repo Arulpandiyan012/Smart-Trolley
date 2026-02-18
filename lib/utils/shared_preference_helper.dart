@@ -292,13 +292,7 @@ class SharedPreferenceHelper {
     return configurationStorage.read("isVendorLoggedIn") ?? false;
   }
 
-  setCustomerNewsletter(bool subscribed) {
-    configurationStorage.write("customerNewsletter", subscribed);
-  }
 
-  bool getCustomerNewsletter() {
-    return configurationStorage.read("customerNewsletter") ?? false;
-  }
 
   // 🟢 DIAGNOSTIC: Check storage state on boot
   void debugCheckStorage() {

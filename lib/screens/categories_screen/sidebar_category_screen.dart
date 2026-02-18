@@ -1,3 +1,8 @@
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:bagisto_app_demo/utils/server_configuration.dart';
+import 'package:bagisto_app_demo/screens/home_page/data_model/get_categories_drawer_data_model.dart';
+import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_repository.dart';
 import 'dart:async'; 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,6 +19,7 @@ import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_bloc.dart'
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_event.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_state.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart'; // For CartStatus
+import 'package:bagisto_app_demo/screens/categories_screen/sub_category_sidebar_screen.dart';
 
 class SidebarCategoryScreen extends StatefulWidget {
   final String? initialSlug;
@@ -31,6 +37,9 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 // ... (code omitted) ...
 
   int _selectedSubCatIndex = -1; 
+  
+  // 🟢 NEW: Level 3 Support
+
   
   // Logic
   CategoryBloc? _categoryBloc;
@@ -112,6 +121,108 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
         }
     }
 
+
+    // 🟢 CUSTOM API FETCH (Bypasses GraphQL limit)
+    // We use mobikul-vendor-api.php which returns the FULL tree (Levels 1, 2, 3)
+
+    setState(() => _isLoading = true);
+
+    _fetchCategoriesFromCustomApi().then((response) {
+        if (mounted) {
+            setState(() => _isLoading = false);
+            if (response != null && response.data != null) {
+                // Update Global & Local
+                GlobalData.categoriesDrawerData = response;
+                appStoragePref.setDrawerCategories(response);
+                processList(response.data!);
+            } else {
+                // Fallback to cache if API fails
+                _loadFromCache(processList);
+            }
+        }
+    }); // No catchError needed as the function handles exceptions
+  }
+
+  // 🟢 NEW: Fetch from Custom PHP Endpoint
+  Future<GetDrawerCategoriesData?> _fetchCategoriesFromCustomApi() async {
+      try {
+          var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
+          debugPrint("🔵 CUSTOM API URL: $url");
+          
+          var response = await http.post(url, body: {"action": "get_categories"});
+          debugPrint("🔵 CUSTOM API STATUS: ${response.statusCode}");
+          debugPrint("🔵 CUSTOM API BODY (First 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}");
+
+          if (response.statusCode == 200) {
+              var json = jsonDecode(response.body);
+              if (json['success'] == true) {
+                   List<dynamic> rawList = json['data'];
+                   debugPrint("🔵 CUSTOM API PARSED: Found ${rawList.length} root categories.");
+                   
+                   List<HomeCategories> homeCats = rawList.map((c) => _mapToHomeCategory(c)).toList();
+                   
+                   // Check 'Grocery' children count for debugging
+                   var grocery = homeCats.firstWhere((c) => c.name?.contains("Grocery") ?? false, orElse: () => HomeCategories());
+                   debugPrint("🔵 CUSTOM API DEBUG: Grocery children count: ${grocery.children?.length ?? 0}");
+
+                   var model = GetDrawerCategoriesData();
+                   model.success = "true";
+                   model.responseStatus = true;
+                   model.data = homeCats;
+                   return model;
+              } else {
+                   debugPrint("🔴 CUSTOM API SUCCESS FALSE: ${json['message']}");
+              }
+          } else {
+               debugPrint("🔴 CUSTOM API HTTP ERROR: ${response.statusCode}");
+          }
+      } catch (e, stack) {
+          debugPrint("🔴 CUSTOM API EXCEPTION: $e");
+          debugPrint("🔴 STACK: $stack");
+      }
+      return null;
+  }
+
+  // Helper to Map JSON -> HomeCategories (Recursive)
+  HomeCategories _mapToHomeCategory(Map<String, dynamic> json) {
+      // Map Children (Recursive)
+      List<Children> childrenList = [];
+      if (json['children'] != null) {
+          json['children'].forEach((v) {
+              childrenList.add(_mapToChildren(v));
+          });
+      }
+
+      var cat = HomeCategories();
+      cat.id = json['id'].toString();
+      cat.name = json['name'];
+      cat.slug = json['slug'];
+      cat.bannerUrl = json['bannerUrl'];
+      cat.logoUrl = json['logoUrl'];
+      cat.children = childrenList;
+      return cat;
+  }
+
+  // Helper to Map JSON -> Children (Recursive for Level 3)
+  Children _mapToChildren(Map<String, dynamic> json) {
+       List<Children> subChildren = [];
+       if (json['children'] != null) {
+           json['children'].forEach((v) {
+               subChildren.add(_mapToChildren(v));
+           });
+       }
+
+       var child = Children();
+       child.id = json['id'].toString();
+       child.name = json['name'];
+       child.slug = json['slug'];
+       child.bannerUrl = json['bannerUrl'];
+       child.logoUrl = json['logoUrl'];
+       child.children = subChildren; // 🟢 CRITICAL: Level 3
+       return child;
+  }
+
+  void _loadFromCache(Function(List<dynamic>) processList) {
     if (GlobalData.categoriesDrawerData != null) {
       final list = GlobalData.categoriesDrawerData!.data ?? [];
       if (list.isNotEmpty) {
@@ -143,7 +254,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
         _subCategories = [];
       }
       
-      _selectedSubCatIndex = -1; 
+      _selectedSubCatIndex = -1;  // Select "All" by default
+ 
       
       _fetchProducts(_getId(cat), _getSlug(cat));
     });
@@ -152,15 +264,22 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   void _onSubCategorySelected(int index) {
     setState(() {
       _selectedSubCatIndex = index;
+
       String idToFetch;
       String slugToFetch;
       
       if (index == -1) {
+        // "All" selected in Level 2 -> Show Level 1 products
         final cat = _categories[_selectedSidebarIndex];
         idToFetch = _getId(cat);
         slugToFetch = _getSlug(cat);
+
       } else {
+        // Specific Level 2 selected
         final subCat = _subCategories[index];
+        
+
+
         idToFetch = _getId(subCat);
         slugToFetch = _getSlug(subCat);
       }
@@ -168,6 +287,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
       _fetchProducts(idToFetch, slugToFetch);
     });
   }
+
+
 
   void _fetchProducts(String id, String slug) {
     setState(() {
@@ -234,273 +355,67 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Retry logic
     if (_categories.isEmpty && GlobalData.categoriesDrawerData != null) {
       _loadCategories();
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0.5,
-        automaticallyImplyLeading: true, 
-      ),
-      body: _categories.isEmpty
-          ? _buildEmptyState()
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // LEFT: SIDEBAR
-                Container(
-                  width: 90, // 🟢 Widened for better Trendy look
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).canvasColor, 
-                    border: Border(right: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5))),
-                  ),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      return _buildSidebarItem(index);
-                    },
-                  ),
-                ),
+    // 1. LOADING / ERROR STATE
+    if (_categories.isEmpty) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          elevation: 0.5,
+        ),
+        body: _buildEmptyState(),
+      );
+    }
 
-                // RIGHT: CONTENT
-                Expanded(
-                  child: Column(
-                    children: [
-                      // 1. SUB-CATEGORIES
-                      if (_subCategories.isNotEmpty)
-                        Container(
-                          height: 50,
-                          color: Theme.of(context).cardColor,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            itemCount: _subCategories.length + 1, 
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                              bool isAll = index == 0;
-                              int realIndex = index - 1;
-                              bool isSelected = _selectedSubCatIndex == realIndex;
-                              String label = isAll ? "All" : _getName(_subCategories[realIndex]);
-
-                              return GestureDetector(
-                                onTap: () => _onSubCategorySelected(realIndex),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).dividerColor,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    label,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodySmall?.color,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                      Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor),
-
-                      // 2. FILTER & SORT
-                      Container(
-                        height: 40,
-                        color: Theme.of(context).cardColor,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => _openSortSheet(),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.swap_vert, size: 16, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    const Text("Sort", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Container(width: 1, height: 20, color: Colors.grey[300]), 
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => _openFilterScreen(),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.tune, size: 16, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    const Text("Filters", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, thickness: 1),
-
-                      // 3. PRODUCT LIST WITH LISTENERS
-                      Expanded(
-                        child: BlocListener<CartScreenBloc, CartScreenBaseState>(
-                          listener: (context, state) {
-                            // 🟢 FIX 1: Split Checks to Fix Type Promotion Errors
-                            
-                            if (state is UpdateCartState) {
-                               if (state.status == CartStatus.success) {
-                                  context.read<CartScreenBloc>().add(FetchCartDataEvent());
-                                  ShowMessage.successNotification("Cart Updated", context);
-                               } else if (state.status == CartStatus.fail) {
-                                  ShowMessage.errorNotification("Failed to update", context);
-                               }
-                            }
-                            
-                            if (state is RemoveCartItemState) {
-                               if (state.status == CartStatus.success) {
-                                  context.read<CartScreenBloc>().add(FetchCartDataEvent());
-                                  ShowMessage.successNotification("Item Removed", context);
-                               } else if (state.status == CartStatus.fail) {
-                                  ShowMessage.errorNotification("Failed to remove", context);
-                               }
-                            }
-
-                            if (state is FetchCartDataState) {
-                               if (state.status == CartStatus.success) {
-                                   GlobalData.updateCartState(state.cartDetailsModel);
-                               }
-                            }
-                          },
-                          // Keep existing CategoryBloc consumer
-                          child: BlocConsumer<CategoryBloc, CategoriesBaseState>(
-                            listener: (context, state) {
-                               if (state is FilterFetchState) {
-                                 _filterData = state.filterModel;
-                                 _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
-                               }
-                               if (state is FetchSubCategoryState) {
-                                 if (state.status == CategoriesStatus.success) {
-                                   setState(() {
-                                     _isLoading = false;
-                                     if (_page == 1) {
-                                       _productsData = state.categoriesData;
-                                     } else {
-                                       _productsData?.data?.addAll(state.categoriesData?.data ?? []);
-                                     }
-                                   });
-                                 } else if (state.status == CategoriesStatus.fail) {
-                                    setState(() => _isLoading = false);
-                                 }
-                               }
-                               
-                               if (state is AddToCartSubCategoriesState) {
-                                 if (state.status == CategoriesStatus.success) {
-                                   // Refresh Cart on initial ADD
-                                   context.read<CartScreenBloc>().add(FetchCartDataEvent());
-                                   GlobalData.cartUpdateStream.add(null); // 🟢 Notify Cart Screen
-                                   GlobalData.updateCartState(state.response?.cart);
-                                   ShowMessage.successNotification(state.successMsg ?? "Added", context);
-                                 } else if (state.status == CategoriesStatus.fail) {
-                                   ShowMessage.errorNotification(state.error ?? "Failed", context);
-                                 }
-                               }
-                               // ... (Keep other listeners for Wishlist/Compare)
-                            },
-                            builder: (context, state) {
-                              if (_isLoading && _page == 1) {
-                                return const Center(child: CircularProgressIndicator(color: Color(0xFFBDB76B)));
-                              }
-                              
-                              if (_productsData?.data == null || _productsData!.data!.isEmpty) {
-                                return Center(child: Text("No products found", style: TextStyle(color: Colors.grey[400])));
-                              }
-
-                              return Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: ListView.builder(
-                                  controller: _listController,
-                                  padding: const EdgeInsets.only(top: 12, bottom: 80),
-                                  itemCount: _productsData!.data!.length,
-                                  itemBuilder: (context, index) {
-                                    return BlinkitProductCard(
-                                      data: _productsData!.data![index],
-                                      isLoggedIn: appStoragePref.getCustomerLoggedIn(),
-                                      subCategoryBloc: _categoryBloc,
-                                      
-                                      onAddToCart: (int productId, int quantity) {
-                                          GlobalData.optimisticUpdateCart(productId, quantity);
-                                          _categoryBloc?.add(AddToCartSubCategoryEvent(productId, quantity));
-                                      },
-
-                                      onAddToWishlist: (String id, bool isInWishlist, dynamic product) {
-                                         bool isLogged = appStoragePref.getCustomerLoggedIn();
-                                         if (isLogged) {
-                                            setState(() {
-                                              (product as NewProducts).isInWishlist = !isInWishlist;
-                                            });
-                                            if (isInWishlist) {
-                                              _categoryBloc?.add(FetchDeleteItemEvent(id, product));
-                                            } else {
-                                              _categoryBloc?.add(FetchDeleteAddItemCategoryEvent(id, product));
-                                            }
-                                         } else {
-                                            ShowMessage.warningNotification("Please login", context);
-                                         }
-                                      },
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    // 🟢 CONDITIONAL: Browse Mode vs Direct Mode
+    // If NO specific slug was passed, show the GRID of categories (Browse Mode)
+    if (widget.initialSlug == null || widget.initialSlug!.isEmpty) {
+       return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            elevation: 0.5,
+          ),
+          body: GridView.builder(
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, 
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                return _buildRootCategoryItem(index);
+              },
             ),
-    );
-  }
+       );
+    }
 
-  void _openFilterScreen() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>
-        SubCategoriesFilterScreen(
-          categorySlug: _currentSlug,
-          subCategoryBloc: _categoryBloc,
-          page: _page,
-          data: _filterData,
-          filters: _filters,
-        ),
-    ));
-  }
+    // 2. DIRECT MODE -> RENDER SUB-CATEGORY SCREEN
+    // User requested a specific category (e.g. from Home Page shortcut)
+    if (_selectedSidebarIndex >= _categories.length) _selectedSidebarIndex = 0;
+    
+    final cat = _categories[_selectedSidebarIndex];
+    final cartBloc = context.read<CartScreenBloc>();
 
-  void _openSortSheet() {
-    showModalBottomSheet(
-      backgroundColor: Theme.of(context).cardColor,
-      context: context,
-      builder: (ctx) => BlocProvider(
-        create: (context) => FilterBloc(FilterRepositoryImp()),
-        child: SortBottomSheet(
-          categorySlug: _currentSlug,
-          page: _page,
-          filters: _filters,
-          subCategoryBloc: _categoryBloc,
-        ),
-      )
+    return MultiBlocProvider(
+       providers: [
+         BlocProvider.value(value: _categoryBloc!),
+         BlocProvider.value(value: cartBloc),
+       ],
+       child: SubCategorySidebarScreen(
+          title: _getName(cat),
+          parentId: _getId(cat),
+          subCategories: ((cat as dynamic).children as List?) ?? [],
+       ),
     );
   }
 
@@ -523,67 +438,67 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     );
   }
 
-  Widget _buildSidebarItem(int index) {
+  // 🟢 NEW: Helper to build Root Item (Click -> Navigate to L2 Sidebar)
+  Widget _buildRootCategoryItem(int index) {
     final cat = _categories[index];
-    final bool isSelected = _selectedSidebarIndex == index;
     final String name = _getName(cat);
     final String imgUrl = _getImage(cat);
-    final Color activeColor = Theme.of(context).primaryColor;
 
     return GestureDetector(
-      onTap: () => _onSidebarItemSelected(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      onTap: () {
+         // 🟢 NAVIGATION: Go to "SubCategorySidebarScreen"
+         // Must pass providers because Navigator.push creates a new context scope
+         final cartBloc = context.read<CartScreenBloc>();
+
+         Navigator.push(
+           context, 
+           MaterialPageRoute(
+             builder: (context) => MultiBlocProvider(
+               providers: [
+                 BlocProvider.value(value: _categoryBloc!),
+                 BlocProvider.value(value: cartBloc),
+               ],
+               child: SubCategorySidebarScreen(
+                 title: name,
+                 parentId: _getId(cat),
+                 subCategories: ((cat as dynamic).children as List?) ?? [],
+               ),
+             )
+           )
+         );
+      },
+      child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: isSelected 
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    activeColor.withOpacity(0.95),
-                    activeColor,
-                    activeColor.withOpacity(0.85),
-                  ],
-                )
-              : null,
-          boxShadow: isSelected 
-              ? [
-                  BoxShadow(
-                    color: activeColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : null,
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              height: 44, width: 44, 
-              padding: const EdgeInsets.all(2),
+              height: 50, width: 50,
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.05),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.white.withOpacity(0.4) : Colors.transparent,
-                  width: 1,
-                ),
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(10),
+                image: imgUrl.isNotEmpty 
+                  ? DecorationImage(
+                      image: NetworkImage(imgUrl), 
+                      fit: BoxFit.cover
+                    )
+                  : null,
               ),
-              child: ClipOval(
-                child: imgUrl.isNotEmpty 
-                    ? ImageView(url: imgUrl, fit: BoxFit.cover) 
-                    : Icon(
-                        _categoryIconFor(name), 
-                        color: isSelected ? Colors.white : Colors.black87, // 🟢 Improved unselected visibility
-                        size: 22
-                      ),
-              ),
+              child: imgUrl.isEmpty 
+                  ? Icon(_categoryIconFor(name), size: 28, color: Theme.of(context).primaryColor) 
+                  : null,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
@@ -591,10 +506,9 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10, 
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : Colors.black87, // 🟢 Improved unselected visibility
+                style: const TextStyle(
+                  fontSize: 11, 
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             )

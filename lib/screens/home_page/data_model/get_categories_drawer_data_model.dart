@@ -96,18 +96,24 @@ class Translations {
 }
 
 @JsonSerializable()
+@JsonSerializable()
 class Children {
   String? id;
   String? name;
   String? slug;
   String? bannerUrl;
   String? logoUrl;
+  
+  // 🟢 ADDED: Recursive children for 3rd Level
+  List<Children>? children;
+
   Children({
     this.id,
     this.name,
     this.slug,
     this.bannerUrl,
     this.logoUrl,
+    this.children,
   });
 
   factory Children.fromJson(Map<String, dynamic> json) =>
