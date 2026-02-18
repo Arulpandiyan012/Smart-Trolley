@@ -12,7 +12,8 @@ import 'package:bagisto_app_demo/utils/theme_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ModernAccountScreen extends StatefulWidget {
-  const ModernAccountScreen({super.key});
+  final bool isFromBottomNav;
+  const ModernAccountScreen({super.key, this.isFromBottomNav = false});
 
   @override
   State<ModernAccountScreen> createState() => _ModernAccountScreenState();
@@ -80,8 +81,6 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
                   const SizedBox(height: 16),
                   _buildAppearanceCard(),
                   const SizedBox(height: 12),
-                  _buildSensitiveItemsCard(),
-                  const SizedBox(height: 20),
                   _buildSectionGroup(
                     "Your information",
                     [
@@ -133,10 +132,13 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
       expandedHeight: 220,
       pinned: true,
       backgroundColor: isDark ? Colors.black : const Color(0xFFFFF9C4),
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
-        onPressed: () => Navigator.pop(context),
-      ),
+      automaticallyImplyLeading: !widget.isFromBottomNav,
+      leading: widget.isFromBottomNav 
+        ? null 
+        : IconButton(
+            icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
+            onPressed: () => Navigator.pop(context),
+          ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           children: [
@@ -399,46 +401,6 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
     );
   }
 
-  Widget _buildSensitiveItemsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.visibility_off_outlined, color: Theme.of(context).primaryColor, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Hide sensitive items", style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).textTheme.titleSmall?.color
-                )),
-                const SizedBox(height: 4),
-                Text(
-                  "Sexual wellness, nicotine products and other sensitive items will be hidden",
-                  style: TextStyle(
-                    fontSize: 11, 
-                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7)
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: false,
-            onChanged: (v) {},
-            activeColor: Theme.of(context).primaryColor,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionGroup(String title, List<Widget> items) {
     return Column(
@@ -502,9 +464,17 @@ class _ModernAccountScreenState extends State<ModernAccountScreen> {
   }
 
   Widget _buildFooter() {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
-        Image.asset(AssetConstants.placeHolder, height: 40, color: Theme.of(context).dividerColor), // Blinkit grey logo
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Image.asset(AssetConstants.placeHolder, height: isDark ? 40 : 50),
+        ),
         const SizedBox(height: 8),
         Text(
           "v1.0.0",

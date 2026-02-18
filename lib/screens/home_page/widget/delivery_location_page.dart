@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'address_details_sheet.dart';
@@ -55,22 +55,34 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
 
   // ---------- Permissions + Current Location ----------
   Future<void> _initCurrentLocation() async {
+    final location = loc.Location();
     try {
-      final enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) {
-        setState(() { _error = 'Location services are disabled'; _loading = false; });
-        return;
+      bool serviceEnabled = await location.serviceEnabled();
+      if (!serviceEnabled) {
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          setState(() { _error = 'Location services are disabled'; _loading = false; });
+          return;
+        }
       }
 
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+      loc.PermissionStatus permission = await location.hasPermission();
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission();
+      }
+      
+      if (permission != loc.PermissionStatus.granted) {
         setState(() { _error = 'Location permission denied'; _loading = false; });
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      final here = gmap.LatLng(pos.latitude, pos.longitude);
+      final locData = await location.getLocation();
+      if (locData.latitude == null || locData.longitude == null) {
+        setState(() { _error = 'Unable to get current position'; _loading = false; });
+        return;
+      }
+      
+      final here = gmap.LatLng(locData.latitude!, locData.longitude!);
 
       setState(() {
         _currentLatLng = here;

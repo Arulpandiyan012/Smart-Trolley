@@ -38,7 +38,7 @@ class CartListItem extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
               // Subtle shadow for the card
               boxShadow: [
@@ -48,7 +48,7 @@ class CartListItem extends StatelessWidget {
                   offset: const Offset(0, 2)
                 )
               ],
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +57,7 @@ class CartListItem extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                   ),
                   padding: const EdgeInsets.all(4),
                   child: ((item?.product?.images ?? []).isNotEmpty)
@@ -86,7 +86,11 @@ class CartListItem extends StatelessWidget {
                         item?.name ?? "",
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600, 
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.titleLarge?.color
+                        ),
                       ),
                       const SizedBox(height: 6),
                       
@@ -107,7 +111,7 @@ class CartListItem extends StatelessWidget {
                         child: Text(
                           "Save for later",
                           style: TextStyle(
-                            color: Colors.grey[600], 
+                            color: Theme.of(context).textTheme.bodyMedium?.color, 
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
                             decoration: TextDecoration.underline,
@@ -123,7 +127,7 @@ class CartListItem extends StatelessWidget {
                            getAttributesValueFromAdditional(item?.additional)?.length ?? 0,
                            (index) => Text(
                               "${getAttributeKeyValueFromAdditional(item?.additional, index, 'option_label')}",
-                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12),
                            )
                         ),
                     ],
@@ -137,7 +141,7 @@ class CartListItem extends StatelessWidget {
                      // Top Right 'X' Button
                      InkWell(
                        onTap: () => _onPressRemove(cartDetailsModel, itemIndex, context),
-                       child: const Icon(Icons.close, size: 20, color: Colors.grey),
+                       child: Icon(Icons.close, size: 20, color: Theme.of(context).hintColor),
                      ),
                      const SizedBox(height: 12),
                      
@@ -197,7 +201,11 @@ class CartListItem extends StatelessWidget {
                      // Price (Bottom Right)
                      Text(
                         _formatPrice(item?.formattedPrice?.price),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.titleLarge?.color
+                        ),
                       ),
                   ],
                 )
@@ -246,13 +254,20 @@ class CartListItem extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(StringConstants.deleteItemWarning.localized(), style: const TextStyle(fontSize: 16)),
+          title: Text(
+            StringConstants.deleteItemWarning.localized(), 
+            style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.titleLarge?.color)
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-              child: Text(StringConstants.no.localized(), style: const TextStyle(color: Colors.grey)),
+              child: Text(
+                StringConstants.no.localized(), 
+                style: TextStyle(color: Theme.of(context).hintColor)
+              ),
             ),
             TextButton(
                 onPressed: () {

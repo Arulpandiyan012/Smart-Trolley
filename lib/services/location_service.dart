@@ -1,41 +1,44 @@
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 class LocationService {
   /// Request permissions and get the current position with timeout protection
-  static Future<Position> getCurrentPosition() async {
+  static Future<loc.LocationData?> getCurrentPosition() async {
+    final location = loc.Location();
+    
     try {
-      // Add timeout to prevent hanging
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+      // Check if service is enabled
+      bool serviceEnabled = await location.serviceEnabled()
           .timeout(const Duration(seconds: 3));
-      
       if (!serviceEnabled) {
-        throw Exception('Location services are disabled.');
+        serviceEnabled = await location.requestService()
+            .timeout(const Duration(seconds: 5));
+        if (!serviceEnabled) {
+          throw Exception('Location services are disabled.');
+        }
       }
 
-      LocationPermission permission = await Geolocator.checkPermission()
+      // Check permission
+      loc.PermissionStatus permission = await location.hasPermission()
           .timeout(const Duration(seconds: 3));
-      
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission()
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission()
             .timeout(const Duration(seconds: 5));
+        if (permission != loc.PermissionStatus.granted) {
+          throw Exception('Location permissions are denied');
+        }
       }
       
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
-      }
-      
-      if (permission == LocationPermission.deniedForever) {
+      if (permission == loc.PermissionStatus.deniedForever) {
         throw Exception('Location permissions are permanently denied');
       }
 
       // Get position with timeout
-      return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 10));
+      return await location.getLocation()
+          .timeout(const Duration(seconds: 10));
       
     } catch (e) {
-      // Catch any errors including DeadSystemException
+      // Catch any errors including Play Services issues
       throw Exception('Failed to get location: ${e.toString()}');
     }
   }

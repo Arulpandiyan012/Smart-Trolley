@@ -88,7 +88,7 @@ class BlinkitCategoryGrid extends StatelessWidget {
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4, 
         childAspectRatio: 0.74, 
@@ -102,7 +102,9 @@ class BlinkitCategoryGrid extends StatelessWidget {
         final imageUrl = cat['image'] ?? '';
         final link = cat['link'] ?? '';
         final icon = cat['icon'] as IconData?;
-        final baseColor = _getCategoryBgColor(title, context);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        final iconColor = isDark ? const Color(0xFF66BB6A) : const Color(0xFF2E7D32);
 
         return InkWell(
           onTap: () => onTap?.call(link, title),
@@ -114,44 +116,25 @@ class BlinkitCategoryGrid extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        baseColor.withOpacity(0.95), // Bright Top
-                        baseColor, // Core
-                        baseColor.withOpacity(0.85), // Darker bottom for depth
-                      ],
-                    ),
+                    color: bgColor, 
                     boxShadow: [
-                      // 1. Bottom shadow for lift
+                      // --- 3D Depth Shadows ---
                       BoxShadow(
-                        color: baseColor.withOpacity(0.4),
+                        color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
                         blurRadius: 10,
-                        offset: const Offset(0, 6),
-                        spreadRadius: -2,
+                        offset: const Offset(0, 5),
+                        spreadRadius: 1,
                       ),
-                      // 2. Subtle top highlight for 3D rim effect
                       BoxShadow(
-                        color: Colors.white.withOpacity(0.4),
-                        blurRadius: 0,
-                        offset: const Offset(0, -1),
-                        spreadRadius: 0.5,
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                        spreadRadius: 0,
                       ),
                     ],
                   ),
                   child: Stack(
                     children: [
-                      // --- Subtle Inner Glow ---
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
-                          ),
-                        ),
-                      ),
-                      
                       // --- The Content ---
                       Center(
                         child: Padding(
@@ -172,8 +155,8 @@ class BlinkitCategoryGrid extends StatelessWidget {
                             : Icon(
                                 icon ?? Icons.category_outlined,
                                 size: 32,
-                                color: Colors.white,
-                                shadows: const [Shadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 4)],
+                                color: iconColor, // Theme-aware icon color
+                                shadows: const [Shadow(color: Colors.black12, offset: Offset(0, 2), blurRadius: 4)],
                               ),
                         ),
                       ),

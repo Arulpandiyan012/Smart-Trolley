@@ -13,7 +13,7 @@ import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 import 'package:bagisto_app_demo/screens/home_page/data_model/theme_customization.dart'; 
 import 'package:bagisto_app_demo/screens/home_page/widget/home_page_view.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 import 'package:bagisto_app_demo/screens/home_page/widget/delivery_location_page.dart';
 import 'package:bagisto_app_demo/utils/current_location_manager.dart';
@@ -88,6 +88,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // 🔴 OPTIMIZATION: Wait 3s before triggering location/address to avoid thread hammer
     Future.delayed(const Duration(seconds: 3), () => _loadInitialAddress()); 
 
+    // 🟢 INITIAL WISHLIST SYNC (Addresses "takes time to reflect on restart")
+    if (appStoragePref.getCustomerLoggedIn()) {
+      Future.delayed(const Duration(seconds: 1), () => _initialWishlistSync());
+    }
+
     // 🟢 Listen for profile updates (Image, Name, and Full Model)
     _profileSubscription = GlobalData.profileUpdateStream.listen((data) {
       if (!mounted) return;
@@ -110,6 +115,22 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  // 🟢 HELPER: Sync Wishlist on Startup
+  void _initialWishlistSync() async {
+    try {
+      final data = await ApiClient().getWishList();
+      if (data?.data != null) {
+        Set<String> ids = {};
+        for (var item in data!.data!) {
+          if (item.productId != null) ids.add(item.productId!);
+        }
+        GlobalData.syncWishlist(ids);
+      }
+    } catch (e) {
+      debugPrint("Wishlist Sync Error: $e");
+    }
   }
 
   // 🟢 HELPER: Sync Cart Count
@@ -139,37 +160,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadInitialAddress() async {
     setState(() => _addrLoading = true);
+    final location = loc.Location();
+    
     try {
-      // Add timeout protection to prevent crashes
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+      // 1. Check if service is enabled
+      bool serviceEnabled = await location.serviceEnabled()
           .timeout(const Duration(seconds: 3), onTimeout: () => false);
       
       if (!serviceEnabled) {
         debugPrint('📍 Location services disabled');
-        setState(() => _addrLoading = false);
+        if (mounted) setState(() => _addrLoading = false);
         return;
       }
 
-      var permission = await Geolocator.checkPermission()
-          .timeout(const Duration(seconds: 3));
+      // 2. Check permissions
+      loc.PermissionStatus permission = await location.hasPermission()
+          .timeout(const Duration(seconds: 3), onTimeout: () => loc.PermissionStatus.denied);
       
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission()
-            .timeout(const Duration(seconds: 5));
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission()
+            .timeout(const Duration(seconds: 5), onTimeout: () => loc.PermissionStatus.denied);
       }
 
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        debugPrint('📍 Location permission denied');
-        setState(() => _addrLoading = false);
+      if (permission != loc.PermissionStatus.granted) {
+        debugPrint('📍 Location permission not granted');
+        if (mounted) setState(() => _addrLoading = false);
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 10));
+      // 3. Get current position
+      final locData = await location.getLocation()
+          .timeout(const Duration(seconds: 10));
 
-      final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude)
+      final lat = locData.latitude;
+      final lng = locData.longitude;
+
+      if (lat == null || lng == null) {
+        if (mounted) setState(() => _addrLoading = false);
+        return;
+      }
+
+      // 4. Resolve address
+      final placemarks = await placemarkFromCoordinates(lat, lng)
           .timeout(const Duration(seconds: 5));
 
       if (placemarks.isNotEmpty) {
@@ -185,8 +217,8 @@ class _HomeScreenState extends State<HomeScreen> {
         
         CurrentLocationManager.setLocation(
           fullAddress, 
-          pos.latitude, 
-          pos.longitude,
+          lat, 
+          lng,
           cityVal: p.locality ?? p.subAdministrativeArea,
           stateVal: p.administrativeArea,
           countryVal: p.isoCountryCode ?? "IN",
@@ -195,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
         debugPrint('📍 Location loaded: $fullAddress');
       }
     } catch (e) {
-      // Catch all errors including DeadSystemException
+      // Catch all errors including Play Services issues
       debugPrint('📍 Location error (non-fatal): $e');
     } finally {
       if (mounted) setState(() => _addrLoading = false);
@@ -397,15 +429,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 38, width: 38,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.grey[100],
+                                color: Colors.white,
+                                border: Border.all(color: Colors.black.withOpacity(0.08), width: 1.2),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))
+                                ],
                               ),
                               child: Center(
                                   child: isLoggedIn && image != null 
                                     ? CircleAvatar(
+                                        backgroundColor: Colors.white,
                                         backgroundImage: ImageView.getImageProvider(image), 
                                         radius: 18
                                       )
-                                    : const Icon(Icons.person, color: Colors.black87, size: 24),
+                                    : Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Image.asset(AssetConstants.placeHolder, fit: BoxFit.contain),
+                                      ),
                               ),
                             ),
                           ),

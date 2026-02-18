@@ -22,7 +22,7 @@ class CartActionsView extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).cardColor,
             ),
             child: Text(
               StringConstants.continueShopping.localized().toUpperCase(),
@@ -70,13 +70,21 @@ class CartActionsView extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(
             StringConstants.deleteAllItemWarning.localized(),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 16, 
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color
+            ),
           ),
-          content: const Text("Are you sure you want to remove all items?"),
+          content: Text(
+            "Are you sure you want to remove all items?",
+            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
