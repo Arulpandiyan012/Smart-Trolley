@@ -53,7 +53,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
     ),
 
     // 4: Profile
-    ModernAccountScreen(),
+    const ModernAccountScreen(isFromBottomNav: true),
   ];
 
   void _onTabTapped(int index) {

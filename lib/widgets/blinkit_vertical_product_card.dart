@@ -139,13 +139,14 @@ class BlinkitVerticalProductCard extends StatelessWidget {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  height: 80,
+                  height: 84,
                   width: double.infinity,
                   padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
@@ -165,8 +166,11 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     builder: (context, snapshot) {
                       final currentWishlist = snapshot.data ?? GlobalData.wishlistProductIds;
                       bool active = currentWishlist.contains(productId.toString());
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        active = active || isInWishlist;
+                      
+                      // 🟢 If we don't have global data yet (snapshot is null/empty), 
+                      // we can fallback to the data model's value as a hint.
+                      if (currentWishlist.isEmpty && isInWishlist) {
+                        active = true;
                       }
                       return InkWell(
                         onTap: () {
@@ -226,8 +230,9 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           return Container(
                             height: 24,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF27C16B),
+                              color: Colors.white.withOpacity(0.9), // Transparent/Frosted
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFF27C16B)), // Green Border
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -235,27 +240,23 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                                 InkWell(
                                   onTap: () {
                                     if (onAddToCart != null) {
-                                      // Logically represent decrement by passing negative or 0
-                                      // But let's check how the parent handles it.
-                                      // We might need a new callback or use id with a flag.
-                                      // For now, let's assume parent might need specific decrement handler.
-                                      onAddToCart?.call(-productId); // 🟢 CONVENTION: Negative ID means decrement
+                                      onAddToCart?.call(-productId); 
                                     }
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 6),
-                                    child: Icon(Icons.remove, color: Colors.white, size: 12),
+                                    child: Icon(Icons.remove, color: Color(0xFF27C16B), size: 12), // Green Icon
                                   ),
                                 ),
                                 Text(
                                   "$currentQty",
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                                  style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold, fontSize: 10), // Green Text
                                 ),
                                 InkWell(
                                   onTap: () => onAddToCart?.call(productId),
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 6),
-                                    child: Icon(Icons.add, color: Colors.white, size: 12),
+                                    child: Icon(Icons.add, color: Color(0xFF27C16B), size: 12), // Green Icon
                                   ),
                                 ),
                               ],
@@ -266,22 +267,20 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                         return InkWell(
                           onTap: () => onAddToCart?.call(productId),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
+                              color: Colors.white.withOpacity(0.9), // Transparent/Frosted
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF27C16B)), // Green Border
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                  color: Colors.black.withOpacity(0.05),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Text(
-                              "ADD",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
-                            ),
+                            child: const Icon(Icons.add, color: Color(0xFF27C16B), size: 18), // Green Icon
                           ),
                         );
                       }
@@ -290,7 +289,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -348,7 +347,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     },
                   ),
                   Container(
-                    margin: const EdgeInsets.symmetric(vertical: 2),
+                    margin: const EdgeInsets.only(top: 2, bottom: 2),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
                       color: Theme.of(context).dividerColor.withOpacity(0.1), 

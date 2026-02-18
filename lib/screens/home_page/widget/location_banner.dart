@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 // adjust if your service path differs:
 import 'package:bagisto_app_demo/services/location_service.dart';
@@ -31,31 +31,29 @@ class _LocationBannerState extends State<LocationBanner> {
     });
 
     try {
+      final location = loc.Location();
+
       // 1) Ensure location services enabled
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      bool serviceEnabled = await location.serviceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          _error = 'Location services are disabled';
-          _loading = false;
-        });
-        return;
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          setState(() {
+            _error = 'Location services are disabled';
+            _loading = false;
+          });
+          return;
+        }
       }
 
       // 2) Check/request permission
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+      loc.PermissionStatus permission = await location.hasPermission();
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission();
       }
-      if (permission == LocationPermission.denied) {
+      if (permission != loc.PermissionStatus.granted) {
         setState(() {
-          _error = 'Location permission denied';
-          _loading = false;
-        });
-        return;
-      }
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _error = 'Location permission permanently denied';
+          _error = 'Location permission not granted';
           _loading = false;
         });
         return;
@@ -63,10 +61,14 @@ class _LocationBannerState extends State<LocationBanner> {
 
       // 3) Get position via your service
       final pos = await LocationService.getCurrentPosition();
+      
+      if (pos == null || pos.latitude == null || pos.longitude == null) {
+        throw Exception('Unable to determine location');
+      }
 
-      // 4) Reverse geocode (or call a method from your service if you have one)
+      // 4) Reverse geocode
       final placemarks =
-          await placemarkFromCoordinates(pos.latitude, pos.longitude);
+          await placemarkFromCoordinates(pos.latitude!, pos.longitude!);
 
       String addr = 'Unknown location';
       if (placemarks.isNotEmpty) {

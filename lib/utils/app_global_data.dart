@@ -51,6 +51,25 @@ class GlobalData {
   static final BehaviorSubject<Set<String>> wishlistUpdateStream =
       BehaviorSubject<Set<String>>.seeded({});
 
+  /// Centralized method to update wishlist state across the app
+  static void syncWishlist(Set<String> ids) {
+    wishlistProductIds = ids;
+    wishlistUpdateStream.add(ids);
+    debugPrint("❤️ GLOBAL WISHLIST SYNC: count=${ids.length}");
+  }
+
+  /// Optimistic update for toggling wishlist
+  static void toggleWishlistOptimistic(String productId, bool add) {
+    final currentSet = Set<String>.from(wishlistProductIds);
+    if (add) {
+      currentSet.add(productId);
+    } else {
+      currentSet.remove(productId);
+    }
+    syncWishlist(currentSet);
+    debugPrint("⚡ OPTIMISTIC WISHLIST TOGGLE: pid=$productId, add=$add");
+  }
+
   static List<NewProductsModel?>? allProducts = [];
 
   // 🟢 NEW: Global Cart Items Map (ProductId -> {qty: int, cartItemId: String})

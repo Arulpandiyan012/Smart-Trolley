@@ -1,7 +1,7 @@
 import 'dart:async'; // Required for Timer (debounce)
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart';
 
@@ -61,26 +61,28 @@ class _DeliveryLocationPageState extends State<DeliveryLocationPage> {
   // --- Location Logic ---
 
   Future<void> _initCurrentLocation() async {
+    final location = loc.Location();
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      bool serviceEnabled = await location.serviceEnabled();
       if (!serviceEnabled) {
-        throw 'Location services are disabled';
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) throw 'Location services are disabled';
       }
 
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+      loc.PermissionStatus permission = await location.hasPermission();
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission();
       }
-      if (permission == LocationPermission.denied || 
-          permission == LocationPermission.deniedForever) {
+      if (permission != loc.PermissionStatus.granted) {
         throw 'Location permission denied';
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      final locData = await location.getLocation();
+      if (locData.latitude == null || locData.longitude == null) {
+        throw 'Unable to get location data';
+      }
 
-      final here = LatLng(pos.latitude, pos.longitude);
+      final here = LatLng(locData.latitude!, locData.longitude!);
       setState(() {
         _currentLatLng = here;
         _pinLatLng = here;

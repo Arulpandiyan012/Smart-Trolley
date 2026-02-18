@@ -74,8 +74,7 @@ class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
       try {
         BaseModel? baseModel = await repository?.removeAllWishListProducts();
         if (baseModel?.success == true) {
-          GlobalData.wishlistProductIds.clear();
-          GlobalData.wishlistUpdateStream.add({});
+          GlobalData.syncWishlist({});
           emit(RemoveAllWishlistProductState.success(
               baseModel: baseModel, successMsg: baseModel?.message));
         } else {
@@ -105,8 +104,7 @@ class WishListBloc extends Bloc<WishListBaseEvent, WishListBaseState> {
           ids.add(item.productId!);
         }
       }
-      GlobalData.wishlistProductIds = ids;
-      GlobalData.wishlistUpdateStream.add(ids);
+      GlobalData.syncWishlist(ids);
     }
   }
 }

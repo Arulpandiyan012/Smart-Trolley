@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart'
     show GoogleMap, GoogleMapController, CameraPosition, Marker, MarkerId, LatLng, CameraUpdate, InfoWindow;
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 class LocationMapPage extends StatefulWidget {
@@ -68,27 +68,35 @@ class _LocationMapPageState extends State<LocationMapPage> {
   }
 
   Future<void> _useCurrentLocation() async {
+    final location = loc.Location();
     try {
-      final enabled = await Geolocator.isLocationServiceEnabled();
+      bool enabled = await location.serviceEnabled();
       if (!enabled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location services are disabled')),
-        );
-        return;
+        enabled = await location.requestService();
+        if (!enabled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location services are disabled')),
+          );
+          return;
+        }
       }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+      
+      loc.PermissionStatus permission = await location.hasPermission();
+      if (permission == loc.PermissionStatus.denied) {
+        permission = await location.requestPermission();
       }
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      
+      if (permission != loc.PermissionStatus.granted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permission not granted')),
         );
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      final here = LatLng(pos.latitude, pos.longitude);
+      final locData = await location.getLocation();
+      if (locData.latitude == null || locData.longitude == null) return;
+      
+      final here = LatLng(locData.latitude!, locData.longitude!);
       setState(() => _pinLatLng = here);
       await _reverseGeocode(here);
       _mapController?.animateCamera(CameraUpdate.newLatLngZoom(here, 16));

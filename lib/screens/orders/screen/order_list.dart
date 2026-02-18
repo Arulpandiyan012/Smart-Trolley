@@ -67,18 +67,19 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: (widget.isFromDashboard ?? false)
             ? null
             : AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
                 elevation: 0.5,
+                surfaceTintColor: Colors.transparent,
                 centerTitle: false,
-                iconTheme: const IconThemeData(color: Colors.black),
+                iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
                 title: Text(
                   StringConstants.orders.localized(),
-                  style: const TextStyle(
-                    color: Colors.black,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -99,9 +100,9 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
@@ -112,13 +113,13 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.tune_rounded, size: 16, color: Colors.black),
-                              SizedBox(width: 6),
+                            children: [
+                              Icon(Icons.tune_rounded, size: 16, color: Theme.of(context).iconTheme.color),
+                              const SizedBox(width: 6),
                               Text(
                                 "Filter", 
                                 style: TextStyle(
-                                  color: Colors.black, 
+                                  color: Theme.of(context).textTheme.bodyMedium?.color, 
                                   fontWeight: FontWeight.w600, 
                                   fontSize: 13
                                 )
@@ -141,7 +142,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
 
   Widget _buildTopStatusTabs() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -161,7 +162,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF27C16B) : const Color(0xFFF5F5F5),
+                  color: isSelected ? const Color(0xFF27C16B) : (Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF5F5F5)),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected ? const Color(0xFF27C16B) : Colors.transparent
@@ -289,9 +290,9 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
   /// 🟢 MODERN FILTER SHEET UI (Blinkit Style)
   _getOrderFilter() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20)
         )
@@ -310,7 +311,11 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                 children: [
                   Text(
                     StringConstants.filterBy.localized(),
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800, 
+                      fontSize: 18,
+                      color: Theme.of(context).textTheme.titleLarge?.color
+                    ),
                   ),
                   TextButton(
                     onPressed: () {
@@ -330,7 +335,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                 ],
               ),
             ),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            const Divider(height: 1),
 
             Padding(
               padding: const EdgeInsets.all(20),
@@ -384,13 +389,13 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF5F5F5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButtonFormField(
                         icon: const Icon(Icons.keyboard_arrow_down_rounded),
                         decoration: const InputDecoration(border: InputBorder.none),
-                        style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14, fontWeight: FontWeight.w500),
                         items: status?.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -412,8 +417,8 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
             // --- FOOTER BUTTONS ---
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFEEEEEE)))
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)))
               ),
               child: Row(
                 children: [
@@ -427,7 +432,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         StringConstants.cancel.localized().toUpperCase(), 
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)
                       ),
                     ),
                   ),
@@ -464,7 +469,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
     return Text(
       title.toUpperCase(),
       style: TextStyle(
-        color: Colors.grey[600],
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.grey[600],
         fontSize: 12,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5
@@ -478,9 +483,9 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
       controller: controller,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+        hintStyle: TextStyle(color: Theme.of(context).hintColor, fontSize: 14),
         filled: true,
-        fillColor: const Color(0xFFF5F5F5), // Soft Grey Background
+        fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF5F5F5), // Soft Grey Background
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

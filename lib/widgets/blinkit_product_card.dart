@@ -274,12 +274,12 @@ class BlinkitProductCard extends StatelessWidget {
     );
   }
   
-  Widget _buildIconContainer({required IconData icon, required Color color}) {
+  Widget _buildIconContainer({required BuildContext context, required IconData icon, required Color color}) {
     return Container(
       width: 26,
       height: 26,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -288,7 +288,7 @@ class BlinkitProductCard extends StatelessWidget {
             offset: const Offset(0, 1),
           ),
         ],
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Icon(
         icon,

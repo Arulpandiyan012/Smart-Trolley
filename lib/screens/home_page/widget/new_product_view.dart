@@ -48,10 +48,10 @@ class _NewProductViewState extends State<NewProductView> {
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 0.48, // 🟢 Adjusted to 0.48 to fix 15px bottom overflow
+          childAspectRatio: 0.49, // 🟢 Fine-tuned to 0.49 to eliminate final 2px overflow
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
@@ -68,9 +68,9 @@ class _NewProductViewState extends State<NewProductView> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingNormal),
+      margin: EdgeInsets.zero,
       color: Theme.of(context).colorScheme.secondaryContainer,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -79,17 +79,21 @@ class _NewProductViewState extends State<NewProductView> {
           ]),
           const SizedBox(height: AppSizes.spacingMedium),
           SizedBox(
-            height: 320, // 🟢 Increased from 280 to 320 to prevent overflow 
+            height: 215, // 🟢 Further reduced to 215 to eliminate bottom white space
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               controller: _controller,
+              padding: const EdgeInsets.symmetric(horizontal: 16), // Increased for alignment
               itemCount: items.length,
-              itemBuilder: (context, index) => SizedBox(
-                width: 170, // 🟢 Increased width (was 150)
-                child: BlinkitVerticalProductCard(
-                  data: items[index],
-                  onAddToCart: widget.onAddToCart,
-                  onAddToWishlist: widget.onAddToWishlist,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(right: 12), // 🟢 Gap between cards
+                child: SizedBox(
+                  width: 160, // Slightly reduced to match card width logic
+                  child: BlinkitVerticalProductCard(
+                    data: items[index],
+                    onAddToCart: widget.onAddToCart,
+                    onAddToWishlist: widget.onAddToWishlist,
+                  ),
                 ),
               ),
             ),

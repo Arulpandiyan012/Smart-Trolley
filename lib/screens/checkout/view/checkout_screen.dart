@@ -203,15 +203,16 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
     return ScaffoldMessenger(
       key: scaffoldMessengerKey,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F8),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
           elevation: 0, 
+          surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text("Checkout", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          title: Text("Checkout", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
           centerTitle: true,
         ),
         body: BlocListener<CheckOutShippingBloc, CheckOutShippingBaseState>(
@@ -409,9 +410,9 @@ Widget _buildBottomBar() {
         top: false,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween, // Ensure space distribution
@@ -425,13 +426,17 @@ Widget _buildBottomBar() {
                   children: [
                     Text(
                       displayTotal, 
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 18, 
+                        color: Theme.of(context).textTheme.titleLarge?.color
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       "TOTAL", 
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[600])
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).hintColor)
                     ),
                   ],
                 ),

@@ -11,7 +11,7 @@ class PriceDetailView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -26,20 +26,24 @@ class PriceDetailView extends StatelessWidget {
         children: [
           Text(
              StringConstants.priceDetails.localized(), 
-             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.grey[800]),
+             style: TextStyle(
+                fontSize: 16, 
+                fontWeight: FontWeight.w800, 
+                color: Theme.of(context).textTheme.titleMedium?.color
+              ),
           ),
           const SizedBox(height: 16),
           
           // Subtotal
-          _buildRow(StringConstants.subTotal.localized(), cartDetailsModel.formattedPrice?.subTotal ?? ""),
+          _buildRow(context, StringConstants.subTotal.localized(), cartDetailsModel.formattedPrice?.subTotal ?? ""),
           
           // Discount
           if (cartDetailsModel.formattedPrice?.discountAmount != null)
-             _buildRow(StringConstants.discount.localized(), cartDetailsModel.formattedPrice?.discountAmount ?? "", isGreen: true),
+             _buildRow(context, StringConstants.discount.localized(), cartDetailsModel.formattedPrice?.discountAmount ?? "", isGreen: true),
 
           // Tax
           if (cartDetailsModel.taxTotal > 0)
-             _buildRow(StringConstants.tax.localized(), cartDetailsModel.formattedPrice?.taxTotal.toString() ?? ""),
+             _buildRow(context, StringConstants.tax.localized(), cartDetailsModel.formattedPrice?.taxTotal.toString() ?? ""),
 
           // 🟢 FIX: Delivery Charges (Robust Calculation)
           Builder(builder: (context) {
@@ -47,13 +51,13 @@ class PriceDetailView extends StatelessWidget {
              
              // 1. Try direct field
              if (ship != "₹0.00" && ship != "0" && ship != "") {
-                return _buildRow("Delivery Charges", ship);
+                return _buildRow(context, "Delivery Charges", ship);
              }
 
              // 2. Try selected rate
              var rate = cartDetailsModel.selectedShippingRate?.formattedPrice?.price;
              if (rate != null && rate.toString() != "₹0.00" && rate.toString() != "0") {
-                return _buildRow("Delivery Charges", rate.toString());
+                return _buildRow(context, "Delivery Charges", rate.toString());
              }
 
              // 3. Fallback: Calculate Difference (Grand - (Sub + Tax - Discount))
@@ -72,7 +76,7 @@ class PriceDetailView extends StatelessWidget {
                 double calculatedDiff = grand - (sub + tax - discount);
 
                 if (calculatedDiff > 0.5) { // Tolerance for rounding
-                   return _buildRow("Delivery Charges", "₹${calculatedDiff.toStringAsFixed(2)}");
+                   return _buildRow(context, "Delivery Charges", "₹${calculatedDiff.toStringAsFixed(2)}");
                 }
              } catch (e) {
                 debugPrint("Price Calc Error: $e");
@@ -92,11 +96,19 @@ class PriceDetailView extends StatelessWidget {
             children: [
               Text(
                 StringConstants.grandTotal.localized(),
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800, 
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.titleLarge?.color
+                ),
               ),
               Text(
                 cartDetailsModel.formattedPrice?.grandTotal.toString() ?? "",
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800, 
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.titleLarge?.color
+                ),
               ),
             ],
           ),
@@ -105,14 +117,24 @@ class PriceDetailView extends StatelessWidget {
     );
   }
   
-  Widget _buildRow(String label, String value, {bool isGreen = false}) {
+  Widget _buildRow(BuildContext context, String label, String value, {bool isGreen = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500)),
-          Text(value, style: TextStyle(color: isGreen ? Colors.green : Colors.black, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(
+            label, 
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 13, fontWeight: FontWeight.w500)
+          ),
+          Text(
+            value, 
+            style: TextStyle(
+              color: isGreen ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color, 
+              fontSize: 13, 
+              fontWeight: FontWeight.w600
+            )
+          ),
         ],
       ),
     );
