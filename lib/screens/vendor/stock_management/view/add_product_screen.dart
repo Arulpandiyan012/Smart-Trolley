@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart'; // 🟢 Use Dio
 import 'package:bagisto_app_demo/utils/app_global_data.dart';
@@ -176,9 +177,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add New Product"),
-        backgroundColor: const Color(0xFF27C16B),
-        foregroundColor: Colors.white,
+        title: Text(
+          "Add New Product",
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF2E7D32),
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        ),
+        iconTheme: IconThemeData(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

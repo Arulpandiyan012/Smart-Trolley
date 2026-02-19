@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../stock_management/view/stock_management_screen.dart';
 import '../../orders/view/vendor_orders_screen.dart';
 
@@ -11,20 +12,28 @@ class VendorDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vendor Dashboard'),
-        backgroundColor: const Color(0xFF27C16B),
-        foregroundColor: Colors.white,
+        title: Text(
+          'Vendor Dashboard',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF2E7D32),
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false, 
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        ),
+        iconTheme: IconThemeData(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
         actions: [
           IconButton(
-            icon: const Icon(Icons.exit_to_app),
+            icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
             tooltip: "Logout",
-            onPressed: () {
-               // 🟢 Logout Vendor
-               appStoragePref.setVendorLoggedIn(false);
-               
-               // Redirect to App Home
-               Navigator.pushNamedAndRemoveUntil(context, home, (route) => false);
-            },
+            onPressed: () => _showLogoutConfirmation(context),
           )
         ],
       ),
@@ -55,7 +64,35 @@ class VendorDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardCard(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout from Vendor Dashboard?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("No", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                appStoragePref.setVendorLoggedIn(false);
+                Navigator.pushNamedAndRemoveUntil(context, home, (route) => false);
+              },
+              child: const Text("Yes", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDashboardCard(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap, Color? iconColor, Color? textColor}) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -65,11 +102,15 @@ class VendorDashboardScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: const Color(0xFF27C16B)),
+            Icon(icon, size: 48, color: iconColor ?? const Color(0xFF27C16B)),
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 16,
+                color: textColor ?? Theme.of(context).textTheme.titleMedium?.color
+              ),
               textAlign: TextAlign.center,
             ),
           ],

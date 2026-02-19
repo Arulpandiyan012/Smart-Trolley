@@ -138,7 +138,14 @@ class ApiClient {
     try {
       var url = Uri.parse("$baseDomain/mobikul-login.php");
       String safePhone = phone ?? "";
-      var response = await http.post(url, body: { "idToken": idToken, "phone": safePhone }, headers: {"Accept": "application/json"});
+      var response = await http.post(
+        url, 
+        body: { "idToken": idToken, "phone": safePhone }, 
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        },
+      );
       debugPrint("📥 Login Body Response: ${response.body}"); // 🟢 Added full body log
       if (response.statusCode == 200) {
         // 🟢 CAPTURE COOKIES 
@@ -254,14 +261,17 @@ Future<OrderDetail?> getOrderDetail(int id) async {
 
       var response = await http.post(
         url, 
-        headers: {"Content-Type": "application/json"}, 
-        body: jsonEncode({
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        }, 
+        body: {
           "customer_id": customerId,
           "order_id": id.toString(),
           "token": token,
           "store_id": "1",
           "currency_code": GlobalData.currencyCode ?? "INR"
-        })
+        }
       );
 
       if (response.statusCode == 200) {
@@ -347,7 +357,14 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     try {
       String customerId = appStoragePref.getCustomerId().toString();
       var url = Uri.parse("$baseDomain/mobikul-compare-api.php");
-      var response = await http.post(url, body: {"action": "add", "customer_id": customerId, "product_id": id});
+      var response = await http.post(
+        url, 
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        },
+        body: {"action": "add", "customer_id": customerId, "product_id": id},
+      );
       if (response.statusCode == 200 && response.body.isNotEmpty) {
          var jsonResponse = jsonDecode(response.body);
          if (jsonResponse['success'] == true) {
@@ -448,12 +465,19 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       String customerId = appStoragePref.getCustomerId().toString();
       String method = paymentMethod ?? "cashondelivery"; 
 
-      var response = await http.post(url, body: {
-        "cart_id": realCartId,
-        "payment_method": method,
-        "customer_id": customerId,
-        "checkout_method": appStoragePref.getCustomerLoggedIn() ? "customer" : "guest",
-      });
+      var response = await http.post(
+        url, 
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        },
+        body: {
+          "cart_id": realCartId,
+          "payment_method": method,
+          "customer_id": customerId,
+          "checkout_method": appStoragePref.getCustomerLoggedIn() ? "customer" : "guest",
+        },
+      );
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
@@ -475,11 +499,18 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
       String finalCartId = (cartId != null && cartId.isNotEmpty) ? cartId : "121";
 
-      var response = await http.post(url, body: {
-        "address_id": id.toString(),
-        "customer_id": customerId,
-        "cart_id": finalCartId, 
-      });
+      var response = await http.post(
+        url, 
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        },
+        body: {
+          "address_id": id.toString(),
+          "customer_id": customerId,
+          "cart_id": finalCartId, 
+        },
+      );
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
@@ -506,7 +537,14 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     try {
       String customerId = appStoragePref.getCustomerId().toString();
       var url = Uri.parse("$baseDomain/mobikul-wishlist-api.php");
-      var response = await http.post(url, body: {"action": "add", "customer_id": customerId, "product_id": id});
+      var response = await http.post(
+        url, 
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        },
+        body: {"action": "add", "customer_id": customerId, "product_id": id},
+      );
       if (response.statusCode == 200) {
         return AddWishListModel.fromJson(jsonDecode(response.body));
       }
@@ -518,7 +556,14 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     try {
       String customerId = appStoragePref.getCustomerId().toString();
       var url = Uri.parse("$baseDomain/mobikul-wishlist-api.php");
-      var response = await http.post(url, body: {"action": "remove", "customer_id": customerId, "product_id": id});
+      var response = await http.post(
+        url, 
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "SmartTrolleyApp/1.0",
+        },
+        body: {"action": "remove", "customer_id": customerId, "product_id": id},
+      );
       if (response.statusCode == 200) {
         return AddToCartModel.fromJson(jsonDecode(response.body));
       }

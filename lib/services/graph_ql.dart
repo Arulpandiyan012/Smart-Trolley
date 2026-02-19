@@ -43,7 +43,9 @@ class GraphQlApiCalling {
     Map<String, String> headers = {
       "x-currency": GlobalData.currencyCode ?? "INR",
       "x-locale": GlobalData.locale ?? "en",
-      "X-Requested-With": "XMLHttpRequest" // 🟢 Fix for 'Unauthenticated' Guard
+      "X-Requested-With": "XMLHttpRequest", // 🟢 Fix for 'Unauthenticated' Guard
+      "User-Agent": "SmartTrolleyApp/1.0",
+      "Accept": "application/json",
     };
 
     if (cookie.isNotEmpty) {

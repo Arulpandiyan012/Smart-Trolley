@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../dashboard/view/vendor_dashboard_screen.dart';
 import 'package:bagisto_app_demo/utils/index.dart'; // 🟢 For appStoragePref
 
@@ -27,11 +28,20 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       appBar: AppBar(
         title: Text(
           'Vendor Login',
-          style: TextStyle(color: textColor),
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF2E7D32),
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
         ),
-        backgroundColor: cardColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        ),
+        iconTheme: IconThemeData(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
       ),
       backgroundColor: backgroundColor,
       body: Container(
