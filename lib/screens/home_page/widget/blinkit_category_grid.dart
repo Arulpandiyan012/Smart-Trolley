@@ -150,7 +150,16 @@ class BlinkitCategoryGrid extends StatelessWidget {
                                     )
                                   ]
                                 ),
-                                child: ImageView(url: imageUrl, fit: BoxFit.contain)
+                                child: Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (c, e, s) => Icon(
+                                    icon ?? Icons.category_outlined,
+                                    size: 32,
+                                    color: iconColor,
+                                    shadows: const [Shadow(color: Colors.black12, offset: Offset(0, 2), blurRadius: 4)],
+                                  ),
+                                )
                               )
                             : Icon(
                                 icon ?? Icons.category_outlined,
