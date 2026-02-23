@@ -15,6 +15,7 @@ import '../utils/index.dart' hide Translations;
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_event.dart';
 
 import 'package:bagisto_app_demo/screens/home_page/widget/blinkit_category_grid.dart'; // 🟢 NEW IMPORT
+import 'package:bagisto_app_demo/screens/home_page/widget/bestsellers_category_grid.dart'; // 🟢 BESTSELLERS OVERVIEW
 import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_screen.dart'; // 🟢 For See All Nav
 import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_bloc.dart'; // 🟢 For Provider
 import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repository.dart'; // 🟢 For Repo
@@ -335,7 +336,34 @@ class _HomePageViewState extends State<HomePageView> {
   @override
   Widget build(BuildContext context) {
     final sections = _buildSectionsFromTheme(widget.customHomeData);
-    final cats = widget.getCategoriesData?.data ?? const [];
+    final rawCats = widget.getCategoriesData?.data ?? const [];
+    
+    // 🟢 CUSTOM SORT ORDER
+    // Priority: Grocery > Snacks > Beauty > Household > Others
+    final cats = List<dynamic>.from(rawCats);
+    cats.sort((a, b) {
+       final nameA = _catLabel(a).toLowerCase();
+       final nameB = _catLabel(b).toLowerCase();
+       
+       int priority(String n) {
+          if (n.contains("grocery")) return 0;
+          if (n.contains("snack")) return 1;
+          if (n.contains("beauty")) return 2;
+          if (n.contains("household")) return 3;
+          return 99; // Others at the end
+       }
+       
+       final pA = priority(nameA);
+       final pB = priority(nameB);
+       
+       if (pA != pB) return pA.compareTo(pB);
+       return nameA.compareTo(nameB); // Alphabetical fallback
+    });
+
+    debugPrint("🏠 HOME PAGE BUILD: Found ${cats.length} Root Categories (Sorted).");
+    for(var c in cats) {
+       debugPrint("   - Root: ${_catLabel(c)}, Priority: ${_catLabel(c).toLowerCase().contains('grocery') ? 0 : 99}");
+    }
 
     return BlocConsumer<HomePageBloc, HomePageBaseState>(
       listener: (context, state) {
@@ -415,40 +443,82 @@ class _HomePageViewState extends State<HomePageView> {
                       ),
                     ),
 
-                    // 🟢 NEW: Trendy 2-Row Category Grid
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                            child: Text(
-                              "Shop by Category",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Roboto',
-                                color: Theme.of(context).textTheme.titleLarge?.color,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                          ),
-                          BlinkitCategoryGrid(
-                            categories: cats.map((cat) => {
-                              'title': _catLabel(cat),
-                              'image': _catBannerUrl(cat).isNotEmpty ? _catBannerUrl(cat) : _catBannerUrl(cat), // Backend mapping
-                              'slug': _catSlug(cat),
-                              'icon': _categoryIconFor(_catLabel(cat)),
-                              'cat': cat // Keep original for navigation
-                            }).toList(),
-                            onTap: (slug, title) {
-                              // Recursive search via _handleSeeAll to support all category depths
-                              _handleSeeAll(title);
-                            },
-                          ),
-                        ],
+                    // 🟢 NEW: BESTSELLERS 2x2 Category Overview
+                    if (cats.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                           padding: const EdgeInsets.only(top: 8, bottom: 12),
+                           child: BestsellersCategoryGrid(
+                             categories: cats,
+                             onTap: (link, title, cat) {
+                                _handleSeeAll(title, slug: link); 
+                                // Alternatively, if you want it to behave like root tap:
+                                // _openCategory(cat);
+                             },
+                           ),
+                        ),
                       ),
-                    ),
+
+                    // 🟢 NEW: Per-Category Section (Root Name -> L2 Grid)
+                    // This matches the user's requested "Screenshot Style"
+                    for (final rootCat in cats) ...[
+                      // 🟢 Filter out the redundant ones (Grocery, Veg, Fruit) to avoid duplication
+                      // BUT allow others like "Beauty & Personal Care", "Health", "Snacks" etc.
+                      if (_catChildren(rootCat).isNotEmpty)
+                        Builder(
+                          builder: (context) {
+                             final title = _catLabel(rootCat);
+                             final tLower = title.toLowerCase();
+                             // SKIP Redundant ones
+                             // 🟢 ALLOW ALL ROOT CATEGORIES (Grocery, Beauty, etc.)
+                             // We already filtered redundant *Theme* sections in _buildSectionsFromTheme.
+                             // So here, we should render EVERYTHING dynamically to ensure nothing is missing.
+                             debugPrint("✅ RENDERING Root Section: $title");
+
+                             return SliverToBoxAdapter(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // 1. Root Category HEADER (e.g. "Beauty & Personal Care")
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          title,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                            fontFamily: 'Roboto',
+                                            color: Theme.of(context).textTheme.titleLarge?.color,
+                                            letterSpacing: -0.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // 2. Level 2 Children GRID (e.g. "Skin", "Hair")
+                                  BlinkitCategoryGrid(
+                                    categories: _catChildren(rootCat).map((child) => {
+                                      'title': _catLabel(child),
+                                      'image': _catBannerUrl(child), 
+                                      'link': _catSlug(child), 
+                                      'subSlug': _catSlug(child), 
+                                      'icon': _categoryIconFor(_catLabel(child)),
+                                      'cat': child
+                                    }).toList(),
+                                    onTap: (link, title) {
+                                      _handleSeeAll(_catLabel(rootCat), slug: link); 
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        ),
+                    ],
 
                     for (final s in sections) ...[
                       SliverToBoxAdapter(
@@ -492,7 +562,7 @@ class _HomePageViewState extends State<HomePageView> {
                                   // Handle Navigation. For now, try to open by Title or Slug
                                   // The 'link' from backend is like 'category_slug_veg'.
                                   // We can map this to real categories if needed, or just open generic.
-                                  _handleSeeAll(title); 
+                                  _handleSeeAll(title, slug: link); 
                                 },
                               )
                             : NewProductView(
@@ -685,16 +755,27 @@ class _HomePageViewState extends State<HomePageView> {
                    ?? e.translations?.firstOrNull;
       
       final imgs = trans?.options?.images;
+      debugPrint("🟢 BANNER DEBUG: type=${e.type}, imgs_length=${imgs?.length}, imgs_raw=$imgs");
       
       if (imgs != null && imgs.isNotEmpty) {
         if (imgs is List) {
           for (var img in imgs) {
-             final u = _imageFromAny(img);
-             if (u != null && u.isNotEmpty) bannerUrls.add(u);
+             String? u = _imageFromAny(img);
+             if (u != null && u.isNotEmpty) {
+                if (u.contains('/storage/')) {
+                   u = u.replaceFirst('/storage/', '/image_proxy.php?path=');
+                }
+                bannerUrls.add(u);
+             }
           }
         } else {
-           final u = _imageFromAny(imgs);
-           if (u != null && u.isNotEmpty) bannerUrls.add(u);
+           String? u = _imageFromAny(imgs);
+           if (u != null && u.isNotEmpty) {
+               if (u.contains('/storage/')) {
+                  u = u.replaceFirst('/storage/', '/image_proxy.php?path=');
+               }
+               bannerUrls.add(u);
+           }
         }
       }
     }
@@ -774,9 +855,16 @@ class _HomePageViewState extends State<HomePageView> {
           final allRealCats = GlobalData.categoriesDrawerData?.data ?? [];
           
           dynamic foundRootCat;
-          // Helper to find category by name (case insensitive)
+          // Helper to find category by name (case insensitive & robust)
+          final searchTitle = title.toLowerCase().replaceAll("&", "and").replaceAll("  ", " ");
+          
           for (var cat in allRealCats) {
-             if (_catLabel(cat).toLowerCase() == title.toLowerCase()) {
+             final catName = _catLabel(cat).toLowerCase().replaceAll("&", "and").replaceAll("  ", " ");
+             
+             // Check exact, fuzzy, or partial match
+             if (catName == searchTitle || 
+                 catName.contains(searchTitle) || 
+                 searchTitle.contains(catName)) {
                 foundRootCat = cat;
                 break;
              }
@@ -854,24 +942,39 @@ class _HomePageViewState extends State<HomePageView> {
     // The previous "All Products" section might duplicate items.
     // I will exclude the "All Products" aggregation unless requested, to keep the UI clean.
     
-    return sections;
+    // 🟢 3. FILTER OUT REDUNDANT SECTIONS
+    // The user requested to remove "Grocery & Kitchen", "Vegetables", "Fruits" 
+    // because they are already shown in the top category hierarchy.
+    final sectionsFiltered = <_Section>[];
+    for (var s in sections) {
+       final t = s.title.toLowerCase();
+       if (t.contains("grocery & kitchen") || 
+           t.contains("farm fresh vegetables") || 
+           t.contains("seasonal & exotic fruits")) {
+           continue; 
+       }
+       sectionsFiltered.add(s);
+    }
+
+    return sectionsFiltered;
   }
-  void _handleSeeAll(String title) {
-    String? slugToPass;
+  void _handleSeeAll(String title, {String? slug}) {
+    String? slugToPass = slug;
     
-    // 🟢 Try to find matching Category by Title
-    // This restores functionality for "Farm Fresh Vegetables" etc.
-    try {
-      final allCats = GlobalData.categoriesDrawerData?.data ?? [];
-      for (var c in allCats) {
-         if (_catLabel(c).toLowerCase().contains(title.toLowerCase()) || 
-             title.toLowerCase().contains(_catLabel(c).toLowerCase())) {
-             // Exact or fuzzy match
-             slugToPass = _catSlug(c);
-             break;
-         }
-      }
-    } catch (_) {}
+    // 🟢 Try to find matching Category by Title IF slug is missing
+    if (slugToPass == null || slugToPass.isEmpty) {
+        try {
+          final allCats = GlobalData.categoriesDrawerData?.data ?? [];
+          for (var c in allCats) {
+             if (_catLabel(c).toLowerCase().contains(title.toLowerCase()) || 
+                 title.toLowerCase().contains(_catLabel(c).toLowerCase())) {
+                 // Exact or fuzzy match
+                 slugToPass = _catSlug(c);
+                 break;
+             }
+          }
+        } catch (_) {}
+    }
 
     Navigator.of(context).push(
       MaterialPageRoute(
