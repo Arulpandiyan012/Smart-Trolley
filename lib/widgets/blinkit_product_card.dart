@@ -28,13 +28,20 @@ class BlinkitProductCard extends StatelessWidget {
     if ((data?.images ?? []).isNotEmpty) {
       imageUrl = data?.images?.first.url ?? "";
     }
+    if (imageUrl.isEmpty) {
+      imageUrl = data?.imageUrl ?? "";
+    }
 
     // Price Logic
     String sellingPrice = data?.priceHtml?.formattedFinalPrice ?? "";
     String originalPrice = data?.priceHtml?.formattedRegularPrice ?? ""; 
 
     if (sellingPrice.isEmpty) {
-      sellingPrice = "₹${data?.price ?? '0'}";
+      double parsedPrice = double.tryParse(data?.price?.toString() ?? "0") ?? 0;
+      sellingPrice = "₹${parsedPrice.toStringAsFixed(2)}";
+    } else {
+      // API sometimes returns 4 decimals even in formatted strings, so enforce 2
+      sellingPrice = sellingPrice.replaceAllMapped(RegExp(r'(\d+\.\d{2})\d+'), (match) => match.group(1)!);
     }
 
     bool hasDiscount = originalPrice.isNotEmpty && 
@@ -136,6 +143,53 @@ class BlinkitProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
+
+                      // Add Button placed bottom right of image
+                      Positioned(
+                        bottom: -4,
+                        right: 0,
+                        child: SizedBox(
+                          width: 48, 
+                          height: 20, 
+                          child: SmartAddButton(
+                            qty: currentQty,
+                            isLoading: false,
+                            onAdd: () {
+                              if (isLoggedIn) {
+                                if (data?.type == "simple" || data?.type == "virtual") {
+                                  if (onAddToCart != null) onAddToCart!(int.tryParse(data?.id ?? "0") ?? 0, 1);
+                                } else {
+                                  ShowMessage.warningNotification("Select Options", context);
+                                }
+                              } else {
+                                ShowMessage.warningNotification(StringConstants.pleaseLogin.localized(), context);
+                              }
+                            },
+                            onIncrease: () {
+                              if (cartItemId != null) {
+                                GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, 1);
+                                context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                  [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
+                                ));
+                              }
+                            },
+                            onDecrease: () {
+                              if (cartItemId != null) {
+                                GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, -1);
+                                if (currentQty > 1) {
+                                  context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                    [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
+                                  ));
+                                } else {
+                                   context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                                     cartItemId: int.parse(cartItemId!)
+                                   ));
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -175,7 +229,7 @@ class BlinkitProductCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis, 
                             style: const TextStyle(
                               fontWeight: FontWeight.w600, 
-                              fontSize: 12, 
+                              fontSize: 10,  // Reduced from 12
                               height: 1.1,
                               color: Colors.black87
                             )
@@ -185,7 +239,7 @@ class BlinkitProductCard extends StatelessWidget {
                           // Unit
                           Text(
                             "1 Unit", 
-                            style: TextStyle(color: Colors.grey[500], fontSize: 10, fontWeight: FontWeight.w500)
+                            style: TextStyle(color: Colors.grey[500], fontSize: 9, fontWeight: FontWeight.w500) // Reduced from 10
                           ),
                           
                           const Spacer(),
@@ -211,55 +265,12 @@ class BlinkitProductCard extends StatelessWidget {
                                     sellingPrice, 
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w800, 
-                                      fontSize: 13, 
+                                      fontSize: 12, 
                                       color: Color(0xFF1B5E20)
                                     )
                                   ),
                                 ],
                               ),
-                              
-                              SizedBox(
-                                width: 65,
-                                height: 28,
-                                child: SmartAddButton(
-                                  qty: currentQty,
-                                  isLoading: false,
-                                  onAdd: () {
-                                     // ... (Same logic)
-                                    if (isLoggedIn) {
-                                      if (data?.type == "simple" || data?.type == "virtual") {
-                                        if (onAddToCart != null) onAddToCart!(int.tryParse(data?.id ?? "0") ?? 0, 1);
-                                      } else {
-                                        ShowMessage.warningNotification("Select Options", context);
-                                      }
-                                    } else {
-                                      ShowMessage.warningNotification(StringConstants.pleaseLogin.localized(), context);
-                                    }
-                                  },
-                                  onIncrease: () {
-                                    if (cartItemId != null) {
-                                      GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, 1);
-                                      context.read<CartScreenBloc>().add(UpdateCartEvent(
-                                        [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
-                                      ));
-                                    }
-                                  },
-                                  onDecrease: () {
-                                    if (cartItemId != null) {
-                                      GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, -1);
-                                      if (currentQty > 1) {
-                                        context.read<CartScreenBloc>().add(UpdateCartEvent(
-                                          [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
-                                        ));
-                                      } else {
-                                         context.read<CartScreenBloc>().add(RemoveCartItemEvent(
-                                           cartItemId: int.parse(cartItemId!)
-                                         ));
-                                      }
-                                    }
-                                  },
-                                ),
-                              )
                             ],
                           )
                       ],

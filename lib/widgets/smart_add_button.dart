@@ -21,7 +21,7 @@ class SmartAddButton extends StatelessWidget {
     // 1. Loading State
     if (isLoading) {
       return Container(
-        height: 32, width: 75,
+        height: double.infinity, width: double.infinity,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Theme.of(context).primaryColor,
@@ -40,7 +40,7 @@ class SmartAddButton extends StatelessWidget {
       return InkWell(
         onTap: onAdd,
         child: Container(
-          height: 32, width: 75,
+          height: double.infinity, width: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor,
@@ -58,7 +58,7 @@ class SmartAddButton extends StatelessWidget {
               style: TextStyle(
                   color: Colors.white, 
                   fontWeight: FontWeight.w900, 
-                  fontSize: 13,
+                  fontSize: 10,
                   letterSpacing: 0.5
               )
           ),
@@ -68,7 +68,7 @@ class SmartAddButton extends StatelessWidget {
 
     // 3. Counter State (Qty > 0)
     return Container(
-      height: 32, width: 85,
+      height: double.infinity, width: double.infinity,
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor,
         borderRadius: BorderRadius.circular(6),
@@ -86,8 +86,8 @@ class SmartAddButton extends StatelessWidget {
           InkWell(
             onTap: onDecrease,
             child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6), 
-                child: Icon(Icons.remove, color: Colors.white, size: 16)
+                padding: EdgeInsets.symmetric(horizontal: 4), 
+                child: Icon(Icons.remove, color: Colors.white, size: 12)
             ),
           ),
           Text(
@@ -95,14 +95,14 @@ class SmartAddButton extends StatelessWidget {
               style: const TextStyle(
                   color: Colors.white, 
                   fontWeight: FontWeight.bold, 
-                  fontSize: 13
+                  fontSize: 11
               )
           ),
           InkWell(
             onTap: onIncrease,
             child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6), 
-                child: Icon(Icons.add, color: Colors.white, size: 16)
+                padding: EdgeInsets.symmetric(horizontal: 4), 
+                child: Icon(Icons.add, color: Colors.white, size: 12)
             ),
           ),
         ],

@@ -10,7 +10,11 @@
 
 import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:bagisto_app_demo/utils/server_configuration.dart'; 
 import '../../../data_model/add_to_wishlist_model/add_wishlist_model.dart';
+
 import '../../cart_screen/cart_model/cart_data_model.dart';
 import '../../cms_screen/data_model/cms_model.dart';
 import '../data_model/theme_customization.dart';
@@ -35,15 +39,67 @@ class HomePageRepositoryImp implements HomePageRepository {
   @override
   Future<GetDrawerCategoriesData?> getHomeCategoriesList(
       {List<Map<String, dynamic>>? filters}) async {
-    GetDrawerCategoriesData? getDrawerCategoriesData;
+    
+    // 🟢 CUSTOM API IMPLEMENTATION (Matches Sidebar Logic)
     try {
-      getDrawerCategoriesData =
-          await ApiClient().homeCategories(filters: filters);
-    } catch (error, stacktrace) {
-      debugPrint("Error --> $error");
-      debugPrint("StackTrace --> $stacktrace");
+        var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
+        debugPrint("🔵 HOME REPO: Fetching Categories from Custom API: $url");
+        
+        var response = await http.post(url, body: {"action": "get_categories"});
+
+        if (response.statusCode == 200) {
+            var json = jsonDecode(response.body);
+            if (json['success'] == true) {
+                 List<dynamic> rawList = json['data'];
+                 List<HomeCategories> homeCats = rawList.map((c) => _mapToHomeCategory(c)).toList();
+                 
+                 var model = GetDrawerCategoriesData();
+                 model.success = "true";
+                 model.responseStatus = true;
+                 model.data = homeCats;
+                 return model;
+            }
+        }
+    } catch (e) {
+        debugPrint("🔴 HOME REPO ERROR: $e");
     }
-    return getDrawerCategoriesData;
+    return null;
+  }
+
+  // Helper to Map JSON -> HomeCategories (Recursive)
+  HomeCategories _mapToHomeCategory(Map<String, dynamic> json) {
+      List<Children> childrenList = [];
+      if (json['children'] != null) {
+          json['children'].forEach((v) {
+              childrenList.add(_mapToChildren(v));
+          });
+      }
+      var cat = HomeCategories();
+      cat.id = json['id'].toString();
+      cat.name = json['name'];
+      cat.slug = json['slug'];
+      cat.bannerUrl = json['bannerUrl'];
+      cat.logoUrl = json['logoUrl'];
+      cat.children = childrenList;
+      return cat;
+  }
+
+  // Helper to Map JSON -> Children (Recursive)
+  Children _mapToChildren(Map<String, dynamic> json) {
+       List<Children> subChildren = [];
+       if (json['children'] != null) {
+           json['children'].forEach((v) {
+               subChildren.add(_mapToChildren(v));
+           });
+       }
+       var child = Children();
+       child.id = json['id'].toString();
+       child.name = json['name'];
+       child.slug = json['slug'];
+       child.bannerUrl = json['bannerUrl'];
+       child.logoUrl = json['logoUrl'];
+       child.children = subChildren;
+       return child;
   }
 
   @override

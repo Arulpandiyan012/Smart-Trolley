@@ -99,24 +99,52 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     void processList(List<dynamic> list) {
         if (mounted) {
           setState(() {
+            // 🟢 CUSTOM SORT ORDER (Synced with Home Page)
+            // Priority: Grocery > Snacks > Beauty > Household > Others
+            list.sort((a, b) {
+               final nameA = _getName(a).toLowerCase();
+               final nameB = _getName(b).toLowerCase();
+               
+               int priority(String n) {
+                  if (n.contains("grocery")) return 0;
+                  if (n.contains("snack")) return 1;
+                  if (n.contains("beauty")) return 2;
+                  if (n.contains("household")) return 3;
+                  return 99; // Others at the end
+               }
+               
+               final pA = priority(nameA);
+               final pB = priority(nameB);
+               
+               if (pA != pB) return pA.compareTo(pB);
+               return nameA.compareTo(nameB); // Alphabetical fallback
+            });
+
             _categories = list;
-            int initialIndex = 0;
-            if (widget.initialSlug != null) {
-               try {
-                 int idx = _categories.indexWhere((c) {
-                   // Try to match slug
-                   String? s;
-                   try { s = _getSlug(c); } catch(_) {}
-                   if (s == widget.initialSlug) return true;
-                   
-                   // Fallback to ID match if slug fails (just in case title was passed as ID)
-                   // But we should stick to slug.
-                   return false;
-                 });
-                 if (idx != -1) initialIndex = idx;
-               } catch (_) {}
+            
+            // 🟢 DEEP SEARCH: Find target slug at ANY level (L1, L2, L3)
+            // If the user clicked "Atta" (L2), we want "Atta" to be the Root Screen.
+            if (widget.initialSlug != null && widget.initialSlug!.isNotEmpty) {
+               final target = _findCategoryRecursively(list, widget.initialSlug!);
+               if (target != null) {
+                  // If found deep, we treat THIS target as the single "Selected" item for the screen.
+                  // We simulate this by overriding _categories temporarily or just handling it in build.
+                  // BETTER: Just set a flag or object that "Direct Mode Target" is found.
+                  _directModeTarget = target; 
+               }
             }
-            _onSidebarItemSelected(initialIndex); 
+            
+            // Fallback for standard L1 Sidebar mode
+            int initialIndex = 0; // Default to first
+            if (widget.initialSlug != null && _directModeTarget == null) {
+               // Try to find in Root Level if deep search somehow failed or for legacy
+               int idx = _categories.indexWhere((c) => _getSlug(c) == widget.initialSlug);
+               if (idx != -1) initialIndex = idx;
+            }
+            
+            if (_directModeTarget == null) {
+               _onSidebarItemSelected(initialIndex); 
+            }
           });
         }
     }
@@ -142,6 +170,24 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
         }
     }); // No catchError needed as the function handles exceptions
   }
+
+  // 🟢 NEW: Deep Search Helper
+  dynamic _findCategoryRecursively(List<dynamic> nodes, String slug) {
+     for (var node in nodes) {
+        if (_getSlug(node) == slug) return node;
+        
+        // Search Children
+        final children = ((node as dynamic).children as List?) ?? [];
+        if (children.isNotEmpty) {
+           final found = _findCategoryRecursively(children, slug);
+           if (found != null) return found;
+        }
+     }
+     return null;
+  }
+  
+  // 🟢 NEW: State Variable for Direct Mode
+  dynamic _directModeTarget;
 
   // 🟢 NEW: Fetch from Custom PHP Endpoint
   Future<GetDrawerCategoriesData?> _fetchCategoriesFromCustomApi() async {
@@ -374,33 +420,48 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     }
 
     // 🟢 CONDITIONAL: Browse Mode vs Direct Mode
-    // If NO specific slug was passed, show the GRID of categories (Browse Mode)
+    // If NO specific slug was passed, show the VERTICAL SECTIONS layout (Heading + Grid)
     if (widget.initialSlug == null || widget.initialSlug!.isEmpty) {
-       return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        return Scaffold(
+          backgroundColor: Colors.white,
           appBar: AppBar(
-            title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
-            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            title: Text("Categories", style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.white,
             elevation: 0.5,
+            iconTheme: const IconThemeData(color: Colors.black),
           ),
-          body: GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, 
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                return _buildRootCategoryItem(index);
-              },
-            ),
+          body: ListView.separated(
+            padding: const EdgeInsets.only(bottom: 24),
+            itemCount: _categories.length,
+            separatorBuilder: (ctx, i) => const Divider(height: 1, thickness: 8, color: Color(0xFFF5F5F5)), // Thick gray separator like Home
+            itemBuilder: (context, index) {
+               return _buildVerticalCategorySection(index);
+            },
+          ),
+        );
+    }
+
+    // 2. DIRECT MODE (Keep existing logic)
+    // 🟢 DEEP LINK HANDLER
+    if (_directModeTarget != null) {
+       final cat = _directModeTarget;
+       final cartBloc = context.read<CartScreenBloc>();
+       
+       return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: _categoryBloc!),
+            BlocProvider.value(value: cartBloc),
+          ],
+          child: SubCategorySidebarScreen(
+             title: _getName(cat),
+             parentId: _getId(cat),
+             parentSlug: _getSlug(cat), 
+             subCategories: ((cat as dynamic).children as List?) ?? [],
+          ),
        );
     }
 
-    // 2. DIRECT MODE -> RENDER SUB-CATEGORY SCREEN
-    // User requested a specific category (e.g. from Home Page shortcut)
+    // Standard L1 Sidebar Mode (Fallback)
     if (_selectedSidebarIndex >= _categories.length) _selectedSidebarIndex = 0;
     
     final cat = _categories[_selectedSidebarIndex];
@@ -414,6 +475,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
        child: SubCategorySidebarScreen(
           title: _getName(cat),
           parentId: _getId(cat),
+          parentSlug: _getSlug(cat), 
           subCategories: ((cat as dynamic).children as List?) ?? [],
        ),
     );
@@ -438,82 +500,113 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     );
   }
 
-  // 🟢 NEW: Helper to build Root Item (Click -> Navigate to L2 Sidebar)
-  Widget _buildRootCategoryItem(int index) {
-    final cat = _categories[index];
+  // 🟢 NEW: Vertical Section Builder (Header + Grid)
+  Widget _buildVerticalCategorySection(int index) {
+    final cat = _categories[index]; // This is a Root Category
     final String name = _getName(cat);
-    final String imgUrl = _getImage(cat);
+    
+    // Get its children (Level 2 Sub-categories)
+    List<dynamic> children = [];
+    try {
+       children = ((cat as dynamic).children as List?) ?? [];
+    } catch (_) {}
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. SECTION HEADER (Root Category Name)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Text(
+            name, // e.g., "Grocery & Kitchen"
+            style: const TextStyle(
+              fontSize: 18, 
+              fontWeight: FontWeight.bold, 
+              color: Colors.black87
+            ),
+          ),
+        ),
+
+        // 2. SUB-CATEGORIES GRID
+        if (children.isEmpty)
+           const Padding(
+             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+             child: Text("No sub-categories", style: TextStyle(color: Colors.grey)),
+           )
+        else
+           GridView.builder(
+              shrinkWrap: true, // Vital for nesting in ListView
+              physics: const NeverScrollableScrollPhysics(), // Vital for nesting
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, 
+                childAspectRatio: 0.75, 
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: children.length,
+              itemBuilder: (ctx, idx) {
+                 return _buildVerticalSubCategoryItem(children[idx]);
+              },
+           ),
+      ],
+    );
+  }
+
+  // 🟢 NEW: Vertical Sub-Category Item
+  Widget _buildVerticalSubCategoryItem(dynamic subCat) {
+    final String name = _getName(subCat);
+    final String imgUrl = _getImage(subCat);
 
     return GestureDetector(
       onTap: () {
-         // 🟢 NAVIGATION: Go to "SubCategorySidebarScreen"
-         // Must pass providers because Navigator.push creates a new context scope
+         // Navigate to SubCategorySidebarScreen (L3 + Products)
          final cartBloc = context.read<CartScreenBloc>();
-
-         Navigator.push(
-           context, 
-           MaterialPageRoute(
-             builder: (context) => MultiBlocProvider(
-               providers: [
-                 BlocProvider.value(value: _categoryBloc!),
-                 BlocProvider.value(value: cartBloc),
-               ],
-               child: SubCategorySidebarScreen(
-                 title: name,
-                 parentId: _getId(cat),
-                 subCategories: ((cat as dynamic).children as List?) ?? [],
-               ),
-             )
+         Navigator.push(context, MaterialPageRoute(
+           builder: (context) => MultiBlocProvider(
+             providers: [
+               BlocProvider.value(value: _categoryBloc!),
+               BlocProvider.value(value: cartBloc),
+             ],
+             child: SubCategorySidebarScreen(
+               title: name,
+               parentId: _getId(subCat),
+               parentSlug: _getSlug(subCat),
+               subCategories: ((subCat as dynamic).children as List?) ?? [],
+             ),
            )
-         );
+         ));
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              height: 50, width: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(10),
-                image: imgUrl.isNotEmpty 
-                  ? DecorationImage(
-                      image: NetworkImage(imgUrl), 
-                      fit: BoxFit.cover
-                    )
-                  : null,
-              ),
-              child: imgUrl.isEmpty 
-                  ? Icon(_categoryIconFor(name), size: 28, color: Theme.of(context).primaryColor) 
-                  : null,
+      child: Column(
+        children: [
+          Container(
+            height: 70, 
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.blue[50]!.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11, 
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            )
-          ],
-        ),
+             child: ClipRRect(
+               borderRadius: BorderRadius.circular(12),
+               child: imgUrl.isNotEmpty 
+                   ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)))
+                   : Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)),
+             )
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+              height: 1.2
+            ),
+          ),
+        ],
       ),
     );
   }
