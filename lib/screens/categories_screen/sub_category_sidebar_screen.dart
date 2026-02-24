@@ -85,10 +85,10 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
         final children = (cat as dynamic).children;
         debugPrint("🟢 Selected L2: ${_getName(cat)}");
         if (children != null && (children is List) && children.isNotEmpty) {
-           debugPrint("   👉 Has ${children.length} L3 Children!");
-           children.forEach((c) => debugPrint("      - L3: ${(c as dynamic).name ?? ''}"));
+           debugPrint("   👉 Has ${children.length} deeper subcategories!");
+           children.forEach((c) => debugPrint("      - Sub: ${(c as dynamic).name ?? ''}"));
         } else {
-           debugPrint("   ❌ No L3 Children found.");
+           debugPrint("   ℹ️ No deeper subcategories found.");
         }
 
         _fetchProducts(_getId(cat), _getSlug(cat));

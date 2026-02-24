@@ -84,6 +84,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   }
 
   void _startAutoRetry() {
+    if (_retryTimer != null && _retryTimer!.isActive) return; // 🟢 FIX: Prevent duplicate timers
+
     _retryTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       _retryCount++;
       _loadCategories();
@@ -95,80 +97,71 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   }
 
   void _loadCategories() {
-    // Helper to process list
-    void processList(List<dynamic> list) {
-        if (mounted) {
-          setState(() {
-            // 🟢 CUSTOM SORT ORDER (Synced with Home Page)
-            // Priority: Grocery > Snacks > Beauty > Household > Others
-            list.sort((a, b) {
-               final nameA = _getName(a).toLowerCase();
-               final nameB = _getName(b).toLowerCase();
-               
-               int priority(String n) {
-                  if (n.contains("grocery")) return 0;
-                  if (n.contains("snack")) return 1;
-                  if (n.contains("beauty")) return 2;
-                  if (n.contains("household")) return 3;
-                  return 99; // Others at the end
-               }
-               
-               final pA = priority(nameA);
-               final pB = priority(nameB);
-               
-               if (pA != pB) return pA.compareTo(pB);
-               return nameA.compareTo(nameB); // Alphabetical fallback
-            });
+    if (_isLoading) return; 
 
-            _categories = list;
-            
-            // 🟢 DEEP SEARCH: Find target slug at ANY level (L1, L2, L3)
-            // If the user clicked "Atta" (L2), we want "Atta" to be the Root Screen.
-            if (widget.initialSlug != null && widget.initialSlug!.isNotEmpty) {
-               final target = _findCategoryRecursively(list, widget.initialSlug!);
-               if (target != null) {
-                  // If found deep, we treat THIS target as the single "Selected" item for the screen.
-                  // We simulate this by overriding _categories temporarily or just handling it in build.
-                  // BETTER: Just set a flag or object that "Direct Mode Target" is found.
-                  _directModeTarget = target; 
-               }
-            }
-            
-            // Fallback for standard L1 Sidebar mode
-            int initialIndex = 0; // Default to first
-            if (widget.initialSlug != null && _directModeTarget == null) {
-               // Try to find in Root Level if deep search somehow failed or for legacy
-               int idx = _categories.indexWhere((c) => _getSlug(c) == widget.initialSlug);
-               if (idx != -1) initialIndex = idx;
-            }
-            
-            if (_directModeTarget == null) {
-               _onSidebarItemSelected(initialIndex); 
-            }
-          });
-        }
+    // 🟢 ZERO-FLICKER: Try Cache First
+    var cached = GlobalData.categoriesDrawerData ?? appStoragePref.getDrawerCategories();
+    if (cached != null && (cached.data ?? []).isNotEmpty) {
+       _isLoading = false; 
+       debugPrint("⚡ Sidebar: Using Cached Categories for Zero-Flicker");
+       _categories = cached.data!;
+       _processCategoryList(_categories);
+    } else {
+       setState(() => _isLoading = true);
     }
 
-
-    // 🟢 CUSTOM API FETCH (Bypasses GraphQL limit)
-    // We use mobikul-vendor-api.php which returns the FULL tree (Levels 1, 2, 3)
-
-    setState(() => _isLoading = true);
-
     _fetchCategoriesFromCustomApi().then((response) {
-        if (mounted) {
-            setState(() => _isLoading = false);
-            if (response != null && response.data != null) {
-                // Update Global & Local
-                GlobalData.categoriesDrawerData = response;
-                appStoragePref.setDrawerCategories(response);
-                processList(response.data!);
-            } else {
-                // Fallback to cache if API fails
-                _loadFromCache(processList);
-            }
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (response != null && response.data != null) {
+          GlobalData.categoriesDrawerData = response;
+          appStoragePref.setDrawerCategories(response);
+          _categories = response.data!;
+          _processCategoryList(_categories);
         }
-    }); // No catchError needed as the function handles exceptions
+      }
+    });
+  }
+
+  void _processCategoryList(List<dynamic> list) {
+    if (!mounted) return;
+    setState(() {
+      // 🟢 CUSTOM SORT ORDER
+      list.sort((a, b) {
+        final nameA = _getName(a).toLowerCase();
+        final nameB = _getName(b).toLowerCase();
+        int priority(String n) {
+          if (n.contains("grocery")) return 0;
+          if (n.contains("snack")) return 1;
+          if (n.contains("beauty")) return 2;
+          if (n.contains("household")) return 3;
+          return 99;
+        }
+        final pA = priority(nameA);
+        final pB = priority(nameB);
+        if (pA != pB) return pA.compareTo(pB);
+        return nameA.compareTo(nameB);
+      });
+
+      _categories = list;
+
+      if (widget.initialSlug != null && widget.initialSlug!.isNotEmpty) {
+        final target = _findCategoryRecursively(list, widget.initialSlug!);
+        if (target != null) {
+          _directModeTarget = target;
+        }
+      }
+
+      int initialIndex = 0;
+      if (widget.initialSlug != null && _directModeTarget == null) {
+        int idx = _categories.indexWhere((c) => _getSlug(c) == widget.initialSlug);
+        if (idx != -1) initialIndex = idx;
+      }
+
+      if (_directModeTarget == null) {
+        _onSidebarItemSelected(initialIndex);
+      }
+    });
   }
 
   // 🟢 NEW: Deep Search Helper
@@ -482,6 +475,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   }
 
   Widget _buildEmptyState() {
+    if (_isLoading) {
+       return const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)));
+    }
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

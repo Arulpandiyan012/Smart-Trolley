@@ -29,51 +29,38 @@ abstract class CategoriesRepository{
 class CategoriesRepo implements CategoriesRepository {
   @override
   Future<NewProductsModel?> callCategoriesData({List<Map<String, dynamic>>? filters, int? page}) async {
-    // 🟢 CUSTOM API PRODUCT FETCH
+    // 🟢 GRAPHQL REPO: Robust product fetching with filter sanitization
     try {
-      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
-      
-      // Extract Category ID from filters
-      String categoryId = "";
-      if (filters != null) {
-         for (var f in filters) {
-            if (f['key'] == "\"category_id\"") {
-                categoryId = f['value'].toString().replaceAll("\"", "");
-            }
-         }
-      }
-
-      debugPrint("🔵 CATEGORY REPO: Fetching Products for CatID: $categoryId (Page: $page)");
-      
-      var response = await http.post(url, body: {
-          "action": "get_category_products",
-          "category_id": categoryId,
-          "page": page.toString()
-      });
-
-      if (response.statusCode == 200) {
-          debugPrint("🔵 PRODUCT API RESPONSE: ${response.body}"); // 🟢 DEBUG: Print full JSON
-          var json = jsonDecode(response.body);
-          
-          if (json['success'] == true) {
-               // 🟢 DEBUG: Check types of first item
-               if (json['data'] != null && (json['data'] as List).isNotEmpty) {
-                  final first = json['data'][0];
-                  debugPrint("🔍 First Product Types:");
-                  first.forEach((k, v) => debugPrint("  - $k: ${v.runtimeType} ($v)"));
-               }
-               
-               // 🟢 SANITIZE JSON (Fix String -> Num issues)
-               json = _sanitizeProductIds(json);
-               
-               return NewProductsModel.fromJson(json);
+       // Ensure keys/values are properly quoted for the GraphQL schema
+       List<Map<String, dynamic>> sanitizedFilters = [];
+       if (filters != null) {
+          for (var f in filters) {
+             String key = f['key'].toString().replaceAll("\"", "");
+             String val = f['value'].toString().replaceAll("\"", "");
+             sanitizedFilters.add({"key": '"$key"', "value": '"$val"'});
           }
-      }
+       }
+
+       debugPrint("🚀 CATEGORY REPO: Fetching GraphQL Products | Filters: $sanitizedFilters | Page: $page");
+       
+       var result = await ApiClient().getAllProducts(filters: sanitizedFilters, page: page);
+       
+       if (result != null) {
+           int count = result.data?.length ?? 0;
+           if (count > 0) {
+             debugPrint("✅ GRAPHQL SUCCESS: Found $count products for filters $sanitizedFilters");
+           } else {
+             debugPrint("⚠️ GRAPHQL EMPTY: API returned success but 0 products for $sanitizedFilters. Check if category ID is correct.");
+           }
+       } else {
+           debugPrint("❌ GRAPHQL FAIL: ApiClient returned NULL for $sanitizedFilters");
+       }
+       return result;
     } catch (e, stack) {
-      debugPrint("🔴 CATEGORY REPO ERROR: $e");
-      debugPrint("🔴 STACK: $stack");
+       debugPrint("❌ GRAPHQL REPO CRASH: $e");
+       debugPrint("Stack: $stack");
+       return null;
     }
-    return null;
   }
 
   // 🟢 HELPER: Sanitize JSON to fix Type Cast Errors
