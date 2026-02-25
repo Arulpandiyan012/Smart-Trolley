@@ -26,11 +26,12 @@ import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart' hide St
 class BlinkitProductBody extends StatefulWidget {
   final NewProducts? productData;
   final ProductScreenBLoc? productScreenBLoc;
-
+  final int refreshVersion;
   const BlinkitProductBody({
     Key? key,
     this.productData,
     this.productScreenBLoc,
+    this.refreshVersion = 0,
   }) : super(key: key);
 
   @override
@@ -143,13 +144,10 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
                 ),
-                child: Image.network(
-                  image.url ?? "",
+                child: ImageView(
+                  url: image.url ?? "",
                   fit: BoxFit.cover, // 🟢 fills entire width to eliminate gaps
-                  errorBuilder: (ctx, _, __) => Container(
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey[100], 
-                    child: Icon(Icons.broken_image, color: Theme.of(context).hintColor)
-                  ),
+                  refreshVersion: widget.refreshVersion, // 🟢 CACHE BUSTER
                 ),
               );
             }).toList(),
@@ -447,11 +445,11 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                             }
                          }
                       },
-                      child: const Icon(Icons.remove, color: Colors.white, size: 20),
+                      child: const Icon(Icons.remove, color: Color(0xFF27C16B), size: 24),
                     ),
                     Text(
                       "$currentQty",
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                      style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w900, fontSize: 18),
                     ),
                     InkWell(
                       onTap: () {
@@ -465,7 +463,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                             ));
                          }
                       },
-                      child: const Icon(Icons.add, color: Colors.white, size: 20),
+                      child: const Icon(Icons.add, color: Color(0xFF27C16B), size: 24),
                     ),
                   ],
                 )
@@ -476,27 +474,12 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF27C16B), // 🟢 Solid green for premium feel
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF27C16B),
-                          const Color(0xFF1E9955),
-                        ],
-                      ),
+                      border: Border.all(color: const Color(0xFF27C16B), width: 1.5),
                     ),
                     child: const Center(
-                      child: Text(
-                        "ADD",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      child: Icon(Icons.add, color: Color(0xFF27C16B), size: 24),
                     ),
                   ),
                 ),
@@ -655,7 +638,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
       width: 160, // 🟢 Increased from 130 to 160 to prevent horizontal overflow
       child: BlinkitVerticalProductCard(
         data: product, // Assuming this is compatible
-        isLoggedIn: appStoragePref.getCustomerLoggedIn(),
+        refreshVersion: widget.refreshVersion, // 🟢 PASS VERSION
         // We pass callbacks if we want specific behavior, OR rely on BlinkitProductCard's internal logic.
         // BlinkitProductCard internal logic uses `subCategoryBloc` which we don't have here (we have ProductScreenBloc).
         // So we MUST provide callbacks OR pass a Bloc.

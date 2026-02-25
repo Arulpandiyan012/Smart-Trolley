@@ -16,6 +16,7 @@ class NewProductView extends StatefulWidget {
   final bool isRecentProduct;
   final bool callPreCache;
   final bool useGrid;
+  final int refreshVersion; // 🟢 NEW: Persistent version for cache-busting
   
   final void Function(int id)? onAddToCart;
   // 🟢 UPDATED: Now accepts 'product' (dynamic) as the 3rd argument
@@ -29,6 +30,7 @@ class NewProductView extends StatefulWidget {
     this.isRecentProduct = false,
     this.callPreCache = false,
     this.useGrid = false,
+    this.refreshVersion = 0, // 🟢 Default
     this.onAddToCart,
     this.onAddToWishlist,
   }) : super(key: key);
@@ -51,7 +53,7 @@ class _NewProductViewState extends State<NewProductView> {
         padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 0.49, // 🟢 Fine-tuned to 0.49 to eliminate final 2px overflow
+          childAspectRatio: 0.46, // 🟢 Taller ratio to prevent overflows on small screens
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
@@ -62,6 +64,7 @@ class _NewProductViewState extends State<NewProductView> {
             onAddToCart: widget.onAddToCart,
             onAddToWishlist: widget.onAddToWishlist,
             width: double.infinity, // Let grid constraints handle width
+            refreshVersion: widget.refreshVersion, // 🟢 PASSING VERSION
           );
         },
       );
@@ -93,6 +96,7 @@ class _NewProductViewState extends State<NewProductView> {
                     data: items[index],
                     onAddToCart: widget.onAddToCart,
                     onAddToWishlist: widget.onAddToWishlist,
+                    refreshVersion: widget.refreshVersion, // 🟢 PASSING VERSION
                   ),
                 ),
               ),

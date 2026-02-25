@@ -5,11 +5,13 @@ import 'package:skeleton_loader/skeleton_loader.dart';
 class BlinkitCategoryGrid extends StatelessWidget {
   final List<dynamic> categories; // Expects list of maps {title, image, link}
   final Function(String link, String title)? onTap;
+  final int refreshVersion; // 🟢 NEW
 
   const BlinkitCategoryGrid({
     Key? key, 
     required this.categories,
     this.onTap,
+    this.refreshVersion = 0,
   }) : super(key: key);
 
   Color _getCategoryBgColor(String name, BuildContext context) {
@@ -150,15 +152,10 @@ class BlinkitCategoryGrid extends StatelessWidget {
                                     )
                                   ]
                                 ),
-                                child: Image.network(
-                                  imageUrl,
+                                child: ImageView(
+                                  url: imageUrl,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (c, e, s) => Icon(
-                                    icon ?? Icons.category_outlined,
-                                    size: 32,
-                                    color: iconColor,
-                                    shadows: const [Shadow(color: Colors.black12, offset: Offset(0, 2), blurRadius: 4)],
-                                  ),
+                                  refreshVersion: refreshVersion, 
                                 )
                               )
                             : Icon(

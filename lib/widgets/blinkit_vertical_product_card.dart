@@ -10,15 +10,15 @@ class BlinkitVerticalProductCard extends StatelessWidget {
   final void Function(int id)? onAddToCart;
   final void Function(String id, bool isInWishlist, dynamic product)? onAddToWishlist;
   final double width;
-  final bool? isLoggedIn;
-
+  final int refreshVersion; // 🟢 NEW: Persistent version for cache-busting
+  
   const BlinkitVerticalProductCard({
-    Key? key, 
-    required this.data, 
-    this.onAddToCart, 
+    Key? key,
+    required this.data,
+    this.onAddToCart,
     this.onAddToWishlist,
-    this.width = 150.0,
-    this.isLoggedIn,
+    this.width = 160,
+    this.refreshVersion = 0, // 🟢 Default
   }) : super(key: key);
 
   String? _imageFromAny(dynamic img) {
@@ -121,6 +121,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
             title: name,
             urlKey: (data as dynamic).urlKey,
             productId: productId,
+            refreshVersion: refreshVersion, // 🟢 PROPAGATE VERSION
           ),
         );
       },
@@ -155,7 +156,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                   ),
                   child: (imageUrl != null && imageUrl.isNotEmpty)
-                      ? ImageView(url: imageUrl, fit: BoxFit.contain)
+                      ? ImageView(url: imageUrl, fit: BoxFit.contain, refreshVersion: refreshVersion)
                       : const Icon(Icons.image, size: 40, color: Colors.grey),
                 ),
                 Positioned(
@@ -289,7 +290,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
               ],
             ),
             Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+            padding: const EdgeInsets.fromLTRB(8, 2, 8, 4), 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -300,9 +301,9 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Theme.of(context).textTheme.titleSmall?.color),
                   ),
-                  const SizedBox(height: 2),
+                   const SizedBox(height: 1), 
                   Text("1 Unit", style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 10)),
-                  const SizedBox(height: 4),
+                   const SizedBox(height: 2), 
                   Builder(
                     builder: (context) {
                       double rating = 0.0;

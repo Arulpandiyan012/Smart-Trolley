@@ -57,6 +57,19 @@ class ApiClient {
   GraphQlApiCalling client = GraphQlApiCalling();
   MutationsData mutation = MutationsData();
 
+  // 🟢 NEW: Manual Cache Clear
+  Future<void> clearCache() async {
+    try {
+      final qClient = client.clientToQuery();
+      await qClient.resetStore();
+      // Also clear potentially stuck persistent cache
+      qClient.cache.store.reset(); 
+      debugPrint("🧹 API CLIENT: GraphQL Normalized & Persistent Cache Cleared");
+    } catch (e) {
+      debugPrint("⚠️ API CLIENT: Failed to clear cache: $e");
+    }
+  }
+
   // 🟢 1. GLOBAL HANDLER (Brute-Force Parser)
   Future<T?> handleResponse<T>(
     QueryResult<Object?> result,
@@ -383,7 +396,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     var response = await (client.clientToQuery()).query(QueryOptions(
         operationName: 'homeCategories',
         document: gql((filters ?? []).isNotEmpty ? mutation.homeCategoriesFilters(filters: filters) : mutation.homeCategoriesFilters(filters: idFilter)),
-        fetchPolicy: FetchPolicy.networkOnly
+        fetchPolicy: FetchPolicy.noCache
     ));
     return handleResponse(response, 'homeCategories', (json) => GetDrawerCategoriesData.fromJson(json));
   }
@@ -405,7 +418,8 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     var response = await (client.clientToQuery()).query(QueryOptions(
         operationName: 'themeCustomization',
         document: gql(mutation.themeCustomizationData()),
-        fetchPolicy: FetchPolicy.networkOnly));
+        fetchPolicy: FetchPolicy.noCache, // 🟢 Force Network
+    ));
     return handleResponse(response, 'themeCustomization', (json) => ThemeCustomDataModel.fromJson(json));
   }
 

@@ -219,6 +219,7 @@ class HomePageView extends StatefulWidget {
   final bool isLogin;
   final HomePageBloc? homePageBloc;
   final bool callPreCache;
+  final bool forceImageRefresh; // 🟢 NEW
 
   const HomePageView({
     Key? key,
@@ -228,6 +229,7 @@ class HomePageView extends StatefulWidget {
     this.isLogin = false,
     this.homePageBloc,
     this.callPreCache = false,
+    this.forceImageRefresh = false, // 🟢 Default
   }) : super(key: key);
 
   @override
@@ -239,6 +241,7 @@ class _HomePageViewState extends State<HomePageView> {
 
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTop = false;
+  int _refreshVersion = 0; // 🟢 ROBUST VERSIONING: Increments on refresh to bypass all caches
 
   @override
   void initState() {
@@ -419,14 +422,30 @@ class _HomePageViewState extends State<HomePageView> {
             child: Stack(
               children: [
                 RefreshIndicator(
-                  color: Theme.of(context).primaryColor,
-                  onRefresh: () async {
-                     widget.homePageBloc?.add(FetchHomeCustomData());
-                     widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
-                     // Wait a moment for UX
-                     await Future.delayed(const Duration(seconds: 2));
-                  },
-                  child: CustomScrollView(
+                   color: Theme.of(context).primaryColor,
+                   onRefresh: () async {
+                      // 1. Clear Cache
+                      await ApiClient().clearCache();
+                      
+                      // 2. Clear local memory to ensure Bloc re-emits success and triggers rebuild
+                      GlobalData.allProducts?.clear();
+                      
+                      // 3. Increment Version (Permanent buster for this lifecycle until next refresh)
+                      if (mounted) {
+                         setState(() {
+                            _refreshVersion++; 
+                            debugPrint("🔄 HOME REFRESH: Version incremented to $_refreshVersion");
+                         });
+                      }
+
+                      // 4. Trigger Re-fetch
+                      widget.homePageBloc?.add(FetchHomeCustomData());
+                      widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
+                      
+                      // 5. Short wait for UX (so the spinner doesn't vanish instantly)
+                      await Future.delayed(const Duration(milliseconds: 800));
+                   },
+                   child: CustomScrollView(
                   controller: _scrollController, 
                   slivers: [
                     // 🟢 REMOVED: Horizontal Scroll Header (Replaced by Grid below)
@@ -450,6 +469,7 @@ class _HomePageViewState extends State<HomePageView> {
                            padding: const EdgeInsets.only(top: 8, bottom: 12),
                            child: BestsellersCategoryGrid(
                              categories: cats,
+                             refreshVersion: _refreshVersion, // 🟢 PASS VERSION
                              onTap: (link, title, cat) {
                                 _handleSeeAll(title, slug: link); 
                                 // Alternatively, if you want it to behave like root tap:
@@ -509,6 +529,7 @@ class _HomePageViewState extends State<HomePageView> {
                                       'icon': _categoryIconFor(_catLabel(child)),
                                       'cat': child
                                     }).toList(),
+                                    refreshVersion: _refreshVersion, // 🟢 PASS VERSION
                                     onTap: (link, title) {
                                       _handleSeeAll(_catLabel(rootCat), slug: link); 
                                     },
@@ -558,6 +579,7 @@ class _HomePageViewState extends State<HomePageView> {
                           child: s.type == "blinkit_category_grid" 
                             ? BlinkitCategoryGrid(
                                 categories: s.items,
+                                refreshVersion: _refreshVersion, // 🟢 PASS VERSION
                                 onTap: (link, title) {
                                   // Handle Navigation. For now, try to open by Title or Slug
                                   // The 'link' from backend is like 'category_slug_veg'.
@@ -572,6 +594,7 @@ class _HomePageViewState extends State<HomePageView> {
                                 isRecentProduct: false,
                                 callPreCache: widget.callPreCache,
                                 useGrid: true,
+                                refreshVersion: _refreshVersion, // 🟢 PERSISTENT VERSION
                                  onAddToCart: (id) {
                                   if (id > 0) {
                                     GlobalData.optimisticUpdateCart(id, 1);
@@ -980,7 +1003,10 @@ class _HomePageViewState extends State<HomePageView> {
       MaterialPageRoute(
         builder: (context) => BlocProvider(
           create: (context) => CategoryBloc(CategoriesRepo()), 
-          child: SidebarCategoryScreen(initialSlug: slugToPass),
+          child: SidebarCategoryScreen(
+            initialSlug: slugToPass,
+            refreshVersion: _refreshVersion, // 🟢 PASS SYNCED VERSION
+          ),
         ),
       ),
     );

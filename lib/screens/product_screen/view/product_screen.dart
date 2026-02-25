@@ -20,8 +20,9 @@ class ProductScreen extends StatefulWidget {
   final int? productId;
   final String? title;
   final String? urlKey;
+  final int refreshVersion;
 
-  const ProductScreen({Key? key, this.title, this.productId, this.urlKey})
+  const ProductScreen({Key? key, this.title, this.productId, this.urlKey, this.refreshVersion = 0})
       : super(key: key);
 
   @override
@@ -230,6 +231,7 @@ class _ProductScreenState extends State<ProductScreen> {
     return BlinkitProductBody(
       productData: productData,
       productScreenBLoc: productScreenBLoc,
+      refreshVersion: widget.refreshVersion, // 🟢 PASSING VERSION
     );
   }
   

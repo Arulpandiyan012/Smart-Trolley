@@ -18,55 +18,74 @@ import '../utils/assets_constants.dart';
 
 class ImageView extends StatelessWidget {
   final String? url;
-  final double height;
-  final double width;
+  final double? height;
+  final double? width;
   final BoxFit? fit;
+  final Widget? placeholder;
   final String? placeHolder;
+  final int refreshVersion; // 🟢 NEW: Persistent version for cache-busting
 
   const ImageView({
     Key? key,
-    this.url,
-    this.width = 0.0,
-    this.height = 0.0,
+    required this.url,
+    this.fit = BoxFit.cover,
+    this.height,
+    this.width,
+    this.placeholder,
     this.placeHolder,
-    this.fit = BoxFit.fill,
+    this.refreshVersion = 0, // 🟢 Default
   }) : super(key: key);
 
-  static String normalizeUrl(String? rawUrl) {
-    String cleanUrl = rawUrl?.trim() ?? "";
-    
+  static String normalizeUrl(String? rawUrl, {int refreshVersion = 0}) {
+    if (rawUrl == null || rawUrl.isEmpty) return "";
+    String cleanUrl = rawUrl.trim();
+    const String baseDomain = "https://ecom.thesmartedgetech.com"; // Define baseDomain here
+
     // 1. Allow local file paths (don't normalize them as URLs)
     if (cleanUrl.startsWith("/") || cleanUrl.contains(":\\") || cleanUrl.startsWith("file://")) {
       return cleanUrl;
     }
 
-    // 2. Normalize relative paths if needed
-    if (cleanUrl.isNotEmpty && !cleanUrl.startsWith("http")) {
-      const String baseDomain = "https://ecom.thesmartedgetech.com";
-      if (cleanUrl.startsWith("/")) {
-        cleanUrl = "$baseDomain$cleanUrl";
-      } else {
-        cleanUrl = "$baseDomain/$cleanUrl";
-      }
+    // 🟢 1. RECOVERY: Check for 'placeholder' or 'no-image'
+    if (cleanUrl.contains("placeholder") || cleanUrl.contains("no-image")) {
+       return "";
     }
-    
-    // 3. Transform broken storage paths to working cache paths
+
+    // 🟢 2. FIX: Ensure absolute URL
+    if (cleanUrl.startsWith("/")) {
+      cleanUrl = "$baseDomain$cleanUrl";
+    }
+
+    // 🟢 3. PROTOCOL FIX (Force HTTPS)
+    if (cleanUrl.startsWith("http://")) {
+      cleanUrl = cleanUrl.replaceFirst("http://", "https://");
+    }
+
+    // 3. Transform broken storage paths to working cache paths (moved after absolute URL fix)
     if (cleanUrl.contains("/storage/product/")) {
         cleanUrl = cleanUrl.replaceFirst("/storage/product/", "/cache/medium/product/");
     }
 
     // 4. Filter out known "empty" backend paths that return 500
-    if (cleanUrl.endsWith("/cache/medium/product/") || 
+    if (cleanUrl.endsWith("/cache/medium/product/") ||
         cleanUrl.endsWith("/storage/small/") ||
         cleanUrl.endsWith("/storage/medium/") ||
         cleanUrl.endsWith("/storage/large/")) {
         return "";
     }
 
+    // 🟢 4. CACHE BUSTING: Append version if refreshVersion > 0
+    // We use a stable timestamp based on the version so that within one "refresh session",
+    // the URL stays the same (allowing valid caching), but changes across sessions.
+    if (refreshVersion > 0 && cleanUrl.isNotEmpty) {
+       String connector = cleanUrl.contains("?") ? "&" : "?";
+       // We use the version number itself to create a unique but stable 'v' param
+       cleanUrl = "$cleanUrl${connector}rv=$refreshVersion";
+    }
     return cleanUrl;
   }
 
-  static ImageProvider getImageProvider(String? url, {String? fallbackAsset}) {
+  static ImageProvider getImageProvider(String? url, {String? fallbackAsset, int refreshVersion = 0}) {
     if (url == null || url.trim().isEmpty) {
       return AssetImage(fallbackAsset ?? AssetConstants.placeHolder);
     }
@@ -78,7 +97,7 @@ class ImageView extends StatelessWidget {
       return FileImage(File(path));
     }
 
-    final normalized = normalizeUrl(cleanUrl);
+    final normalized = normalizeUrl(cleanUrl, refreshVersion: refreshVersion);
     if (normalized.isEmpty) {
       return AssetImage(fallbackAsset ?? AssetConstants.placeHolder);
     }
@@ -105,7 +124,7 @@ class ImageView extends StatelessWidget {
       );
     }
 
-    final normalized = normalizeUrl(cleanUrl);
+    final normalized = normalizeUrl(cleanUrl, refreshVersion: refreshVersion);
     if (normalized.isEmpty) {
       return _placeholder();
     }
@@ -121,6 +140,7 @@ class ImageView extends StatelessWidget {
   }
 
   Widget _placeholder() {
+    if (placeholder != null) return placeholder!;
     return Image.asset(
       placeHolder ?? AssetConstants.placeHolder,
       width: width != 0.0 ? width : null,

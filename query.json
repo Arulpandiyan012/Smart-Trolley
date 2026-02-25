@@ -1,0 +1,3 @@
+{
+    "query": "query { allProducts(input: [{key: \"category_slug\", value: \"atta\"}]) { data { id name urlKey priceHtml { formattedFinalPrice } } } }"
+}

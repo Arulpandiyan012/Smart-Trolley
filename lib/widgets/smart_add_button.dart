@@ -35,7 +35,7 @@ class SmartAddButton extends StatelessWidget {
       );
     }
 
-    // 2. "ADD" State (Qty is 0)
+    // 2. "+" Icon State (Qty is 0)
     if (qty == 0) {
       return InkWell(
         onTap: onAdd,
@@ -43,24 +43,21 @@ class SmartAddButton extends StatelessWidget {
           height: double.infinity, width: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: const Color(0xFF27C16B)),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               )
             ],
           ),
-          child: const Text(
-              "ADD", 
-              style: TextStyle(
-                  color: Colors.white, 
-                  fontWeight: FontWeight.w900, 
-                  fontSize: 10,
-                  letterSpacing: 0.5
-              )
+          child: const Icon(
+              Icons.add, 
+              color: Color(0xFF27C16B), 
+              size: 18,
           ),
         ),
       );
@@ -70,11 +67,12 @@ class SmartAddButton extends StatelessWidget {
     return Container(
       height: double.infinity, width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFF27C16B)),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           )
@@ -87,13 +85,13 @@ class SmartAddButton extends StatelessWidget {
             onTap: onDecrease,
             child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4), 
-                child: Icon(Icons.remove, color: Colors.white, size: 12)
+                child: Icon(Icons.remove, color: Color(0xFF27C16B), size: 14)
             ),
           ),
           Text(
               "$qty", 
               style: const TextStyle(
-                  color: Colors.white, 
+                  color: Color(0xFF27C16B), 
                   fontWeight: FontWeight.bold, 
                   fontSize: 11
               )
@@ -102,7 +100,7 @@ class SmartAddButton extends StatelessWidget {
             onTap: onIncrease,
             child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4), 
-                child: Icon(Icons.add, color: Colors.white, size: 12)
+                child: Icon(Icons.add, color: Color(0xFF27C16B), size: 14)
             ),
           ),
         ],

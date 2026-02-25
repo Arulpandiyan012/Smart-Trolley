@@ -19,6 +19,7 @@ class SubCategorySidebarScreen extends StatefulWidget {
   final String parentId;
   final String parentSlug; // 🟢 NEW
   final List<dynamic> subCategories; // These are L3 Categories
+  final int refreshVersion; // 🟢 NEW: Persistent version for cache-busting
 
   const SubCategorySidebarScreen({
     Key? key, 
@@ -26,6 +27,7 @@ class SubCategorySidebarScreen extends StatefulWidget {
     required this.parentId,
     required this.parentSlug, // 🟢 NEW
     required this.subCategories,
+    this.refreshVersion = 0,
   }) : super(key: key);
 
   @override
@@ -45,6 +47,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
   final ScrollController _listController = ScrollController();
   int _page = 1;
   List<Map<String, dynamic>> _filters = [];
+  int _refreshVersion = 0; // 🟢 LOCAL VERSION (for its own pull-to-refresh)
 
   @override
   void initState() {
@@ -53,6 +56,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
     debugPrint("🟢 Passed L3 Categories: ${widget.subCategories.length}");
     widget.subCategories.forEach((c) => debugPrint(" - L3: ${_getName(c)}"));
 
+    _refreshVersion = widget.refreshVersion; // 🟢 INHERIT VERSION
     _categoryBloc = context.read<CategoryBloc>();
     
     // Initial Load - Select First L3 Category if available
@@ -104,6 +108,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
       _filters = [{"key": "\"category_id\"", "value": "\"$id\""}];
     });
     _categoryBloc?.add(FilterFetchEvent(slug));
+    _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page)); // 🟢 FIX: Trigger product fetch too!
   }
 
   String _getId(dynamic cat) {
@@ -141,6 +146,17 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
     return Icons.category_outlined;
   }
 
+  void _onAddToCart(int id, int qty) {
+    if (id > 0) {
+      GlobalData.optimisticUpdateCart(id, qty);
+      _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
+    }
+  }
+
+  void _onAddToWishlist(String id, bool isInWishlist, dynamic product) {
+    // 🟢 TODO: Implement wishlist toggle if needed
+  }
+
   @override
   Widget build(BuildContext context) {
     // 🟢 FIX: Handle Empty Subcategories (L3)
@@ -155,7 +171,29 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
             elevation: 0.5,
             iconTheme: const IconThemeData(color: Colors.black),
           ),
-          body: BlocConsumer<CategoryBloc, CategoriesBaseState>(
+          body: RefreshIndicator(
+            color: const Color(0xFF27C16B),
+            onRefresh: () async {
+          // 1. Clear Cache
+          await ApiClient().clearCache();
+          
+          // 2. Clear local
+          GlobalData.allProducts?.clear();
+          
+          // 3. Increment LOCAL version for this screen's refresh
+          if (mounted) {
+             setState(() {
+                _refreshVersion++;
+             });
+          }
+
+          // 4. Force Bloc to fetch fresh
+          _categoryBloc?.add(FetchSubCategoryEvent(_filters, 1));
+          
+          // 5. Short wait for UX
+          await Future.delayed(const Duration(milliseconds: 800));
+        },
+            child: BlocConsumer<CategoryBloc, CategoriesBaseState>(
              listener: (context, state) {
                 if (state is FilterFetchState) {
                     _filterData = state.filterModel;
@@ -207,16 +245,15 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                         data: _productsData!.data![index],
                         isLoggedIn: appStoragePref.getCustomerLoggedIn(),
                         subCategoryBloc: _categoryBloc,
-                        onAddToCart: (id, qty) {
-                           GlobalData.optimisticUpdateCart(id, qty);
-                           _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
-                        },
-                        onAddToWishlist: (id, isIn, prod) {},
+                        onAddToCart: (pid, qty) => _onAddToCart(pid, qty),
+                        onAddToWishlist: (id, isInWishlist, product) => _onAddToWishlist(id, isInWishlist, product),
+                        refreshVersion: widget.refreshVersion > 0 ? widget.refreshVersion : _refreshVersion, // 🟢 USE HIGHEST VERSION
                      );
                   },
                 );
              },
            ),
+          ),
         );
     }
     
@@ -247,7 +284,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
               border: Border(right: BorderSide(color: Colors.grey[200]!)),
             ),
             child: ListView.separated(
-              padding: EdgeInsets.zero,
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 80),
               itemCount: widget.subCategories.length,
               separatorBuilder: (ctx, i) => const SizedBox(height: 0),
               itemBuilder: (context, index) {
@@ -394,28 +431,49 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                              return Center(child: Text("No products found", style: TextStyle(color: Colors.grey[400])));
                           }
 
-                          return GridView.builder(
-                            controller: _listController,
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.58, 
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                            ),
-                            itemCount: _productsData!.data!.length,
-                            itemBuilder: (context, index) {
-                               return BlinkitProductCard(
-                                  data: _productsData!.data![index],
-                                  isLoggedIn: appStoragePref.getCustomerLoggedIn(),
-                                  subCategoryBloc: _categoryBloc,
-                                  onAddToCart: (id, qty) {
-                                     GlobalData.optimisticUpdateCart(id, qty);
-                                     _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
-                                  },
-                                  onAddToWishlist: (id, isIn, prod) { /* Optional implement */ },
-                               );
+                          return RefreshIndicator(
+                            color: const Color(0xFF27C16B),
+                            onRefresh: () async {
+                               // 1. Clear Cache
+                               await ApiClient().clearCache();
+                               
+                               // 2. Clear local
+                               GlobalData.allProducts?.clear();
+                               
+                               // 3. Increment LOCAL version for this screen's refresh
+                               if (mounted) {
+                                  setState(() {
+                                     _refreshVersion++;
+                                  });
+                               }
+
+                               // 4. Force Bloc to fetch fresh
+                               _categoryBloc?.add(FetchSubCategoryEvent(_filters, 1));
+                               
+                               // 5. Short wait for UX
+                               await Future.delayed(const Duration(milliseconds: 800));
                             },
+                            child: GridView.builder(
+                              controller: _listController,
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.55, 
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
+                              itemCount: _productsData!.data!.length,
+                              itemBuilder: (context, index) {
+                                 return BlinkitProductCard(
+                                    data: _productsData!.data![index],
+                                    isLoggedIn: appStoragePref.getCustomerLoggedIn(),
+                                    subCategoryBloc: _categoryBloc,
+                                    onAddToCart: (pid, qty) => _onAddToCart(pid, qty),
+                                    onAddToWishlist: (id, isInWishlist, product) => _onAddToWishlist(id, isInWishlist, product),
+                                    refreshVersion: widget.refreshVersion > 0 ? widget.refreshVersion : _refreshVersion, // 🟢 USE HIGHEST VERSION
+                                 );
+                              },
+                            ),
                           );
                        },
                      ),
@@ -458,7 +516,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
               ),
               child: ClipOval(
                   child: imgUrl.isNotEmpty 
-                     ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 22, color: Colors.grey[400]))
+                     ? ImageView(url: imgUrl, fit: BoxFit.cover, refreshVersion: widget.refreshVersion > 0 ? widget.refreshVersion : _refreshVersion)
                      : Icon(_categoryIconFor(name), size: 22, color: Colors.grey[400])
               )
             ),

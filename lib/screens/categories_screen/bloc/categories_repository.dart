@@ -44,16 +44,14 @@ class CategoriesRepo implements CategoriesRepository {
        debugPrint("🚀 CATEGORY REPO: Fetching GraphQL Products | Filters: $sanitizedFilters | Page: $page");
        
        var result = await ApiClient().getAllProducts(filters: sanitizedFilters, page: page);
-       
+
        if (result != null) {
            int count = result.data?.length ?? 0;
            if (count > 0) {
              debugPrint("✅ GRAPHQL SUCCESS: Found $count products for filters $sanitizedFilters");
            } else {
-             debugPrint("⚠️ GRAPHQL EMPTY: API returned success but 0 products for $sanitizedFilters. Check if category ID is correct.");
+             debugPrint("⚠️ GRAPHQL EMPTY: API returned 0 products for $sanitizedFilters.");
            }
-       } else {
-           debugPrint("❌ GRAPHQL FAIL: ApiClient returned NULL for $sanitizedFilters");
        }
        return result;
     } catch (e, stack) {

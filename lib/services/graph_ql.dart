@@ -46,6 +46,9 @@ class GraphQlApiCalling {
       "X-Requested-With": "XMLHttpRequest", // 🟢 Fix for 'Unauthenticated' Guard
       "User-Agent": "SmartTrolleyApp/1.0",
       "Accept": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate", // 🟢 Bypass CDN/Proxy Cache
+      "Pragma": "no-cache",
+      "Expires": "0",
     };
 
     if (cookie.isNotEmpty) {

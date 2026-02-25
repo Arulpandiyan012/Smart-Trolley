@@ -12,6 +12,7 @@ class BlinkitProductCard extends StatelessWidget {
   final void Function(String id, bool isInWishlist, dynamic product)? onAddToWishlist;
   final void Function(int productId, int quantity)? onAddToCart;
   final CategoryBloc? subCategoryBloc;
+  final int refreshVersion; // 🟢 NEW: Persistent version for cache-busting
 
   const BlinkitProductCard({
     Key? key,
@@ -20,6 +21,7 @@ class BlinkitProductCard extends StatelessWidget {
     this.subCategoryBloc,
     this.onAddToWishlist,
     this.onAddToCart, 
+    this.refreshVersion = 0, // 🟢 Default
   }) : super(key: key);
 
   @override
@@ -70,6 +72,7 @@ class BlinkitProductCard extends StatelessWidget {
                 title: data?.name ?? data?.productFlats?.firstOrNull?.name ?? "",
                 urlKey: data?.urlKey,
                 productId: int.tryParse(data?.id ?? "0"),
+                refreshVersion: refreshVersion, // 🟢 PROPAGATE VERSION
               ),
             );
           },
@@ -95,12 +98,13 @@ class BlinkitProductCard extends StatelessWidget {
                 Expanded(
                   flex: 5,
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
                       // Image
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
-                          child: ImageView(url: imageUrl, fit: BoxFit.contain),
+                          child: ImageView(url: imageUrl, fit: BoxFit.contain, refreshVersion: refreshVersion),
                         ),
                       ),
                       
@@ -144,13 +148,12 @@ class BlinkitProductCard extends StatelessWidget {
                         ),
                       ),
 
-                      // Add Button placed bottom right of image
                       Positioned(
-                        bottom: -4,
-                        right: 0,
+                        bottom: 4,
+                        right: 8,
                         child: SizedBox(
-                          width: 48, 
-                          height: 20, 
+                          width: 60, 
+                          height: 24, 
                           child: SmartAddButton(
                             qty: currentQty,
                             isLoading: false,
@@ -200,7 +203,7 @@ class BlinkitProductCard extends StatelessWidget {
                 Expanded(
                   flex: 6,
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0), 
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -220,7 +223,7 @@ class BlinkitProductCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4), 
 
                           // Name
                           Text(
@@ -234,7 +237,7 @@ class BlinkitProductCard extends StatelessWidget {
                               color: Colors.black87
                             )
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
 
                           // Unit
                           Text(

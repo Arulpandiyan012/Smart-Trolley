@@ -285,9 +285,16 @@ class _WishlistItemListState extends State<WishlistItemList> {
       height: 36,
       width: 100,
       decoration: BoxDecoration(
-        color: hasItems ? const Color(0xFF27C16B) : Colors.white,
+        color: Colors.white,
         border: Border.all(color: const Color(0xFF27C16B)),
         borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: hasItems
           ? Row(
@@ -307,11 +314,11 @@ class _WishlistItemListState extends State<WishlistItemList> {
                       }
                     }
                   },
-                  child: const Icon(Icons.remove, color: Colors.white, size: 18),
+                  child: const Icon(Icons.remove, color: Color(0xFF27C16B), size: 18),
                 ),
                 Text(
                   "$qty",
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold),
                 ),
                 InkWell(
                   onTap: () {
@@ -321,7 +328,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
                        ));
                     }
                   },
-                  child: const Icon(Icons.add, color: Colors.white, size: 18),
+                  child: const Icon(Icons.add, color: Color(0xFF27C16B), size: 18),
                 ),
               ],
             )
@@ -330,14 +337,7 @@ class _WishlistItemListState extends State<WishlistItemList> {
                  _addToCart(productId, wishlistId, "1");
               },
               child: const Center(
-                child: Text(
-                  "ADD",
-                  style: TextStyle(
-                    color: Color(0xFF27C16B),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
+                child: Icon(Icons.add, color: Color(0xFF27C16B), size: 20),
               ),
             ),
     );

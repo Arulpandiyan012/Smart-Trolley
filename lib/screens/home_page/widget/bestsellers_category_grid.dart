@@ -5,11 +5,13 @@ import 'package:skeleton_loader/skeleton_loader.dart';
 class BestsellersCategoryGrid extends StatelessWidget {
   final List<dynamic> categories; // Root categories
   final Function(String link, String title, dynamic cat)? onTap;
+  final int refreshVersion; // 🟢 NEW
 
   const BestsellersCategoryGrid({
     Key? key, 
     required this.categories,
     this.onTap,
+    this.refreshVersion = 0,
   }) : super(key: key);
 
   String _catLabel(dynamic cat) {
@@ -166,7 +168,11 @@ class BestsellersCategoryGrid extends StatelessWidget {
                                   child: imgUrl.isNotEmpty 
                                     ? ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
-                                        child: Image.network(imgUrl, fit: BoxFit.contain, errorBuilder: (c, e, s) => const Icon(Icons.category, size: 16, color: Colors.grey)))
+                                        child: ImageView(
+                                          url: imgUrl, 
+                                          fit: BoxFit.contain, 
+                                          refreshVersion: refreshVersion,
+                                        ))
                                     : const Center(child: Icon(Icons.image_outlined, size: 16, color: Colors.black12)),
                                 );
                               },

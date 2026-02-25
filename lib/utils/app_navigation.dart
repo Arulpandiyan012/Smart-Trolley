@@ -153,7 +153,9 @@ Route<dynamic> generateRoute(RouteSettings settings) {
           child: ProductScreen(
               title: (productData.title),
               productId: productData.productId,
-              urlKey: productData.urlKey),
+              urlKey: productData.urlKey,
+              refreshVersion: productData.refreshVersion, // 🟢 PASSING VERSION
+          ),
         ),
       );
 

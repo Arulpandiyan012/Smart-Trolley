@@ -19,9 +19,10 @@ class DrawerSubCategories {
 }
 
 class PassProductData {
-  PassProductData({this.title, this.productId, this.urlKey});
+  PassProductData({this.title, this.productId, this.urlKey, this.refreshVersion = 0});
 
   String? urlKey;
   int? productId;
   String? title;
+  int refreshVersion;
 }

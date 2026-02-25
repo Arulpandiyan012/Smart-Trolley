@@ -471,13 +471,20 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
                            child: Opacity(
                              opacity: isSaleable ? 1 : 0.5,
                              child: Container(
-                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                               padding: const EdgeInsets.all(6),
                                decoration: BoxDecoration(
                                  border: Border.all(color: const Color(0xFF27C16B)),
-                                 borderRadius: BorderRadius.circular(6),
-                                 color: const Color(0xFFF7FFF9),
+                                 borderRadius: BorderRadius.circular(8),
+                                 color: Colors.white,
+                                 boxShadow: [
+                                   BoxShadow(
+                                     color: Colors.black.withOpacity(0.05),
+                                     blurRadius: 4,
+                                     offset: const Offset(0, 2),
+                                   ),
+                                 ],
                                ),
-                               child: const Text("ADD", style: TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 11)),
+                               child: const Icon(Icons.add, color: Color(0xFF27C16B), size: 18),
                              ),
                            ),
                          )

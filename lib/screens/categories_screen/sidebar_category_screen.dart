@@ -23,7 +23,8 @@ import 'package:bagisto_app_demo/screens/categories_screen/sub_category_sidebar_
 
 class SidebarCategoryScreen extends StatefulWidget {
   final String? initialSlug;
-  const SidebarCategoryScreen({Key? key, this.initialSlug}) : super(key: key);
+  final int refreshVersion; // 🟢 NEW: Pass global version
+  const SidebarCategoryScreen({Key? key, this.initialSlug, this.refreshVersion = 0}) : super(key: key);
 
   @override
   State<SidebarCategoryScreen> createState() => _SidebarCategoryScreenState();
@@ -51,6 +52,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   final ScrollController _listController = ScrollController();
   int _page = 1;
   List<Map<String, dynamic>> _filters = [];
+  int _refreshVersion = 0; // 🟢 NEW: Persistent version for cache-busting
 
   // Auto-Retry Timer
   Timer? _retryTimer;
@@ -59,6 +61,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   @override
   void initState() {
     super.initState();
+    _refreshVersion = widget.refreshVersion; // 🟢 INHERIT VERSION
     _categoryBloc = context.read<CategoryBloc>();
     
     _loadCategories();
@@ -423,13 +426,35 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             elevation: 0.5,
             iconTheme: const IconThemeData(color: Colors.black),
           ),
-          body: ListView.separated(
-            padding: const EdgeInsets.only(bottom: 24),
-            itemCount: _categories.length,
-            separatorBuilder: (ctx, i) => const Divider(height: 1, thickness: 8, color: Color(0xFFF5F5F5)), // Thick gray separator like Home
-            itemBuilder: (context, index) {
-               return _buildVerticalCategorySection(index);
-            },
+          body: RefreshIndicator(
+          onRefresh: () async {
+            // 1. Clear Cache
+            await ApiClient().clearCache();
+            
+            // 2. Increment version
+            if (mounted) {
+               setState(() {
+                  _refreshVersion++;
+               });
+            }
+
+            // 3. Clear local
+            GlobalData.allProducts?.clear();
+            
+            // 4. Force Bloc to fetch fresh
+            _categoryBloc?.add(FetchSubCategoryEvent(_filters, 1));
+            
+            // 5. Short wait for UX
+            await Future.delayed(const Duration(milliseconds: 800));
+          },
+          child: ListView.separated(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 40),
+              itemCount: _categories.length,
+              separatorBuilder: (ctx, i) => const Divider(height: 1, thickness: 8, color: Color(0xFFF5F5F5)), // Thick gray separator like Home
+              itemBuilder: (context, index) {
+                 return _buildVerticalCategorySection(index);
+              },
+            ),
           ),
         );
     }
@@ -450,6 +475,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
              parentId: _getId(cat),
              parentSlug: _getSlug(cat), 
              subCategories: ((cat as dynamic).children as List?) ?? [],
+             refreshVersion: _refreshVersion, // 🟢 PASSING VERSION
           ),
        );
     }
@@ -470,6 +496,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           parentId: _getId(cat),
           parentSlug: _getSlug(cat), 
           subCategories: ((cat as dynamic).children as List?) ?? [],
+          refreshVersion: _refreshVersion, // 🟢 PASSING VERSION
        ),
     );
   }
@@ -537,7 +564,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3, 
-                childAspectRatio: 0.75, 
+                childAspectRatio: 0.7, 
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 16,
               ),
@@ -567,28 +594,29 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
              ],
              child: SubCategorySidebarScreen(
                title: name,
-               parentId: _getId(subCat),
-               parentSlug: _getSlug(subCat),
-               subCategories: ((subCat as dynamic).children as List?) ?? [],
-             ),
+                parentId: _getId(subCat),
+                parentSlug: _getSlug(subCat),
+                subCategories: ((subCat as dynamic).children as List?) ?? [],
+                refreshVersion: _refreshVersion, // 🟢 PASSING VERSION
+              ),
            )
          ));
       },
       child: Column(
         children: [
           Container(
-            height: 70, 
+            height: 65, 
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.blue[50]!.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
             ),
-             child: ClipRRect(
-               borderRadius: BorderRadius.circular(12),
-               child: imgUrl.isNotEmpty 
-                   ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)))
-                   : Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)),
-             )
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: imgUrl.isNotEmpty 
+                    ? ImageView(url: imgUrl, fit: BoxFit.cover, refreshVersion: _refreshVersion)
+                    : Icon(_categoryIconFor(name), size: 30, color: const Color(0xFF27C16B)),
+              )
           ),
           const SizedBox(height: 8),
           Text(
