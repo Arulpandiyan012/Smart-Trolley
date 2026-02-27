@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../stock_management/view/stock_management_screen.dart';
 import '../../orders/view/vendor_orders_screen.dart';
+import '../../vendor_login/view/vendor_login_screen.dart'; // import vendor login screen
 
 import 'package:bagisto_app_demo/utils/index.dart'; // For appStoragePref & Routes
 
@@ -9,21 +10,56 @@ class VendorDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vendor Dashboard'),
-        backgroundColor: const Color(0xFF27C16B),
+        backgroundColor: appBarColor,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             tooltip: "Logout",
             onPressed: () {
-               // 🟢 Logout Vendor
-               appStoragePref.setVendorLoggedIn(false);
-               
-               // Redirect to App Home
-               Navigator.pushNamedAndRemoveUntil(context, home, (route) => false);
+               showDialog(
+                 context: context,
+                 builder: (BuildContext context) {
+                   return AlertDialog(
+                     title: const Text('Confirm Logout'),
+                     content: const Text('Are you sure you want to log out?'),
+                     actions: [
+                       TextButton(
+                         onPressed: () {
+                           Navigator.pop(context); // Close dialog
+                         },
+                         child: const Text('Cancel'),
+                       ),
+                       TextButton(
+                         onPressed: () {
+                           // 🟢 Logout Vendor
+                           appStoragePref.setVendorLoggedIn(false);
+                           
+                           // Show message
+                           ScaffoldMessenger.of(context).showSnackBar(
+                             const SnackBar(content: Text('Logged out successfully')),
+                           );
+
+                           // Redirect to Vendor Login
+                           Navigator.pushAndRemoveUntil(
+                             context,
+                             MaterialPageRoute(builder: (context) => const VendorLoginScreen()),
+                             (route) => false,
+                           );
+                         },
+                         child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                       ),
+                     ],
+                   );
+                 },
+               );
             },
           )
         ],
@@ -56,8 +92,11 @@ class VendorDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildDashboardCard(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isDark ? Theme.of(context).colorScheme.secondary : const Color(0xFF27C16B);
+
     return Card(
-      elevation: 4,
+      elevation: isDark ? 2 : 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
@@ -65,7 +104,7 @@ class VendorDashboardScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: const Color(0xFF27C16B)),
+            Icon(icon, size: 48, color: iconColor),
             const SizedBox(height: 16),
             Text(
               title,

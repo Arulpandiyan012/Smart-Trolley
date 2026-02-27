@@ -10,8 +10,10 @@
 
 import '../../../data_model/add_to_wishlist_model/add_wishlist_model.dart';
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
+import 'package:bagisto_app_demo/services/api_client.dart';
 
 import '../data_model/download_sample_model.dart';
+
 
 abstract class ProductScreenRepository {
   Future<NewProductsModel?> getProductDetails(
@@ -41,16 +43,36 @@ class ProductScreenRepo implements ProductScreenRepository {
   @override
   Future<NewProductsModel?> getProductDetails(
       List<Map<String, dynamic>>? filters) async {
-    NewProductsModel? productData;
+    // Extract urlKey and productId from the filters map
+    String urlKey = "";
+    int? productId;
+    String? name;
+
+    for (var f in (filters ?? [])) {
+      String key = f["key"]?.toString().replaceAll('"', '') ?? "";
+      String value = f["value"]?.toString().replaceAll('"', '') ?? "";
+      if (key == "url_key") urlKey = value;
+      if (key == "id") productId = int.tryParse(value);
+      if (key == "name") name = value;
+    }
+
     try {
-      productData = await ApiClient().getAllProducts(filters: filters);
-      debugPrint("productData ${productData?.toJson()}");
+      // 🟢 Use dedicated product detail query instead of allProducts(filters)
+      NewProducts? product = await ApiClient().getProductDetail(urlKey, productId: productId, name: name);
+      debugPrint("productDetail result: ${product?.name ?? 'null'}");
+      
+      if (product != null) {
+        // Wrap into NewProductsModel for compatibility
+        return NewProductsModel(data: [product]);
+      }
+      return NewProductsModel(data: []);
     } catch (error, stacktrace) {
       debugPrint("Error --> $error");
       debugPrint("StackTrace --> $stacktrace");
+      return null;
     }
-    return productData;
   }
+
 
   @override
   Future<AddToCartModel?> callAddToCartAPi(

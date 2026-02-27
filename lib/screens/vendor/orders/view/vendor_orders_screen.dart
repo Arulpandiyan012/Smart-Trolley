@@ -33,10 +33,13 @@ class VendorOrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pending Deliveries'),
-        backgroundColor: const Color(0xFF27C16B),
+        backgroundColor: appBarColor,
         foregroundColor: Colors.white,
       ),
       body: ListView.builder(
@@ -61,13 +64,17 @@ class VendorOrdersScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isPending ? Colors.orange[100] : Colors.blue[100],
+                          color: isPending 
+                              ? (isDark ? Colors.orange.withOpacity(0.2) : Colors.orange[100])
+                              : (isDark ? Colors.blue.withOpacity(0.2) : Colors.blue[100]),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           order['status']!,
                           style: TextStyle(
-                            color: isPending ? Colors.orange[900] : Colors.blue[900],
+                            color: isPending 
+                                ? (isDark ? Colors.orange[300] : Colors.orange[900])
+                                : (isDark ? Colors.blue[300] : Colors.blue[900]),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -93,7 +100,7 @@ class VendorOrdersScreen extends StatelessWidget {
                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Order Marked as Ready")));
                           },
                            style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF27C16B), 
+                            backgroundColor: appBarColor, 
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             minimumSize: const Size(0, 36)

@@ -123,14 +123,24 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             _categories = list;
             
             // 🟢 DEEP SEARCH: Find target slug at ANY level (L1, L2, L3)
-            // If the user clicked "Atta" (L2), we want "Atta" to be the Root Screen.
             if (widget.initialSlug != null && widget.initialSlug!.isNotEmpty) {
                final target = _findCategoryRecursively(list, widget.initialSlug!);
                if (target != null) {
-                  // If found deep, we treat THIS target as the single "Selected" item for the screen.
-                  // We simulate this by overriding _categories temporarily or just handling it in build.
-                  // BETTER: Just set a flag or object that "Direct Mode Target" is found.
-                  _directModeTarget = target; 
+                  final children = ((target as dynamic).children as List?) ?? [];
+                  if (children.isNotEmpty) {
+                      _directModeTarget = target; 
+                  } else {
+                      // It has no children (probably L2), so find its parent (L1) to show the sidebar navigation
+                      final parent = _findCategoryParentRecursively(list, widget.initialSlug!);
+                      if (parent != null) {
+                         _directModeTarget = parent;
+                         // Find the index of the child to select it
+                         final parentChildren = ((parent as dynamic).children as List?) ?? [];
+                         _directModeSelectedIndex = parentChildren.indexWhere((c) => _getSlug(c) == widget.initialSlug);
+                      } else {
+                         _directModeTarget = target;
+                      }
+                  }
                }
             }
             
@@ -185,9 +195,24 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
      }
      return null;
   }
+
+  // 🟢 NEW: Parent Search Helper
+  dynamic _findCategoryParentRecursively(List<dynamic> nodes, String slug) {
+     for (var node in nodes) {
+        final children = ((node as dynamic).children as List?) ?? [];
+        if (children.any((c) => _getSlug(c) == slug)) return node;
+        
+        if (children.isNotEmpty) {
+           final found = _findCategoryParentRecursively(children, slug);
+           if (found != null) return found;
+        }
+     }
+     return null;
+  }
   
   // 🟢 NEW: State Variable for Direct Mode
   dynamic _directModeTarget;
+  int _directModeSelectedIndex = 0;
 
   // 🟢 NEW: Fetch from Custom PHP Endpoint
   Future<GetDrawerCategoriesData?> _fetchCategoriesFromCustomApi() async {
@@ -422,18 +447,22 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     // 🟢 CONDITIONAL: Browse Mode vs Direct Mode
     // If NO specific slug was passed, show the VERTICAL SECTIONS layout (Heading + Grid)
     if (widget.initialSlug == null || widget.initialSlug!.isEmpty) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            title: Text("Categories", style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            backgroundColor: Colors.white,
+            title: Text("Categories", style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
+            backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
             elevation: 0.5,
-            iconTheme: const IconThemeData(color: Colors.black),
+            iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
           ),
           body: ListView.separated(
             padding: const EdgeInsets.only(bottom: 24),
             itemCount: _categories.length,
-            separatorBuilder: (ctx, i) => const Divider(height: 1, thickness: 8, color: Color(0xFFF5F5F5)), // Thick gray separator like Home
+            separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)), // Thick separator
+
             itemBuilder: (context, index) {
                return _buildVerticalCategorySection(index);
             },
@@ -457,6 +486,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
              parentId: _getId(cat),
              parentSlug: _getSlug(cat), 
              subCategories: ((cat as dynamic).children as List?) ?? [],
+             initialSelectedIndex: _directModeSelectedIndex >= 0 ? _directModeSelectedIndex : 0,
           ),
        );
     }
@@ -482,13 +512,16 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   }
 
   Widget _buildEmptyState() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)));
+    }
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.category_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text("Loading Categories...", style: TextStyle(color: Colors.grey)),
+          const Text("No Categories Found", style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadCategories,
@@ -502,6 +535,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   // 🟢 NEW: Vertical Section Builder (Header + Grid)
   Widget _buildVerticalCategorySection(int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final cat = _categories[index]; // This is a Root Category
     final String name = _getName(cat);
     
@@ -519,10 +554,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Text(
             name, // e.g., "Grocery & Kitchen"
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18, 
               fontWeight: FontWeight.bold, 
-              color: Colors.black87
+              color: theme.textTheme.titleLarge?.color ?? (isDark ? Colors.white : Colors.black87)
             ),
           ),
         ),
@@ -555,6 +590,9 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   // 🟢 NEW: Vertical Sub-Category Item
   Widget _buildVerticalSubCategoryItem(dynamic subCat) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     final String name = _getName(subCat);
     final String imgUrl = _getImage(subCat);
 
@@ -583,7 +621,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             height: 70, 
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.blue[50]!.withOpacity(0.5),
+              color: isDark ? const Color(0xFF1A1A1A) : Colors.blue[50]!.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
             ),
              child: ClipRRect(
@@ -599,10 +637,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white70 : Colors.black87),
               height: 1.2
             ),
           ),

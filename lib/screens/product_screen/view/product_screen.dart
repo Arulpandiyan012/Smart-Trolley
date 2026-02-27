@@ -59,7 +59,7 @@ class _ProductScreenState extends State<ProductScreen> {
     GlobalData.cartCountController.sink.add(appStoragePref.getCartCount());
     
     productScreenBLoc = context.read<ProductScreenBLoc>();
-    productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId));
+    productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId, title: widget.title));
     
     // 🟢 SYNC CART: Ensure +/- buttons have info immediately
     context.read<CartScreenBloc>().add(FetchCartDataEvent());
@@ -104,7 +104,7 @@ class _ProductScreenState extends State<ProductScreen> {
               child: InkWell(
                 onTap: () => Navigator.pushNamed(context, cartScreen).then((value) {
                    // Refresh product when returning from cart
-                   productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId));
+                   productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId, title: widget.title));
                 }),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
@@ -218,13 +218,37 @@ class _ProductScreenState extends State<ProductScreen> {
         GlobalData.cartCountController.sink.add(appStoragePref.getCartCount());
       } else if (state.status == ProductStatus.fail) {
         Future.delayed(Duration.zero).then((value) => const NoInternetError());
-        return CommonWidgets().getHeightSpace(0);
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 60, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                "Failed to load product",
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B)),
+                child: const Text("Go Back", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
       }
     }
     
     // Handle loading states
     if (state is AddToCartProductState) isLoading = false;
     if (state is OnClickProductLoaderState) isLoading = state.isReqToShowLoader ?? false;
+
+    // 🟢 FIX: If productData is still null (e.g. BLoC is in an intermediate state from
+    // a previous screen), show the loader instead of a blank screen.
+    if (productData == null) {
+      return const ProductDetailLoader();
+    }
 
     // Return the Blinkit Product Body
     return BlinkitProductBody(

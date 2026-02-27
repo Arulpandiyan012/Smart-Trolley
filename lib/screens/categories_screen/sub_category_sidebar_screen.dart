@@ -19,6 +19,7 @@ class SubCategorySidebarScreen extends StatefulWidget {
   final String parentId;
   final String parentSlug; // 🟢 NEW
   final List<dynamic> subCategories; // These are L3 Categories
+  final int initialSelectedIndex;
 
   const SubCategorySidebarScreen({
     Key? key, 
@@ -26,6 +27,7 @@ class SubCategorySidebarScreen extends StatefulWidget {
     required this.parentId,
     required this.parentSlug, // 🟢 NEW
     required this.subCategories,
+    this.initialSelectedIndex = 0,
   }) : super(key: key);
 
   @override
@@ -55,9 +57,12 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
 
     _categoryBloc = context.read<CategoryBloc>();
     
-    // Initial Load - Select First L3 Category if available
+    // Initial Load - Select specific L3 Category if available
     if (widget.subCategories.isNotEmpty) {
-      _onSidebarItemSelected(0);
+      _selectedSidebarIndex = (widget.initialSelectedIndex >= 0 && widget.initialSelectedIndex < widget.subCategories.length) 
+          ? widget.initialSelectedIndex 
+          : 0;
+      _onSidebarItemSelected(_selectedSidebarIndex);
     } else {
        // Fallback: Load products of L2 itself if no L3
        debugPrint("🟡 No L3 Categories. Loading products for L2 ID: ${widget.parentId} Slug: ${widget.parentSlug}");
@@ -146,14 +151,17 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
     // 🟢 FIX: Handle Empty Subcategories (L3)
     // If no L3 categories exist, we should just show the L2 Products (Parent)
     // instead of returning an empty SizedBox (which causes a BLACK SCREEN).
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     if (widget.subCategories.isEmpty) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            title: Text(widget.title, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-            backgroundColor: Colors.white,
+            title: Text(widget.title, style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold, fontSize: 16)),
+            backgroundColor: theme.appBarTheme.backgroundColor,
             elevation: 0.5,
-            iconTheme: const IconThemeData(color: Colors.black),
+            iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
           ),
           body: BlocConsumer<CategoryBloc, CategoriesBaseState>(
              listener: (context, state) {
@@ -229,12 +237,12 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
     final List<dynamic> deeperChildren = ((selectedSidebarItem as dynamic).children as List?) ?? [];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(widget.title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-        backgroundColor: Colors.white,
+        title: Text(widget.title, style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold, fontSize: 16)),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
       ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,8 +251,8 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
           Container(
             width: 70, 
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5), 
-              border: Border(right: BorderSide(color: Colors.grey[200]!)),
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5), 
+              border: Border(right: BorderSide(color: theme.dividerColor)),
             ),
             child: ListView.separated(
               padding: EdgeInsets.zero,
@@ -324,10 +332,10 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                              margin: const EdgeInsets.only(right: 8),
                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                              decoration: BoxDecoration(
-                               color: isSelected ? const Color(0xFF27C16B) : Colors.white,
+                               color: isSelected ? const Color(0xFF27C16B) : (isDark ? const Color(0xFF2A2A2A) : Colors.white),
                                borderRadius: BorderRadius.circular(16),
                                border: Border.all(
-                                 color: isSelected ? Colors.transparent : Colors.grey[300]!
+                                 color: isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.grey[300]!)
                                ),
                              ),
                              alignment: Alignment.center,
@@ -336,7 +344,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                                style: TextStyle(
                                  fontSize: 12,
                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                 color: isSelected ? Colors.white : Colors.black87,
+                                 color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
                                ),
                              ),
                            ),
@@ -430,6 +438,9 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
   }
 
   Widget _buildSidebarItem(int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final cat = widget.subCategories[index];
     final bool isSelected = _selectedSidebarIndex == index;
     final String name = _getName(cat);
@@ -440,7 +451,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
       child: Container(
         // Full width container
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? (isDark ? const Color(0xFF2A2A2A) : Colors.white) : Colors.transparent,
           border: isSelected 
              ? const Border(left: BorderSide(color: Color(0xFF27C16B), width: 4))
              : const Border(left: BorderSide(color: Colors.transparent, width: 4)),
@@ -452,9 +463,9 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
             Container(
               height: 46, width: 46,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: ClipOval(
                   child: imgUrl.isNotEmpty 
@@ -472,7 +483,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
               style: TextStyle(
                 fontSize: 11, 
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? Colors.black : Colors.grey[700],
+                color: isSelected ? theme.textTheme.bodyLarge?.color : theme.textTheme.bodySmall?.color,
                 height: 1.2
               )
             ),

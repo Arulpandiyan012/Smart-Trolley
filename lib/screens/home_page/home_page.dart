@@ -343,17 +343,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildContainer(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-        backgroundColor: const Color(0xFFF8F8F8),
+        backgroundColor: theme.scaffoldBackgroundColor,
 
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(130), // Slightly reduced height
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFFFF9C4), Colors.white], // Subtle soft yellow to white gradient
+                colors: isDark 
+                    ? [const Color(0xFF2A2A2A), const Color(0xFF1E1E1E)] 
+                    : [const Color(0xFFFFF9C4), Colors.white], // Subtle soft yellow to white gradient
               ),
             ),
             child: SafeArea(
@@ -403,16 +408,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          color: Colors.grey[700],
+                                          color: isDark ? Colors.white70 : Colors.grey[700],
                                           fontWeight: FontWeight.w500,
                                           fontSize: 12,
                                         ),
                                       ),
                                     ),
-                                    const Icon(
+                                    Icon(
                                       Icons.arrow_drop_down,
                                       size: 20,
-                                      color: Colors.black87,
+                                      color: isDark ? Colors.white : Colors.black87,
                                     ),
                                   ],
                                 ),
@@ -429,8 +434,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 38, width: 38,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white,
-                                border: Border.all(color: Colors.black.withOpacity(0.08), width: 1.2),
+                                color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                                border: Border.all(color: isDark ? Colors.white24 : Colors.black.withOpacity(0.08), width: 1.2),
                                 boxShadow: [
                                   BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))
                                 ],
@@ -438,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Center(
                                   child: isLoggedIn && image != null 
                                     ? CircleAvatar(
-                                        backgroundColor: Colors.white,
+                                        backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                                         backgroundImage: ImageView.getImageProvider(image), 
                                         radius: 18
                                       )
@@ -462,12 +467,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 48,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey[200]!),
+                          border: Border.all(color: isDark ? Colors.white24 : Colors.grey[200]!),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
+                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
