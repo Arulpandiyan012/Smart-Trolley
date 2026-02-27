@@ -10,6 +10,9 @@
 
 import '../../../data_model/add_to_wishlist_model/add_wishlist_model.dart';
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:bagisto_app_demo/utils/server_configuration.dart';
 
 import '../data_model/download_sample_model.dart';
 
@@ -41,15 +44,45 @@ class ProductScreenRepo implements ProductScreenRepository {
   @override
   Future<NewProductsModel?> getProductDetails(
       List<Map<String, dynamic>>? filters) async {
-    NewProductsModel? productData;
+    // 🟢 CUSTOM API PRODUCT DETAILS FETCH (Bypass Bagisto GraphQL EAV logic)
     try {
-      productData = await ApiClient().getAllProducts(filters: filters);
-      debugPrint("productData ${productData?.toJson()}");
-    } catch (error, stacktrace) {
-      debugPrint("Error --> $error");
-      debugPrint("StackTrace --> $stacktrace");
+      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
+      
+      String urlKey = "";
+      String productId = "";
+      
+      if (filters != null) {
+         for (var f in filters) {
+            if (f['key'] == "\"url_key\"") {
+                urlKey = f['value'].toString().replaceAll("\"", "");
+            } else if (f['key'] == "\"id\"") {
+                productId = f['value'].toString().replaceAll("\"", "");
+            }
+         }
+      }
+
+      debugPrint("🔵 PRODUCT REPO: Fetching Single Product (urlKey: $urlKey, ID: $productId)");
+      
+      var response = await http.post(url, body: {
+          "action": "get_single_product",
+          "url_key": urlKey,
+          "product_id": productId
+      });
+
+      if (response.statusCode == 200) {
+          var json = jsonDecode(response.body);
+          if (json['success'] == true) {
+               return NewProductsModel.fromJson(json);
+          }
+      }
+      
+      // Fallback to GraphQL if PHP fails
+      return await ApiClient().getAllProducts(filters: filters);
+    } catch (e, stack) {
+      debugPrint("🔴 PRODUCT REPO ERROR: $e");
+      debugPrint("🔴 STACK: $stack");
     }
-    return productData;
+    return null;
   }
 
   @override
