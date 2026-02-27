@@ -16,6 +16,7 @@ import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_event.dart';
 
 import 'package:bagisto_app_demo/screens/home_page/widget/blinkit_category_grid.dart'; // 🟢 NEW IMPORT
 import 'package:bagisto_app_demo/screens/home_page/widget/bestsellers_category_grid.dart'; // 🟢 BESTSELLERS OVERVIEW
+import 'package:bagisto_app_demo/screens/home_page/widget/blinkit_featured_sections.dart'; // 🟢 BLINKIT FEATURED SECTIONS
 import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_screen.dart'; // 🟢 For See All Nav
 import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_bloc.dart'; // 🟢 For Provider
 import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repository.dart'; // 🟢 For Repo
@@ -238,6 +239,7 @@ class _HomePageViewState extends State<HomePageView> {
   int _selectedCatIndex = -1;
 
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<BlinkitFeaturedSectionsState> _featuredSectionsKey = GlobalKey<BlinkitFeaturedSectionsState>(); // 🟢 NEW: For Pull-to-Refresh
   bool _showBackToTop = false;
 
   @override
@@ -423,6 +425,8 @@ class _HomePageViewState extends State<HomePageView> {
                   onRefresh: () async {
                      widget.homePageBloc?.add(FetchHomeCustomData());
                      widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
+                     // 🟢 NEW: Refresh the custom featured sections
+                     _featuredSectionsKey.currentState?.fetchFeaturedSections();
                      // Wait a moment for UX
                      await Future.delayed(const Duration(seconds: 2));
                   },
@@ -623,6 +627,15 @@ class _HomePageViewState extends State<HomePageView> {
                         ),
                       ),
                     ],
+
+                    // 🟢 CUSTOM BLINKIT FEATURED SECTIONS 
+                    SliverToBoxAdapter(
+                       child: BlinkitFeaturedSections(
+                           key: _featuredSectionsKey, // 🟢 Assign Key for Refresh
+                           isLogin: widget.isLogin,
+                           homePageBloc: widget.homePageBloc,
+                       ),
+                    ),
 
                     const SliverToBoxAdapter(child: SizedBox(height: 24)),
                   ],
@@ -950,7 +963,11 @@ class _HomePageViewState extends State<HomePageView> {
        final t = s.title.toLowerCase();
        if (t.contains("grocery & kitchen") || 
            t.contains("farm fresh vegetables") || 
-           t.contains("seasonal & exotic fruits")) {
+           t.contains("seasonal & exotic fruits") ||
+           t.contains("featured products") ||
+           t.contains("new products") ||
+           t.contains("all products") ||
+           t.contains("products")) { // Broad catch-all for generic "Products" blocks
            continue; 
        }
        sectionsFiltered.add(s);

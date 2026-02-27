@@ -26,17 +26,17 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
       try {
         List<Map<String, dynamic>> filters = [];
         
-        // If productId is available, use it; otherwise use url_key
-        if (event.productId != null && event.productId! > 0) {
-          filters = [
-            {"key": '"id"', "value": '"${event.productId}"'}
-          ];
-          debugPrint("🔵 Fetching product by ID: ${event.productId}");
-        } else if (event.sku.isNotEmpty) {
+        // Prioritize url_key since Bagisto GraphQL indexes it more reliably for new products
+        if (event.sku.isNotEmpty) {
           filters = [
             {"key": '"url_key"', "value": '"${event.sku}"'}
           ];
           debugPrint("🔵 Fetching product by URL Key: ${event.sku}");
+        } else if (event.productId != null && event.productId! > 0) {
+          filters = [
+            {"key": '"id"', "value": '"${event.productId}"'}
+          ];
+          debugPrint("🔵 Fetching product by ID: ${event.productId}");
         } else {
           emit(FetchProductState.fail(error: "No product identifier provided"));
           return;
