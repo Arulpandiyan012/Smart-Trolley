@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../dashboard/view/vendor_dashboard_screen.dart';
+import '../../../../screens/sign_in/view/sign_in_screen.dart'; // 🟢 For Back to User Login
 import 'package:bagisto_app_demo/utils/index.dart'; // 🟢 For appStoragePref
 
 class VendorLoginScreen extends StatefulWidget {
@@ -264,6 +265,27 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                                 letterSpacing: 0.5,
                               ),
                             ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Back to User Login Button
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SignInScreen()),
+                        (route) => false,
+                      );
+                    },
+                    child: Text(
+                      'Not a Vendor? Back to User Login',
+                      style: TextStyle(
+                        color: textColor.withOpacity(0.7),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                 ],
