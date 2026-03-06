@@ -2,9 +2,17 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart'; // 🟢 Use Dio
 import 'add_product_screen.dart'; 
+import '../../dashboard/view/vendor_root_category_screen.dart';
 
 class StockManagementScreen extends StatefulWidget {
-  const StockManagementScreen({Key? key}) : super(key: key);
+  final String? categoryId;
+  final String? categoryName;
+
+  const StockManagementScreen({
+    Key? key, 
+    this.categoryId,
+    this.categoryName,
+  }) : super(key: key);
 
   @override
   State<StockManagementScreen> createState() => _StockManagementScreenState();
@@ -34,7 +42,10 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
       // 🟢 Dio Request
       final response = await Dio().post(
         _apiUrl,
-        data: {"action": "get_vendor_products"},
+        data: {
+          "action": "get_vendor_products",
+          if (widget.categoryId != null) "category_id": widget.categoryId,
+        },
         options: Options(
            headers: {"Content-Type": "application/json"},
            sendTimeout: const Duration(seconds: 10),
@@ -66,7 +77,18 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
   
   void _processData(dynamic data) {
         if (data['success'] == true) {
-          final list = data['data'] as List;
+          final rawList = data['data'] as List;
+          
+          // 🟢 Client-Side Fallback Filter
+          // If the live backend hasn't been updated yet, it might return ALL products.
+          // This ensures the UI properly filters them anyway safely.
+          final list = widget.categoryName != null 
+              ? rawList.where((p) {
+                  final apiName = (p['category_name']?.toString() ?? '').trim().toLowerCase();
+                  final targetName = widget.categoryName!.trim().toLowerCase();
+                  return apiName == targetName;
+                }).toList()
+              : rawList;
           
           final Map<String, List<dynamic>> groups = {};
           for (var p in list) {
@@ -139,13 +161,19 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stock Management'),
+        title: Text(widget.categoryName != null ? '${widget.categoryName} Stock' : 'Stock Management'),
         backgroundColor: appBarColor,
         foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchProducts)],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const AddProductScreen())).then((_) => _fetchProducts()),
+        onPressed: () {
+          if (widget.categoryId != null) {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => AddProductScreen(initialCategoryId: widget.categoryId, initialCategoryName: widget.categoryName))).then((_) => _fetchProducts());
+          } else {
+            Navigator.push(context, MaterialPageRoute(builder: (c) => const VendorRootCategoryScreen())).then((_) => _fetchProducts());
+          }
+        },
         label: const Text("Add Product"),
         icon: const Icon(Icons.add),
         backgroundColor: appBarColor,
@@ -184,33 +212,34 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                  ),
                ),
 
-               // 🟢 DROPDOWN FILTER
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                 color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
-                 child: Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                   decoration: BoxDecoration(
-                     border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300),
-                     borderRadius: BorderRadius.circular(8)
-                   ),
-                   child: DropdownButton<String>(
-                     value: categories.contains(_selectedCategory) ? _selectedCategory : "All Categories",
-                     isExpanded: true, // Prevent Overflow
-                     underline: const SizedBox(),
-                     items: categories.map((c) => DropdownMenuItem(
-                        value: c, 
-                        child: Text(
-                             c, 
-                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                             overflow: TextOverflow.ellipsis,
-                             maxLines: 1,
-                        )
-                     )).toList(),
-                     onChanged: (v) => setState(() => _selectedCategory = v!),
+               // 🟢 DROPDOWN FILTER (Only show if not locked to a specific category)
+               if (widget.categoryId == null)
+                 Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                   color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+                   child: Container(
+                     padding: const EdgeInsets.symmetric(horizontal: 12),
+                     decoration: BoxDecoration(
+                       border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300),
+                       borderRadius: BorderRadius.circular(8)
+                     ),
+                     child: DropdownButton<String>(
+                       value: categories.contains(_selectedCategory) ? _selectedCategory : "All Categories",
+                       isExpanded: true, // Prevent Overflow
+                       underline: const SizedBox(),
+                       items: categories.map((c) => DropdownMenuItem(
+                          value: c, 
+                          child: Text(
+                               c, 
+                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                               overflow: TextOverflow.ellipsis,
+                               maxLines: 1,
+                          )
+                       )).toList(),
+                       onChanged: (v) => setState(() => _selectedCategory = v!),
+                     ),
                    ),
                  ),
-               ),
 
                // 🟢 LIST
                Expanded(
@@ -223,10 +252,12 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                            return Column(
                              crossAxisAlignment: CrossAxisAlignment.start,
                              children: [
-                               Padding(
-                                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                                 child: Text(entry.key, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                               ),
+                               // Only show headers if we are looking at all categories
+                               if (widget.categoryId == null)
+                                 Padding(
+                                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                                   child: Text(entry.key, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                                 ),
                                ...entry.value.map((product) {
                                   final stock = int.tryParse(product['stock'].toString()) ?? 0;
                                   final imageUrl = product['image'] ?? "";

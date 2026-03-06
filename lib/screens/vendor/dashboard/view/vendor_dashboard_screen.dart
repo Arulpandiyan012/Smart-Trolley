@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../stock_management/view/stock_management_screen.dart';
+import 'vendor_root_category_screen.dart';
 import '../../orders/view/vendor_orders_screen.dart';
 import '../../vendor_login/view/vendor_login_screen.dart'; // import vendor login screen
-
 import 'package:bagisto_app_demo/utils/index.dart'; // For appStoragePref & Routes
 
 class VendorDashboardScreen extends StatelessWidget {
@@ -75,7 +74,7 @@ class VendorDashboardScreen extends StatelessWidget {
             icon: Icons.inventory,
             title: 'Stock Management',
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const StockManagementScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorRootCategoryScreen()));
             },
           ),
           _buildDashboardCard(
@@ -117,3 +116,4 @@ class VendorDashboardScreen extends StatelessWidget {
     );
   }
 }
+

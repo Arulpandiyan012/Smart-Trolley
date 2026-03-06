@@ -11,6 +11,9 @@
 import '../../../data_model/add_to_wishlist_model/add_wishlist_model.dart';
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 import 'package:bagisto_app_demo/services/api_client.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:bagisto_app_demo/utils/server_configuration.dart';
 
 import '../data_model/download_sample_model.dart';
 
@@ -40,9 +43,6 @@ abstract class ProductScreenRepository {
 }
 
 class ProductScreenRepo implements ProductScreenRepository {
-  @override
-  Future<NewProductsModel?> getProductDetails(
-      List<Map<String, dynamic>>? filters) async {
     // Extract urlKey and productId from the filters map
     String urlKey = "";
     int? productId;
@@ -57,20 +57,38 @@ class ProductScreenRepo implements ProductScreenRepository {
     }
 
     try {
-      // 🟢 Use dedicated product detail query instead of allProducts(filters)
+      // 1. Try dedicated product detail query (HEAD approach)
       NewProducts? product = await ApiClient().getProductDetail(urlKey, productId: productId, name: name);
-      debugPrint("productDetail result: ${product?.name ?? 'null'}");
       
       if (product != null) {
-        // Wrap into NewProductsModel for compatibility
+        debugPrint("✅ productDetail result from GraphQL: ${product.name}");
         return NewProductsModel(data: [product]);
       }
-      return NewProductsModel(data: []);
-    } catch (error, stacktrace) {
-      debugPrint("Error --> $error");
-      debugPrint("StackTrace --> $stacktrace");
-      return null;
+
+      // 2. Fallback to CUSTOM API (main approach)
+      debugPrint("🔵 GraphQL Detail failed, trying PHP Fallback (urlKey: $urlKey, ID: $productId)");
+      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
+      var response = await http.post(url, body: {
+          "action": "get_single_product",
+          "url_key": urlKey,
+          "product_id": productId?.toString() ?? ""
+      });
+
+      if (response.statusCode == 200) {
+          var json = jsonDecode(response.body);
+          if (json['success'] == true) {
+               debugPrint("✅ productDetail result from PHP");
+               return NewProductsModel.fromJson(json);
+          }
+      }
+      
+      // 3. Final Fallback to getAllProducts
+      return await ApiClient().getAllProducts(filters: filters);
+    } catch (e, stack) {
+      debugPrint("🔴 PRODUCT REPO ERROR: $e");
+      debugPrint("🔴 STACK: $stack");
     }
+    return null;
   }
 
 

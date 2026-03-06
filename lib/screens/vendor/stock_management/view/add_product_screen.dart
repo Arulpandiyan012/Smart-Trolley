@@ -6,7 +6,14 @@ import 'package:dio/dio.dart'; // 🟢 Use Dio
 import 'package:bagisto_app_demo/utils/app_global_data.dart';
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({Key? key}) : super(key: key);
+  final String? initialCategoryId;
+  final String? initialCategoryName;
+
+  const AddProductScreen({
+    Key? key,
+    this.initialCategoryId,
+    this.initialCategoryName,
+  }) : super(key: key);
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -20,6 +27,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _descCtrl = TextEditingController();
   
   String? _selectedCategoryId; // Store ID
+  String? _selectedCategoryName; // Store Name for display if locked
+  String? _selectedFeaturedSection = "None"; // 🟢 Store Featured Section
   File? _imageFile;
   bool _isLoading = false;
 
@@ -58,6 +67,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         "qty": _qtyCtrl.text,
         "description": _descCtrl.text,
         "category_id": _selectedCategoryId ?? "1", // Default to Root if null
+        "featured_section": _selectedFeaturedSection ?? "None", // 🟢 Passing Tag for Featured Section
         "image": base64Image
       };
 
@@ -104,7 +114,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCategories(); // 🟢 Fetch on Init
+    if (widget.initialCategoryId != null) {
+      _selectedCategoryId = widget.initialCategoryId;
+      _selectedCategoryName = widget.initialCategoryName ?? "Selected Category";
+      // We don't necessarily need to fetch all categories if it's locked, but we can to be safe.
+    } else {
+      _fetchCategories(); // 🟢 Fetch on Init only if not locked
+    }
   }
 
   // Fetch Categories Directly from Vendor API
@@ -244,31 +260,77 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 16),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      decoration: const InputDecoration(labelText: "Category", border: OutlineInputBorder()),
-                      value: _selectedCategoryId,
-                      items: _categories.map((c) => DropdownMenuItem(
-                        value: c['id'].toString(), 
-                        child: Text(
-                          c['name']!, 
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        )
-                      )).toList(),
-                      onChanged: (v) => setState(() => _selectedCategoryId = v),
-                      hint: const Text("Select Category"),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add_circle, color: appBarColor, size: 32),
-                    tooltip: "Add New Category",
-                    onPressed: _showAddCategoryDialog,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.grey[100],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.category, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "Category: ${_selectedCategoryName!}",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                                ),
+                              ),
+                              const Icon(Icons.lock, color: Colors.grey, size: 16), 
+                            ],
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add_circle, color: appBarColor, size: 32),
+                        tooltip: "Add New Category",
+                        onPressed: _showAddCategoryDialog,
+                      )
+                    ],
                   )
-                ],
+                : // Dropdown for generic addition
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          decoration: const InputDecoration(labelText: "Category", border: OutlineInputBorder()),
+                          value: _selectedCategoryId,
+                          items: _categories.map((c) => DropdownMenuItem(
+                            value: c['id'].toString(), 
+                            child: Text(
+                              c['name']!, 
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            )
+                          )).toList(),
+                          onChanged: (v) => setState(() => _selectedCategoryId = v),
+                          hint: const Text("Select Category"),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: Color(0xFF27C16B), size: 32),
+                        tooltip: "Add New Category",
+                        onPressed: _showAddCategoryDialog,
+                      )
+                    ],
+                  ),
+              const SizedBox(height: 16),
+              
+              // 🟢 NEW: Dropdown for Featured Section
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: "Home Page Placement (Optional)", border: OutlineInputBorder()),
+                value: _selectedFeaturedSection,
+                items: ["None", "Sweet Tooth", "Cold Drinks & Juices", "Instant & Frozen Food", "Dry Fruit Masala & Oil"].map((s) => DropdownMenuItem(
+                  value: s,
+                  child: Text(s),
+                )).toList(),
+                onChanged: (v) => setState(() => _selectedFeaturedSection = v),
               ),
               const SizedBox(height: 16),
 
