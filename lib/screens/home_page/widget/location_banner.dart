@@ -129,7 +129,7 @@ Widget build(BuildContext context) {
           const SizedBox(width: 10),
           Expanded(
             child: _loading
-                ? const Text('Detecting your location...')
+                ? Text('Detecting your location...', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color))
                 : (_error != null
                     ? Text(
                         'Location unavailable: $_error',
@@ -141,11 +141,11 @@ Widget build(BuildContext context) {
                         _address ?? 'Tap to select delivery location',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodyLarge?.color),
                       )),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.keyboard_arrow_right), // arrow to indicate navigation
+          Icon(Icons.keyboard_arrow_right, color: Theme.of(context).iconTheme.color), // arrow to indicate navigation
         ],
       ),
     ),

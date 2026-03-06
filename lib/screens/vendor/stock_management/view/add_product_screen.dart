@@ -151,37 +151,37 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () async {
-               if (_catNameCtrl.text.isEmpty) return;
-               Navigator.pop(context); // Close dialog
-               
-               setState(() => _isLoading = true);
-               try {
-                  final resp = await Dio().post(_apiUrl, data: {
-                    "action": "add_category",
-                    "name": _catNameCtrl.text
-                  });
-                  
-                  if (resp.data['success'] == true) {
-                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                       content: Text("Category Added! Updating list..."),
-                       backgroundColor: Colors.green
-                     ));
-                     // 🟢 REFRESH LIST INSTANTLY
-                     await _fetchCategories();
-                  } else {
-                     throw resp.data['message'];
-                  }
-               } catch(e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed: $e"), backgroundColor: Colors.red));
-               } finally {
-                  setState(() => _isLoading = false);
-               }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B)),
-            child: const Text("Add", style: TextStyle(color: Colors.white)),
-          )
+                  ElevatedButton(
+                    onPressed: () async {
+                       if (_catNameCtrl.text.isEmpty) return;
+                       Navigator.pop(context); // Close dialog
+                       
+                       setState(() => _isLoading = true);
+                       try {
+                          final resp = await Dio().post(_apiUrl, data: {
+                            "action": "add_category",
+                            "name": _catNameCtrl.text
+                          });
+                          
+                          if (resp.data['success'] == true) {
+                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                               content: Text("Category Added! Updating list..."),
+                               backgroundColor: Colors.green
+                             ));
+                             // 🟢 REFRESH LIST INSTANTLY
+                             await _fetchCategories();
+                          } else {
+                             throw resp.data['message'];
+                          }
+                       } catch(e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed: $e"), backgroundColor: Colors.red));
+                       } finally {
+                          setState(() => _isLoading = false);
+                       }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+                    child: const Text("Add", style: TextStyle(color: Colors.white)),
+                  )
         ],
       )
     );
@@ -189,11 +189,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Add New Product"),
-        backgroundColor: const Color(0xFF27C16B),
+        backgroundColor: appBarColor,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -209,9 +211,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: Container(
                   height: 150,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[400]!),
+                    border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[400]!),
                   ),
                   child: _imageFile != null 
                      ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
@@ -260,26 +262,37 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
               widget.initialCategoryId != null 
                 ? // Locked Category UI
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
-                      color: Colors.grey[100],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.category, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            "Category: ${_selectedCategoryName!}",
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.grey[100],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.category, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "Category: ${_selectedCategoryName!}",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                                ),
+                              ),
+                              const Icon(Icons.lock, color: Colors.grey, size: 16), 
+                            ],
                           ),
                         ),
-                        const Icon(Icons.lock, color: Colors.grey, size: 16), // Indicates it's fixed
-                      ],
-                    ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add_circle, color: appBarColor, size: 32),
+                        tooltip: "Add New Category",
+                        onPressed: _showAddCategoryDialog,
+                      )
+                    ],
                   )
                 : // Dropdown for generic addition
                   Row(
@@ -335,7 +348,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitProduct,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF27C16B),
+                    backgroundColor: appBarColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   child: _isLoading 

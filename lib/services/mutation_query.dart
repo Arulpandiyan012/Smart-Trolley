@@ -559,6 +559,310 @@ String cartDetails() {
     } """;
   }
 
+  /// 🟢 PRODUCT DETAIL: Fetches a single product by urlKey.
+  /// Used by the product screen instead of allProducts (which only supports category_id filtering).
+  String getProductByUrlKey(String urlKey) {
+    return """
+    query productDetail {
+      product(urlKey: "$urlKey") {
+        id
+        type
+        isInWishlist
+        isInSale
+        isSaleable
+        attributeFamilyId
+        name
+        shareURL
+        urlKey
+        sku
+        description
+        parentId
+        price
+        priceHtml {
+          id
+          type
+          priceHtml
+          priceWithoutHtml
+          minPrice
+          regularPrice
+          formattedRegularPrice
+          finalPrice
+          formattedFinalPrice
+          currencyCode
+          bundlePrice {
+            finalPriceFrom
+            formattedFinalPriceFrom
+            regularPriceFrom
+            formattedRegularPriceFrom
+            finalPriceTo
+            formattedFinalPriceTo
+            regularPriceTo
+            formattedRegularPriceTo
+          }
+        }
+        images {
+          id
+          type
+          path
+          url
+          productId
+        }
+        inventories {
+          id
+          qty
+          productId
+          inventorySourceId
+          vendorId
+        }
+        averageRating
+        percentageRating
+        reviews {
+          id
+          title
+          rating
+          comment
+          status
+          productId
+          customerId
+          createdAt
+          updatedAt
+        }
+        relatedProducts {
+          id
+          type
+          name
+          urlKey
+          sku
+          isSaleable
+          isInWishlist
+          priceHtml {
+            formattedFinalPrice
+            formattedRegularPrice
+            finalPrice
+          }
+          images {
+            url
+          }
+        }
+        variants {
+          id
+          type
+          attributeFamilyId
+          sku
+          parentId
+        }
+        configutableData {
+          chooseText
+          attributes {
+            id
+            code
+            label
+            swatchType
+            options {
+              id
+              label
+              swatchType
+              swatchValue
+            }
+          }
+          index {
+            id
+            attributeOptionIds {
+              attributeId
+              attributeCode
+              attributeOptionId
+            }
+          }
+          variantPrices {
+            id
+            regularPrice {
+              price
+              formattedPrice
+            }
+            finalPrice {
+              price
+              formattedPrice
+            }
+          }
+        }
+
+        superAttributes {
+          id
+          code
+          adminName
+          type
+          position
+        }
+        bundleOptions {
+          id
+          type
+          isRequired
+          sortOrder
+          productId
+          bundleOptionProducts {
+            id
+            qty
+            isUserDefined
+            sortOrder
+            isDefault
+            productBundleOptionId
+            productId
+            product {
+              sku
+              name
+              id
+              priceHtml {
+                formattedFinalPrice
+                formattedRegularPrice
+                finalPrice
+              }
+            }
+          }
+          translations {
+            id
+            locale
+            label
+            productBundleOptionId
+          }
+        }
+        downloadableLinks {
+          id
+          title
+          price
+          url
+          file
+          fileName
+          type
+          sampleUrl
+          sampleFile
+          sampleFileName
+          sampleType
+          sortOrder
+          productId
+          downloads
+          translations {
+            id
+            locale
+            title
+            productDownloadableLinkId
+          }
+        }
+        downloadableSamples {
+          id
+          url
+          fileUrl
+          file
+          fileName
+          type
+          sortOrder
+          productId
+          translations {
+            id
+            locale
+            title
+            productDownloadableSampleId
+          }
+        }
+      }
+    }
+    """;
+  }
+
+  /// 🟢 PRODUCT DETAIL BY ID: Fallback when urlKey is not available.
+  /// Tries product(id: ...) Bagisto query.
+  String getProductById(int id) {
+    return """
+    query productDetailById {
+      product(id: $id) {
+        id
+        type
+        isInWishlist
+        isInSale
+        isSaleable
+        attributeFamilyId
+        name
+        shareURL
+        urlKey
+        sku
+        description
+        parentId
+        price
+        priceHtml {
+          id
+          type
+          priceHtml
+          priceWithoutHtml
+          minPrice
+          regularPrice
+          formattedRegularPrice
+          finalPrice
+          formattedFinalPrice
+          currencyCode
+        }
+        images {
+          id
+          type
+          path
+          url
+          productId
+        }
+        inventories {
+          id
+          qty
+          productId
+          inventorySourceId
+          vendorId
+        }
+        averageRating
+        percentageRating
+        reviews {
+          id
+          title
+          rating
+          comment
+          status
+          productId
+          customerId
+          createdAt
+          updatedAt
+        }
+        relatedProducts {
+          id
+          type
+          name
+          urlKey
+          sku
+          isSaleable
+          isInWishlist
+          priceHtml {
+            formattedFinalPrice
+            formattedRegularPrice
+            finalPrice
+          }
+          images {
+            url
+          }
+        }
+        variants {
+          id
+          type
+          attributeFamilyId
+          sku
+          parentId
+        }
+
+        superAttributes {
+          id
+          code
+          adminName
+          type
+          position
+        }
+      }
+    }
+    """;
+  }
+
   String allProductsList(
       {List<Map<String, dynamic>>? filters, int page = 1, int limit = 15}) {
     filters?.add({"key": '"page"', "value": '"$page"'});

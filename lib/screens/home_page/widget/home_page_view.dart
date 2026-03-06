@@ -352,6 +352,7 @@ class _HomePageViewState extends State<HomePageView> {
           if (n.contains("snack")) return 1;
           if (n.contains("beauty")) return 2;
           if (n.contains("household")) return 3;
+          if (n.contains("beverage") || n.contains("drink") || n.contains("juice")) return 4;
           return 99; // Others at the end
        }
        
@@ -468,7 +469,8 @@ class _HomePageViewState extends State<HomePageView> {
                     for (final rootCat in cats) ...[
                       // 🟢 Filter out the redundant ones (Grocery, Veg, Fruit) to avoid duplication
                       // BUT allow others like "Beauty & Personal Care", "Health", "Snacks" etc.
-                      if (_catChildren(rootCat).isNotEmpty)
+                      // 🟢 SHOW ALL ROOT CATEGORIES
+                      if (true) // Removed .isNotEmpty check to show categories with direct products
                         Builder(
                           builder: (context) {
                              final title = _catLabel(rootCat);

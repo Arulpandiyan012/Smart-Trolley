@@ -98,10 +98,13 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pending Deliveries'),
-        backgroundColor: const Color(0xFF27C16B),
+        backgroundColor: appBarColor,
         foregroundColor: Colors.white,
         actions: [
            IconButton(
@@ -119,12 +122,11 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
               itemCount: _orders.length,
               itemBuilder: (context, index) {
                 final order = _orders[index];
-                // "Pending" might be "Pending" or "Processing" in DB depending on status name. 
-                // But the API returns it as "Pending" or "Processing" Capitalized.
                 final isPending = (order['status'] == 'Pending' || order['status'] == 'Processing');
                 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
+                  elevation: isDark ? 2 : 4,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -138,13 +140,17 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: isPending ? Colors.orange[100] : Colors.blue[100],
+                                color: isPending 
+                                    ? (isDark ? Colors.orange.withOpacity(0.2) : Colors.orange[100])
+                                    : (isDark ? Colors.blue.withOpacity(0.2) : Colors.blue[100]),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '${order['status']}',
                                 style: TextStyle(
-                                  color: isPending ? Colors.orange[900] : Colors.blue[900],
+                                  color: isPending 
+                                      ? (isDark ? Colors.orange[300] : Colors.orange[900])
+                                      : (isDark ? Colors.blue[300] : Colors.blue[900]),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),

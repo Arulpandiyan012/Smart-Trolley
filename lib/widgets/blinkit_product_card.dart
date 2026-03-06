@@ -24,6 +24,8 @@ class BlinkitProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     String imageUrl = "";
     if ((data?.images ?? []).isNotEmpty) {
       imageUrl = data?.images?.first.url ?? "";
@@ -75,12 +77,12 @@ class BlinkitProductCard extends StatelessWidget {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
+              border: Border.all(color: isDark ? Colors.white24 : Colors.grey[200]!),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03), 
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.03), 
                   blurRadius: 4, 
                   offset: const Offset(0, 2)
                 ),
@@ -134,11 +136,11 @@ class BlinkitProductCard extends StatelessWidget {
                           },
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), // clean bg
+                            decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, shape: BoxShape.circle), // clean bg
                             child: Icon(
                               (data?.isInWishlist ?? false) ? Icons.favorite : Icons.favorite_border,
                               size: 16,
-                              color: (data?.isInWishlist ?? false) ? Colors.red : Colors.grey[400],
+                              color: (data?.isInWishlist ?? false) ? Colors.red : (isDark ? Colors.white70 : Colors.grey[400]),
                             ),
                           ),
                         ),
@@ -204,22 +206,21 @@ class BlinkitProductCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         // Timer
-                         Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF4F6F8),
-                              borderRadius: BorderRadius.circular(4),
+                           Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF4F6F8),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.timer_outlined, size: 8, color: theme.textTheme.bodySmall?.color),
+                                  const SizedBox(width: 2),
+                                  Text("12 MINS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: theme.textTheme.bodySmall?.color)),
+                                ],
+                              ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.timer_outlined, size: 8, color: Colors.black54),
-                                SizedBox(width: 2),
-                                Text("12 MINS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.black54)),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 6),
 
                           // Name
@@ -227,11 +228,11 @@ class BlinkitProductCard extends StatelessWidget {
                             data?.name ?? "",
                             maxLines: 2, 
                             overflow: TextOverflow.ellipsis, 
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600, 
                               fontSize: 10,  // Reduced from 12
                               height: 1.1,
-                              color: Colors.black87
+                              color: theme.textTheme.titleSmall?.color ?? (isDark ? Colors.white : Colors.black87)
                             )
                           ),
                           const SizedBox(height: 4),
@@ -239,7 +240,7 @@ class BlinkitProductCard extends StatelessWidget {
                           // Unit
                           Text(
                             "1 Unit", 
-                            style: TextStyle(color: Colors.grey[500], fontSize: 9, fontWeight: FontWeight.w500) // Reduced from 10
+                            style: TextStyle(color: theme.textTheme.bodySmall?.color ?? (isDark ? Colors.white70 : Colors.grey[500]), fontSize: 9, fontWeight: FontWeight.w500) // Reduced from 10
                           ),
                           
                           const Spacer(),
@@ -263,10 +264,10 @@ class BlinkitProductCard extends StatelessWidget {
                                     ),
                                   Text(
                                     sellingPrice, 
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800, 
                                       fontSize: 12, 
-                                      color: Color(0xFF1B5E20)
+                                      color: isDark ? const Color(0xFF27C16B) : const Color(0xFF1B5E20)
                                     )
                                   ),
                                 ],

@@ -145,7 +145,7 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                 ),
                 child: Image.network(
                   image.url ?? "",
-                  fit: BoxFit.cover, // 🟢 fills entire width to eliminate gaps
+                  fit: BoxFit.contain, // 🟢 ensures full image visibility
                   errorBuilder: (ctx, _, __) => Container(
                     color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey[100], 
                     child: Icon(Icons.broken_image, color: Theme.of(context).hintColor)

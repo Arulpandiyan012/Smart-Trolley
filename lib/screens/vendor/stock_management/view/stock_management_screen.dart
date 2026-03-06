@@ -24,6 +24,8 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
   Map<String, List<dynamic>> _groupedProducts = {}; 
   // Removed _selectedCategory
   String _selectedCategory = "All Categories"; // 🟢 Filter State
+  String _searchQuery = ""; // 🟢 Search State
+  final TextEditingController _searchCtrl = TextEditingController();
 
   final String _apiUrl = "https://ecom.thesmartedgetech.com/mobikul-vendor-api.php"; 
 
@@ -132,14 +134,35 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
   Widget build(BuildContext context) {
     // 🟢 Filter Logic
     final categories = ["All Categories", ..._groupedProducts.keys];
-    final displayGroups = (_selectedCategory == "All Categories") 
+    
+    // First apply category filter
+    Map<String, List<dynamic>> filteredByCat = (_selectedCategory == "All Categories") 
         ? _groupedProducts 
         : {_selectedCategory: _groupedProducts[_selectedCategory] ?? []};
+
+    // Then apply search filter
+    Map<String, List<dynamic>> displayGroups = {};
+    if (_searchQuery.isEmpty) {
+      displayGroups = filteredByCat;
+    } else {
+      final query = _searchQuery.toLowerCase();
+      filteredByCat.forEach((cat, products) {
+        final matches = products.where((p) => 
+          (p['name'] ?? "").toString().toLowerCase().contains(query)
+        ).toList();
+        if (matches.isNotEmpty) {
+          displayGroups[cat] = matches;
+        }
+      });
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.categoryName != null ? '${widget.categoryName} Stock' : 'Stock Management'),
-        backgroundColor: const Color(0xFF27C16B),
+        backgroundColor: appBarColor,
         foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchProducts)],
       ),
@@ -153,21 +176,51 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
         },
         label: const Text("Add Product"),
         icon: const Icon(Icons.add),
-        backgroundColor: const Color(0xFF27C16B),
+        backgroundColor: appBarColor,
       ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
+               // 🟢 SEARCH BAR
+               Container(
+                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                 color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+                 child: TextField(
+                   controller: _searchCtrl,
+                   onChanged: (v) => setState(() => _searchQuery = v),
+                   decoration: InputDecoration(
+                     hintText: "Search products...",
+                     prefixIcon: Icon(Icons.search, color: isDark ? Colors.grey[400] : Colors.grey),
+                     suffixIcon: _searchQuery.isNotEmpty 
+                        ? IconButton(
+                            icon: const Icon(Icons.clear), 
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _searchQuery = "");
+                            },
+                          )
+                        : null,
+                     filled: true,
+                     fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                     border: OutlineInputBorder(
+                       borderRadius: BorderRadius.circular(12),
+                       borderSide: BorderSide.none,
+                     ),
+                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                   ),
+                 ),
+               ),
+
                // 🟢 DROPDOWN FILTER (Only show if not locked to a specific category)
                if (widget.categoryId == null)
                  Container(
                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                   color: Colors.white,
+                   color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
                    child: Container(
                      padding: const EdgeInsets.symmetric(horizontal: 12),
                      decoration: BoxDecoration(
-                       border: Border.all(color: Colors.grey.shade300),
+                       border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300),
                        borderRadius: BorderRadius.circular(8)
                      ),
                      child: DropdownButton<String>(
@@ -178,7 +231,7 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                           value: c, 
                           child: Text(
                                c, 
-                               style: const TextStyle(fontWeight: FontWeight.w600),
+                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                                overflow: TextOverflow.ellipsis,
                                maxLines: 1,
                           )
@@ -198,13 +251,13 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                            if (entry.value.isEmpty) return const SizedBox.shrink();
                            return Column(
                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Only show headers if we are looking at all categories
-                                if (widget.categoryId == null)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                                    child: Text(entry.key, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                                  ),
+                             children: [
+                               // Only show headers if we are looking at all categories
+                               if (widget.categoryId == null)
+                                 Padding(
+                                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                                   child: Text(entry.key, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                                 ),
                                ...entry.value.map((product) {
                                   final stock = int.tryParse(product['stock'].toString()) ?? 0;
                                   final imageUrl = product['image'] ?? "";
@@ -218,7 +271,7 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                                         children: [
                                           Container(
                                             width: 50, height: 50,
-                                            decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                                            decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[100], borderRadius: BorderRadius.circular(8)),
                                             child: (imageUrl.isNotEmpty) 
                                                 ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.broken_image))
                                                 : const Icon(Icons.image, color: Colors.grey),
