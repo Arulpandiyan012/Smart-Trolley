@@ -110,6 +110,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                   if (n.contains("snack")) return 1;
                   if (n.contains("beauty")) return 2;
                   if (n.contains("household")) return 3;
+                  if (n.contains("beverage") || n.contains("drink") || n.contains("juice")) return 4;
                   return 99; // Others at the end
                }
                
@@ -627,7 +628,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
              child: ClipRRect(
                borderRadius: BorderRadius.circular(12),
                child: imgUrl.isNotEmpty 
-                   ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)))
+                   ? Image.network(imgUrl, fit: BoxFit.contain, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)))
                    : Icon(_categoryIconFor(name), size: 32, color: const Color(0xFF27C16B)),
              )
           ),

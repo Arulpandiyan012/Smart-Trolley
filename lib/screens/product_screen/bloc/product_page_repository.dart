@@ -43,6 +43,9 @@ abstract class ProductScreenRepository {
 }
 
 class ProductScreenRepo implements ProductScreenRepository {
+  @override
+  Future<NewProductsModel?> getProductDetails(
+      List<Map<String, dynamic>>? filters) async {
     // Extract urlKey and productId from the filters map
     String urlKey = "";
     int? productId;

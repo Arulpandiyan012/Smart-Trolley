@@ -95,7 +95,7 @@ class BlinkitCategoryGrid extends StatelessWidget {
         crossAxisSpacing: 10,
         mainAxisSpacing: 16,
       ),
-      itemCount: categories.length > 8 ? 8 : categories.length, 
+      itemCount: categories.length, 
       itemBuilder: (context, index) {
         final cat = categories[index];
         final title = cat['title'] ?? '';

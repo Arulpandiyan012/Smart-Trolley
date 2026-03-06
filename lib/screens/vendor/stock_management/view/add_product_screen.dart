@@ -260,6 +260,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 16),
 
+              widget.initialCategoryId != null 
+                ? // Locked Category UI
                   Row(
                     children: [
                       Expanded(

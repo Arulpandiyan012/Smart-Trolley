@@ -244,8 +244,9 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
         elevation: 0.5,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
       ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // SIDEBAR (Level 2 Categories)
           Container(
@@ -255,7 +256,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
               border: Border(right: BorderSide(color: theme.dividerColor)),
             ),
             child: ListView.separated(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(bottom: 100), // 🟢 Added padding to avoid system navigation overlap
               itemCount: widget.subCategories.length,
               separatorBuilder: (ctx, i) => const SizedBox(height: 0),
               itemBuilder: (context, index) {
@@ -434,7 +435,8 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
           ),
         ],
       ),
-    );
+    ),
+   );
   }
 
   Widget _buildSidebarItem(int index) {
@@ -469,7 +471,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
               ),
               child: ClipOval(
                   child: imgUrl.isNotEmpty 
-                     ? Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 22, color: Colors.grey[400]))
+                     ? Image.network(imgUrl, fit: BoxFit.contain, errorBuilder: (c, e, s) => Icon(_categoryIconFor(name), size: 22, color: Colors.grey[400]))
                      : Icon(_categoryIconFor(name), size: 22, color: Colors.grey[400])
               )
             ),
