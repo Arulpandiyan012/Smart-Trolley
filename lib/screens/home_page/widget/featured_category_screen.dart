@@ -34,13 +34,15 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -48,26 +50,34 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
           children: [
             Text(
               widget.title,
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.titleLarge?.color, 
+                fontWeight: FontWeight.bold, 
+                fontSize: 18
+              ),
             ),
             Row(
-              children: const [
-                Text(
+              children: [
+                const Text(
                   "Delivering to: ",
                   style: TextStyle(color: Color(0xFF008B47), fontSize: 12, fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  "Vellore New Bus Station, Thotta...",
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                Expanded(
+                  child: Text(
+                    "Vellore New Bus Station, Thotta...",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey, fontSize: 12),
+                  ),
                 ),
-                Icon(Icons.arrow_drop_down, color: Colors.grey, size: 16),
+                Icon(Icons.arrow_drop_down, color: Theme.of(context).hintColor, size: 16),
               ],
             )
           ],
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.black87), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.file_upload_outlined, color: Colors.black87), onPressed: () {}),
+          IconButton(icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color), onPressed: () {}),
+          IconButton(icon: Icon(Icons.file_upload_outlined, color: Theme.of(context).iconTheme.color), onPressed: () {}),
         ],
       ),
       body: CustomScrollView(
@@ -79,11 +89,11 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  _buildFilterChip("Filters", Icons.tune),
-                  _buildFilterChip("Sort", Icons.swap_vert),
-                  _buildFilterChip("Price", Icons.arrow_drop_down),
-                  _buildFilterChip("Brand", Icons.arrow_drop_down),
-                  _buildFilterChip("Type", Icons.arrow_drop_down),
+                  _buildFilterChip("Filters", Icons.tune, context),
+                  _buildFilterChip("Sort", Icons.swap_vert, context),
+                  _buildFilterChip("Price", Icons.arrow_drop_down, context),
+                  _buildFilterChip("Brand", Icons.arrow_drop_down, context),
+                  _buildFilterChip("Type", Icons.arrow_drop_down, context),
                 ],
               ),
             ),
@@ -95,7 +105,7 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                childAspectRatio: 0.49,
+                childAspectRatio: 0.46, 
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
@@ -137,16 +147,20 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
           // Shop by Brands
           SliverToBoxAdapter(
             child: Container(
-              color: const Color(0xFFFCFAEE), // Soft yellow background
+              color: isDark ? Colors.black26 : const Color(0xFFFCFAEE),
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
                       "Shop by brands",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: TextStyle(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.bold, 
+                        color: Theme.of(context).textTheme.titleLarge?.color
+                      ),
                     ),
                   ),
                   SizedBox(
@@ -165,11 +179,15 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
                                 width: 80,
                                 height: 80,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                                   boxShadow: [
-                                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), 
+                                      blurRadius: 4, 
+                                      offset: const Offset(0, 2)
+                                    )
                                   ]
                                 ),
                                 child: Center(
@@ -184,7 +202,14 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text(brands[index]["name"]!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                              Text(
+                                brands[index]["name"]!, 
+                                style: TextStyle(
+                                  fontSize: 12, 
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color
+                                )
+                              ),
                             ],
                           ),
                         );
@@ -200,25 +225,33 @@ class _FeaturedCategoryScreenState extends State<FeaturedCategoryScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, IconData? icon) {
+  Widget _buildFilterChip(String label, IconData? icon, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.2)),
       ),
       child: Row(
         children: [
           if (icon != null && label == "Filters") ...[
-            Icon(icon, size: 16, color: Colors.black54),
+            Icon(icon, size: 16, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
             const SizedBox(width: 4),
           ],
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+          Text(
+            label, 
+            style: TextStyle(
+              fontSize: 13, 
+              fontWeight: FontWeight.w600, 
+              color: Theme.of(context).textTheme.bodyMedium?.color
+            )
+          ),
           if (icon != null && label != "Filters") ...[
             const SizedBox(width: 4),
-            Icon(icon, size: 16, color: Colors.black54),
+            Icon(icon, size: 16, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
           ],
         ],
       ),
