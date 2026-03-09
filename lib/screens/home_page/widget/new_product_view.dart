@@ -51,7 +51,7 @@ class _NewProductViewState extends State<NewProductView> {
         padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 0.49, // 🟢 Fine-tuned to 0.49 to eliminate final 2px overflow
+          childAspectRatio: 0.46, // 🟢 Reduced to 0.46 to give more height and prevent overflow
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
@@ -79,7 +79,7 @@ class _NewProductViewState extends State<NewProductView> {
           ]),
           const SizedBox(height: AppSizes.spacingMedium),
           SizedBox(
-            height: 215, // 🟢 Further reduced to 215 to eliminate bottom white space
+            height: 230, // 🟢 Increased to 230 to prevent bottom overflow
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               controller: _controller,

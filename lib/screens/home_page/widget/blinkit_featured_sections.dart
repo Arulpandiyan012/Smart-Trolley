@@ -199,30 +199,37 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
                        ),
                      );
                    },
-                   child: Container(
-                     width: double.infinity,
-                     padding: const EdgeInsets.symmetric(vertical: 12),
-                     decoration: BoxDecoration(
-                       color: Colors.white,
-                       borderRadius: BorderRadius.circular(8),
-                       border: Border.all(color: Colors.grey.shade200),
-                     ),
-                     child: Row(
-                       mainAxisAlignment: MainAxisAlignment.center,
-                       children: [
-                         const Text(
-                           "See all products",
-                           style: TextStyle(
-                             color: Color(0xFF2E7D32),
-                             fontWeight: FontWeight.w600,
-                             fontSize: 14,
-                           ),
-                         ),
-                         const SizedBox(width: 4),
-                         const Icon(Icons.arrow_right_rounded, color: Color(0xFF2E7D32)),
-                       ],
-                     ),
-                   ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "See all products",
+                            style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                ? const Color(0xFF66BB6A) 
+                                : const Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_right_rounded, 
+                            color: Theme.of(context).brightness == Brightness.dark 
+                                ? const Color(0xFF66BB6A) 
+                                : const Color(0xFF2E7D32)
+                          ),
+                        ],
+                      ),
+                    ),
                  ),
                ),
              ],
