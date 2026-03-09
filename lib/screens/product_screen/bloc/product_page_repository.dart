@@ -60,16 +60,8 @@ class ProductScreenRepo implements ProductScreenRepository {
     }
 
     try {
-      // 1. Try dedicated product detail query (HEAD approach)
-      NewProducts? product = await ApiClient().getProductDetail(urlKey, productId: productId, name: name);
-      
-      if (product != null) {
-        debugPrint("✅ productDetail result from GraphQL: ${product.name}");
-        return NewProductsModel(data: [product]);
-      }
-
-      // 2. Fallback to CUSTOM API (main approach)
-      debugPrint("🔵 GraphQL Detail failed, trying PHP Fallback (urlKey: $urlKey, ID: $productId)");
+      // 1. Try Fallback to CUSTOM API FIRST (Ensures consistency with Grids)
+      debugPrint("🔵 Fetching Product via PHP Custom API (urlKey: $urlKey, ID: $productId)");
       var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
       var response = await http.post(url, body: {
           "action": "get_single_product",
@@ -80,9 +72,17 @@ class ProductScreenRepo implements ProductScreenRepository {
       if (response.statusCode == 200) {
           var json = jsonDecode(response.body);
           if (json['success'] == true) {
-               debugPrint("✅ productDetail result from PHP");
+               debugPrint("✅ productDetail result from PHP (Custom)");
                return NewProductsModel.fromJson(json);
           }
+      }
+
+      // 2. Try dedicated product detail query (GraphQL)
+      NewProducts? product = await ApiClient().getProductDetail(urlKey, productId: productId, name: name);
+      
+      if (product != null) {
+        debugPrint("✅ productDetail result from GraphQL: ${product.name}");
+        return NewProductsModel(data: [product]);
       }
       
       // 3. Final Fallback to getAllProducts
