@@ -64,8 +64,9 @@ String _catId(dynamic cat) {
 
 String _catBannerUrl(dynamic cat) {
   try { final v = (cat as dynamic).bannerUrl; if (v is String && v.trim().isNotEmpty) return v.trim(); } catch (_) {}
+  try { final v = (cat as dynamic).imageUrl; if (v is String && v.trim().isNotEmpty) return v.trim(); } catch (_) {}
   if (cat is Map) {
-    final v = cat['bannerUrl'];
+    var v = cat['bannerUrl'] ?? cat['imageUrl'];
     if (v is String && v.trim().isNotEmpty) return v.trim();
   }
   return '';
@@ -111,12 +112,12 @@ IconData _categoryIconFor(String name) {
   if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return Icons.set_meal_outlined;
   if (n.contains('baby') || n.contains('child') || n.contains('diaper')) return Icons.child_care_outlined;
   if (n.contains('care') || n.contains('beauty') || n.contains('face') || n.contains('personal')) return Icons.face_retouching_natural_outlined;
-  if (n.contains('kitchen')) return Icons.flatware_outlined;
+  if (n.contains('kitchen')) return Icons.kitchen_outlined;
   if (n.contains('home') || n.contains('clean') || n.contains('household')) return Icons.cleaning_services_outlined;
   if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return Icons.pets_outlined;
   if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined; 
   if (n.contains('spice') || n.contains('masala') || n.contains('powder')) return Icons.flare_outlined;
-  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.local_grocery_store_outlined;
+  if (n.contains('grocery') || n.contains('staple') || n.contains('dal') || n.contains('atta')) return Icons.shopping_basket_outlined;
 
   return Icons.category_outlined;
 }
@@ -454,7 +455,46 @@ class _HomePageViewState extends State<HomePageView> {
                       ),
                     ),
 
-                    // 🟢 NEW: BESTSELLERS 2x2 Category Overview
+                    // 🟢 NEW: SHOP BY CATEGORY SECTION (Major Categories)
+                     if (cats.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Text(
+                                "Shop by Category",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'Roboto',
+                                  color: Theme.of(context).textTheme.titleLarge?.color,
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+                            ),
+                            BlinkitCategoryGrid(
+                              categories: cats
+                                .where((c) => !_catLabel(c).toLowerCase().contains("event")) // 🟢 HIDE EVENTS
+                                .take(8)
+                                .map((cat) => {
+                                'title': _catLabel(cat),
+                                'image': _catBannerUrl(cat),
+                                'link': _catSlug(cat),
+                                'icon': _categoryIconFor(_catLabel(cat)),
+                                'cat': cat
+                              }).toList(),
+                              onTap: (link, title) {
+                                _handleSeeAll(title, slug: link);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // 🟢 HIDDEN: BESTSELLERS 2x2 Category Overview (Per User Request)
+                    /*
                     if (cats.isNotEmpty)
                       SliverToBoxAdapter(
                         child: Padding(
@@ -469,10 +509,11 @@ class _HomePageViewState extends State<HomePageView> {
                            ),
                         ),
                       ),
+                    */
 
                     // 🟢 NEW: Per-Category Section (Root Name -> L2 Grid)
                     // This matches the user's requested "Screenshot Style"
-                    for (final rootCat in cats) ...[
+                    for (final rootCat in cats.where((c) => !_catLabel(c).toLowerCase().contains("event"))) ...[
                       // 🟢 Filter out the redundant ones (Grocery, Veg, Fruit) to avoid duplication
                       // BUT allow others like "Beauty & Personal Care", "Health", "Snacks" etc.
                       // 🟢 SHOW ALL ROOT CATEGORIES
@@ -481,6 +522,7 @@ class _HomePageViewState extends State<HomePageView> {
                           builder: (context) {
                              final title = _catLabel(rootCat);
                              final tLower = title.toLowerCase();
+
                              // SKIP Redundant ones
                              // 🟢 ALLOW ALL ROOT CATEGORIES (Grocery, Beauty, etc.)
                              // We already filtered redundant *Theme* sections in _buildSectionsFromTheme.
@@ -977,9 +1019,10 @@ class _HomePageViewState extends State<HomePageView> {
        if (t.contains("grocery & kitchen") || 
            t.contains("farm fresh vegetables") || 
            t.contains("seasonal & exotic fruits") ||
-           t.contains("featured products") ||
-           t.contains("new products") ||
-           t.contains("all products") ||
+           t.contains("featured products") || 
+           t.contains("new products") || 
+           t.contains("all products") || 
+           t.contains("event") || // 🟢 HIDE EVENTS SECTION
            t.contains("products")) { // Broad catch-all for generic "Products" blocks
            continue; 
        }

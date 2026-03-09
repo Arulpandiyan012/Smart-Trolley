@@ -232,7 +232,7 @@ class _SearchScreenState extends State<SearchScreen>
     if (n.contains('egg')) return Icons.egg_outlined; 
     
     // Grocery
-    if (n.contains('grocery') || n.contains('staple')) return Icons.shopping_bag_outlined;
+    if (n.contains('grocery') || n.contains('staple')) return Icons.shopping_basket_outlined;
     if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined;
     if (n.contains('spice') || n.contains('masala')) return Icons.whatshot_outlined;
 

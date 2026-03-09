@@ -564,7 +564,7 @@ String cartDetails() {
   String getProductByUrlKey(String urlKey) {
     return """
     query productDetail {
-      product(urlKey: "$urlKey") {
+      product(slug: "$urlKey") {
         id
         type
         isInWishlist
