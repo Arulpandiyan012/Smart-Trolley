@@ -422,7 +422,7 @@ class _HomePageViewState extends State<HomePageView> {
       builder: (context, state) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return ColoredBox(
-          color: isDark ? const Color(0xFF121212) : const Color(0xFFC8E6CA), // Dark mode: dark grey, Light mode: soft mint green 
+          color: Theme.of(context).colorScheme.secondaryContainer, 
           child: SafeArea(
             top: false,
             child: Stack(

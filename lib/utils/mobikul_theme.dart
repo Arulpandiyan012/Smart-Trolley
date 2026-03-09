@@ -96,9 +96,9 @@ class MobiKulTheme {
   static final ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: Colors.black,
+    scaffoldBackgroundColor: const Color(0xFF0F0F0F), // Slightly lighter than pure black
     highlightColor: skeletonLoaderColorDark,
-    cardColor: const Color(0xFF121212),
+    cardColor: const Color(0xFF1A1A1A), // Slightly lighter for contrast
     canvasColor: Colors.black,
     fontFamily: fontFamily,
     primaryColor: const Color(0xFF27C16B),
@@ -109,11 +109,11 @@ class MobiKulTheme {
       onSurface: Colors.white,
       onBackground: Colors.white,
       background: Colors.black,
-      secondaryContainer: Color(0xFF121212), // Slightly lighter black for sections
+      secondaryContainer: Color(0xFF121F12), // 🟢 DARK FOREST GREEN TINT (Matches Light Mint Green)
     ),
     appBarTheme: AppBarTheme(
       elevation: 0,
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0F0F0F),
       iconTheme: const IconThemeData(color: Colors.white),
       titleTextStyle: TextStyle(
           fontSize: 18,

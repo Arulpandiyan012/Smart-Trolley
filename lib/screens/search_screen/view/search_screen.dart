@@ -119,7 +119,7 @@ class _SearchScreenState extends State<SearchScreen>
             }
           }
           return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: _setAppBarView(context),
               body: SingleChildScrollView(
                 child: Column(
@@ -169,14 +169,14 @@ class _SearchScreenState extends State<SearchScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
             "Browse Categories",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
         ),
@@ -257,7 +257,15 @@ class _SearchScreenState extends State<SearchScreen>
   /// 🟢 NEW: Single Category Card
   Widget _buildCategoryCard(HomeCategories item, int index) {
     // 🎨 UPDATED COLORS: More vibrant & clean (Pastel Pop)
-    final List<Color> bgColors = [
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final List<Color> bgColors = isDark ? [
+      const Color(0xFF1B2A2B), // Dark Cyan
+      const Color(0xFF2B2A1B), // Dark Yellow
+      const Color(0xFF2A1B2B), // Dark Purple
+      const Color(0xFF1B2B1B), // Dark Green
+      const Color(0xFF1B1B2B), // Dark Blue
+      const Color(0xFF2B1B1B), // Dark Orange
+    ] : [
       const Color(0xFFE0F7FA), // Cyan tint
       const Color(0xFFFFF9C4), // Yellow tint
       const Color(0xFFE1BEE7), // Purple tint
@@ -344,21 +352,22 @@ class _SearchScreenState extends State<SearchScreen>
 
   /// App Bar View
   _setAppBarView(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return PreferredSize(
       preferredSize: const Size.fromHeight(60.0),
       child: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0.5,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Container(
           height: 40,
           margin: const EdgeInsets.only(right: 8), 
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(

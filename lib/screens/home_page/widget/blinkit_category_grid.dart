@@ -103,7 +103,7 @@ class BlinkitCategoryGrid extends StatelessWidget {
         final link = cat['link'] ?? '';
         final icon = cat['icon'] as IconData?;
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        final bgColor = Theme.of(context).cardColor;
         final iconColor = isDark ? const Color(0xFF66BB6A) : const Color(0xFF2E7D32);
 
         return InkWell(

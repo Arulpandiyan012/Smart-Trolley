@@ -622,7 +622,7 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             height: 70, 
             width: double.infinity,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.blue[50]!.withOpacity(0.5),
+              color: isDark ? const Color(0xFF1A1A1A) : Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
              child: ClipRRect(
