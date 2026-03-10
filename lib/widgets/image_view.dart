@@ -50,9 +50,13 @@ class ImageView extends StatelessWidget {
       }
     }
     
-    // 3. Transform broken storage paths to working cache paths
+    // 3. Transform broken storage paths to working proxy paths (Fixes Blur & Stale Cache)
     if (cleanUrl.contains("/storage/product/")) {
-        cleanUrl = cleanUrl.replaceFirst("/storage/product/", "/cache/medium/product/");
+        // We transform '.../storage/product/ID/FILENAME.jpg' to '.../image_proxy.php?path=product/FILENAME.jpg'
+        // or just keep it simple if it's already a direct path.
+        // The most reliable way to match the grid is using the proxy.
+        String fileName = cleanUrl.split("/").last;
+        cleanUrl = "https://ecom.thesmartedgetech.com/image_proxy.php?path=product/$fileName";
     }
 
     // 4. Filter out known "empty" backend paths that return 500

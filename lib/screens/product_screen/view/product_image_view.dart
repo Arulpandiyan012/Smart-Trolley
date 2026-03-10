@@ -69,7 +69,7 @@ class ProductImageViewState extends State<ProductImageView> {
                               url: item,
                               width: MediaQuery.of(context).size.width,
                               height: MediaQuery.of(context).size.width,
-                              fit: BoxFit.fill,
+                              fit: BoxFit.contain,
                             )))
                         .toList(),
                   )

@@ -119,7 +119,7 @@ class BestsellersCategoryGrid extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.withOpacity(0.15)),
                     boxShadow: [
@@ -139,7 +139,7 @@ class BestsellersCategoryGrid extends StatelessWidget {
                           padding: const EdgeInsets.all(8.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF9FAFB),
+                              color: isDark ? const Color(0xFF2A2A2A) : Theme.of(context).secondaryHeaderColor.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: GridView.builder(

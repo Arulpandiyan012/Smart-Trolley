@@ -45,12 +45,16 @@ class _InternetMonitorState extends State<InternetMonitor> {
             padding: const EdgeInsets.all(12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.wifi_off, color: Colors.white, size: 20),
-                SizedBox(width: 10),
-                Text(
-                  "No Internet Connection",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              children: [
+                const Icon(Icons.wifi_off, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    "No Internet Connection",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

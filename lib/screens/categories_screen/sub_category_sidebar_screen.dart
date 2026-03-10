@@ -252,7 +252,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
           Container(
             width: 70, 
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5), 
+              color: isDark ? const Color(0xFF1E1E1E) : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5), 
               border: Border(right: BorderSide(color: theme.dividerColor)),
             ),
             child: ListView.separated(
@@ -333,11 +333,11 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                              margin: const EdgeInsets.only(right: 8),
                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                              decoration: BoxDecoration(
-                               color: isSelected ? const Color(0xFF27C16B) : (isDark ? const Color(0xFF2A2A2A) : Colors.white),
-                               borderRadius: BorderRadius.circular(16),
-                               border: Border.all(
-                                 color: isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.grey[300]!)
-                               ),
+                              color: isSelected ? const Color(0xFF27C16B) : (isDark ? const Color(0xFF2A2A2A) : Theme.of(context).cardColor),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.grey[300]!)
+                              ),
                              ),
                              alignment: Alignment.center,
                              child: Text(
