@@ -378,11 +378,109 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       fetchPolicy: FetchPolicy.noCache
     ));
     NewProductsModel? model = await handleResponse(response, 'allProducts', (json) => NewProductsModel.fromJson(json));
+    
+    // 🟢 FIX: Removed the customizableOptions filter because it was hiding newly added products.
+    // We only filter out 'booking' products now.
     if (model != null && (model.data ?? []).isNotEmpty) {
-      model.data = model.data?.where((product) => product.type?.toLowerCase() != 'booking' && (product.customizableOptions == null || (product.customizableOptions ?? []).isEmpty)).toList();
+      model.data = model.data?.where((product) => product.type?.toLowerCase() != 'booking').toList();
     }
     return model;
   }
+
+  /// 🟢 NEW: Fetch a single product by urlKey using the dedicated `product()` query.
+  /// Falls back to product(id:) then allProducts.
+  Future<NewProducts?> getProductDetail(String urlKey, {int? productId, String? name}) async {
+    // ── Strategy 1: product(urlKey: "...") ──
+    if (urlKey.isNotEmpty) {
+      try {
+        debugPrint("🔵 Fetching product detail by urlKey: $urlKey");
+        var response = await (client.clientToQuery()).query(QueryOptions(
+          operationName: 'productDetail',
+          document: gql(mutation.getProductByUrlKey(urlKey)),
+          fetchPolicy: FetchPolicy.noCache,
+        ));
+
+        if (!response.hasException && response.data != null) {
+          var raw = response.data!['product'];
+          if (raw is Map<String, dynamic>) {
+            debugPrint("✅ [S1] productDetail by urlKey: Got '${raw['name']}'");
+            try { return NewProducts.fromJson(raw); } catch (e) {
+              debugPrint("⚠️ [S1] parse error: $e");
+            }
+          }
+        } else {
+          debugPrint("⚠️ [S1] productDetail exception: ${response.exception}");
+        }
+      } catch (e) {
+        debugPrint("⚠️ [S1] productDetail failed: $e");
+      }
+    }
+
+    // ── Strategy 2: product(id: ...) ──
+    if (productId != null && productId > 0) {
+      try {
+        debugPrint("🔄 [S2] Fetching product by ID: $productId");
+        var response = await (client.clientToQuery()).query(QueryOptions(
+          operationName: 'productDetailById',
+          document: gql(mutation.getProductById(productId)),
+          fetchPolicy: FetchPolicy.noCache,
+        ));
+
+        if (!response.hasException && response.data != null) {
+          var raw = response.data!['product'];
+          if (raw is Map<String, dynamic>) {
+            debugPrint("✅ [S2] productDetailById: Got '${raw['name']}'");
+            try { return NewProducts.fromJson(raw); } catch (e) {
+              debugPrint("⚠️ [S2] parse error: $e");
+            }
+          }
+        } else {
+          debugPrint("⚠️ [S2] productDetailById exception: ${response.exception}");
+        }
+      } catch (e) {
+        debugPrint("⚠️ [S2] productDetailById failed: $e");
+      }
+    }
+
+    // ── Strategy 3: allProducts (last resort) ──
+    debugPrint("🔄 [S3] Falling back to allProducts");
+    List<Map<String, dynamic>> filters = [];
+    if (urlKey.isNotEmpty) {
+      filters = [{"key": '"url_key"', "value": '"$urlKey"'}];
+      NewProductsModel? model = await getAllProducts(filters: filters, limit: 1);
+      return model?.data?.firstOrNull;
+    } else if (productId != null && productId > 0) {
+      // 🟢 FIX: The backend ignores 'id' filters and product() needs admin token.
+      // Also, `name` filtering on allProducts can be flaky with special characters.
+      // So we fetch a large page of products and find it locally by ID or fuzzy Name match.
+      debugPrint("🔄 [S3] Fetching generic allProducts to scan for ID $productId or Name locally");
+      NewProductsModel? model = await getAllProducts(limit: 500); // Fetch enough to likely find new ones
+      if (model != null && model.data != null) {
+        String safeTargetName = (name ?? "").toLowerCase().trim();
+        for (var p in model.data!) {
+          String pName = (p.name ?? "").toLowerCase().trim();
+          bool matchesId = (p.id?.toString() == productId.toString() && productId != null && productId > 0);
+          bool matchesName = (safeTargetName.isNotEmpty && pName == safeTargetName);
+
+          if (matchesId || matchesName) {
+            debugPrint("✅ [S3] Found product locally (ID: $matchesId, Name: $matchesName)! urlKey: ${p.urlKey}");
+            
+            // If it has a urlKey now, try to fetch its full details using S1,
+            // otherwise just return the abbreviated data we got from allProducts.
+            if (p.urlKey != null && p.urlKey!.isNotEmpty) {
+              return await getProductDetail(p.urlKey!); 
+            }
+            return p;
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+
+
 
   Future<ThemeCustomDataModel?> getThemeCustomizationData() async {
     var response = await (client.clientToQuery()).query(QueryOptions(

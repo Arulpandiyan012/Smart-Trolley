@@ -289,7 +289,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
               ],
             ),
             Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+            padding: const EdgeInsets.fromLTRB(6, 2, 6, 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -298,11 +298,11 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Theme.of(context).textTheme.titleSmall?.color),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, height: 1.1, color: Theme.of(context).textTheme.titleSmall?.color),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text("1 Unit", style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 10)),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Builder(
                     builder: (context) {
                       double rating = 0.0;
@@ -331,7 +331,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                             children: List.generate(5, (index) {
                               return Icon(
                                 index < rating.round() ? Icons.star : Icons.star_border,
-                                size: 11,
+                                size: 10,
                                 color: index < rating.round() ? Colors.amber : Theme.of(context).dividerColor,
                               );
                             }),
@@ -340,14 +340,14 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           if (reviewCount > 0)
                             Text(
                               "($reviewCount)",
-                              style: TextStyle(fontSize: 9, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 8, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w500),
                             ),
                         ],
                       );
                     },
                   ),
                   Container(
-                    margin: const EdgeInsets.only(top: 2, bottom: 2),
+                    margin: const EdgeInsets.only(top: 1, bottom: 1),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
                       color: Theme.of(context).dividerColor.withOpacity(0.1), 

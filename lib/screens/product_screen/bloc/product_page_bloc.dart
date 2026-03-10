@@ -24,29 +24,49 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
       ProductScreenBaseEvent event, Emitter<ProductBaseState> emit) async {
     if (event is FetchProductEvent) {
       try {
-        List<Map<String, dynamic>> filters = [];
-        
-        // Prioritize url_key since Bagisto GraphQL indexes it more reliably for new products
-        if (event.sku.isNotEmpty) {
-          filters = [
-            {"key": '"url_key"', "value": '"${event.sku}"'}
-          ];
-          debugPrint("🔵 Fetching product by URL Key: ${event.sku}");
-        } else if (event.productId != null && event.productId! > 0) {
-          filters = [
-            {"key": '"id"', "value": '"${event.productId}"'}
-          ];
-          debugPrint("🔵 Fetching product by ID: ${event.productId}");
-        } else {
+        String urlKey = event.sku.trim();
+        int? productId = event.productId;
+
+        // 🟢 FIX: If urlKey is empty but we have a productId, try to recover urlKey
+        // from the in-memory product cache (GlobalData.allProducts).
+        // This handles newly added products that are shown on home but have no urlKey passed.
+        if (urlKey.isEmpty && productId != null && productId > 0) {
+          final String pidStr = productId.toString();
+          outerLoop:
+          for (final sectionModel in (GlobalData.allProducts ?? [])) {
+            for (final product in (sectionModel?.data ?? [])) {
+              if (product.id?.toString() == pidStr && (product.urlKey?.isNotEmpty ?? false)) {
+                urlKey = product.urlKey!;
+                debugPrint("✅ Recovered urlKey from cache: $urlKey (productId=$productId)");
+                break outerLoop;
+              }
+            }
+          }
+        }
+
+        if (urlKey.isEmpty && (productId == null || productId <= 0)) {
           emit(FetchProductState.fail(error: "No product identifier provided"));
           return;
         }
-        
+
+        debugPrint("🔵 FetchProductEvent: urlKey='$urlKey' productId=$productId");
+
+        List<Map<String, dynamic>> filters = [];
+        if (urlKey.isNotEmpty) {
+          filters = [{"key": '"url_key"', "value": '"$urlKey"'}];
+        } else {
+          filters = [{"key": '"id"', "value": '"$productId"'}];
+          if (event.title != null && event.title!.isNotEmpty) {
+            filters.add({"key": '"name"', "value": '"${event.title}"'});
+          }
+        }
+
         NewProductsModel? productData = await repository?.getProductDetails(filters);
         emit(FetchProductState.success(productData: productData?.data?.firstOrNull));
       } catch (e) {
         emit(FetchProductState.fail(error: e.toString()));
       }
+
     } else if (event is AddToCartProductEvent) {
       try {
         AddToCartModel? cartModel = await repository?.callAddToCartAPi(

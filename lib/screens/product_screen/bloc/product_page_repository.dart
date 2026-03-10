@@ -10,11 +10,13 @@
 
 import '../../../data_model/add_to_wishlist_model/add_wishlist_model.dart';
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
+import 'package:bagisto_app_demo/services/api_client.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bagisto_app_demo/utils/server_configuration.dart';
 
 import '../data_model/download_sample_model.dart';
+
 
 abstract class ProductScreenRepository {
   Future<NewProductsModel?> getProductDetails(
@@ -44,39 +46,46 @@ class ProductScreenRepo implements ProductScreenRepository {
   @override
   Future<NewProductsModel?> getProductDetails(
       List<Map<String, dynamic>>? filters) async {
-    // 🟢 CUSTOM API PRODUCT DETAILS FETCH (Bypass Bagisto GraphQL EAV logic)
+    // Extract urlKey and productId from the filters map
+    String urlKey = "";
+    int? productId;
+    String? name;
+
+    for (var f in (filters ?? [])) {
+      String key = f["key"]?.toString().replaceAll('"', '') ?? "";
+      String value = f["value"]?.toString().replaceAll('"', '') ?? "";
+      if (key == "url_key") urlKey = value;
+      if (key == "id") productId = int.tryParse(value);
+      if (key == "name") name = value;
+    }
+
     try {
-      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
+      // 1. Try dedicated product detail query (HEAD approach)
+      NewProducts? product = await ApiClient().getProductDetail(urlKey, productId: productId, name: name);
       
-      String urlKey = "";
-      String productId = "";
-      
-      if (filters != null) {
-         for (var f in filters) {
-            if (f['key'] == "\"url_key\"") {
-                urlKey = f['value'].toString().replaceAll("\"", "");
-            } else if (f['key'] == "\"id\"") {
-                productId = f['value'].toString().replaceAll("\"", "");
-            }
-         }
+      if (product != null) {
+        debugPrint("✅ productDetail result from GraphQL: ${product.name}");
+        return NewProductsModel(data: [product]);
       }
 
-      debugPrint("🔵 PRODUCT REPO: Fetching Single Product (urlKey: $urlKey, ID: $productId)");
-      
+      // 2. Fallback to CUSTOM API (main approach)
+      debugPrint("🔵 GraphQL Detail failed, trying PHP Fallback (urlKey: $urlKey, ID: $productId)");
+      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
       var response = await http.post(url, body: {
           "action": "get_single_product",
           "url_key": urlKey,
-          "product_id": productId
+          "product_id": productId?.toString() ?? ""
       });
 
       if (response.statusCode == 200) {
           var json = jsonDecode(response.body);
           if (json['success'] == true) {
+               debugPrint("✅ productDetail result from PHP");
                return NewProductsModel.fromJson(json);
           }
       }
       
-      // Fallback to GraphQL if PHP fails
+      // 3. Final Fallback to getAllProducts
       return await ApiClient().getAllProducts(filters: filters);
     } catch (e, stack) {
       debugPrint("🔴 PRODUCT REPO ERROR: $e");
@@ -84,6 +93,7 @@ class ProductScreenRepo implements ProductScreenRepository {
     }
     return null;
   }
+
 
   @override
   Future<AddToCartModel?> callAddToCartAPi(

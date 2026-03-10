@@ -140,13 +140,13 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white, // Flat white
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Color(0x08000000), // Very subtle shadow
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.05),
             blurRadius: 4,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -170,10 +170,12 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(selected ? 1 : 0.9),
+                  color: selected 
+                    ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2E7D32) : const Color(0xFFE8F5E9))
+                    : Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: selected ? const Color(0xFF2E7D32) : const Color(0xFFE0E0E0),
+                    color: selected ? const Color(0xFF2E7D32) : Theme.of(context).dividerColor.withOpacity(0.1),
                   ),
                 ),
                 child: Column(
@@ -182,7 +184,9 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
                     Icon(
                       _categoryIconFor(label),
                       size: 14,
-                      color: selected ? const Color(0xFF2E7D32) : Colors.black87,
+                      color: selected 
+                        ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2E7D32))
+                        : Theme.of(context).textTheme.bodySmall?.color,
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -194,7 +198,9 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
                         fontSize: 9.5,
                         height: 1.1,
                         fontWeight: FontWeight.w600,
-                        color: selected ? const Color(0xFF2E7D32) : Colors.black87,
+                        color: selected 
+                          ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2E7D32))
+                          : Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
@@ -352,6 +358,7 @@ class _HomePageViewState extends State<HomePageView> {
           if (n.contains("snack")) return 1;
           if (n.contains("beauty")) return 2;
           if (n.contains("household")) return 3;
+          if (n.contains("beverage") || n.contains("drink") || n.contains("juice")) return 4;
           return 99; // Others at the end
        }
        
@@ -468,7 +475,8 @@ class _HomePageViewState extends State<HomePageView> {
                     for (final rootCat in cats) ...[
                       // 🟢 Filter out the redundant ones (Grocery, Veg, Fruit) to avoid duplication
                       // BUT allow others like "Beauty & Personal Care", "Health", "Snacks" etc.
-                      if (_catChildren(rootCat).isNotEmpty)
+                      // 🟢 SHOW ALL ROOT CATEGORIES
+                      if (true) // Removed .isNotEmpty check to show categories with direct products
                         Builder(
                           builder: (context) {
                              final title = _catLabel(rootCat);
@@ -546,9 +554,14 @@ class _HomePageViewState extends State<HomePageView> {
                               if (s.type == "product_carousel")
                                 TextButton(
                                   onPressed: () => _handleSeeAll(s.title),
-                                  child: const Text(
+                                  child: Text(
                                     'See all',
-                                    style: TextStyle(color: Colors.deepOrange),
+                                    style: TextStyle(
+                                      color: Theme.of(context).brightness == Brightness.dark 
+                                        ? const Color(0xFFFFAB40) 
+                                        : Colors.deepOrange,
+                                      fontWeight: FontWeight.bold
+                                    ),
                                   ),
                                 ),
                             ],

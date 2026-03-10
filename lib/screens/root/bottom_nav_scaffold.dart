@@ -65,8 +65,11 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       // 🟢 Use IndexedStack to keep pages alive (Cart won't reload every time)
       body: IndexedStack(
         index: _index,
@@ -79,10 +82,10 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
 
           return Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+              color: isDark ? const Color(0xFF121212) : Colors.white,
+              border: Border(top: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade200)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, -5)),
+                BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.04), blurRadius: 10, offset: const Offset(0, -5)),
               ],
             ),
             child: SafeArea(
@@ -92,11 +95,11 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _navItem(0, Icons.home_outlined, Icons.home, "Home"),
-                    _navItem(1, Icons.grid_view_outlined, Icons.grid_view_rounded, "Categories"),
-                    _cartNavItem(2, count), // Index 2 is Cart
-                    _navItem(3, Icons.receipt_long_outlined, Icons.receipt_long, "Orders"),
-                    _navItem(4, Icons.person_outline, Icons.person, "Profile"),
+                    _navItem(0, Icons.home_outlined, Icons.home, "Home", isDark),
+                    _navItem(1, Icons.grid_view_outlined, Icons.grid_view_rounded, "Categories", isDark),
+                    _cartNavItem(2, count, isDark), // Index 2 is Cart
+                    _navItem(3, Icons.receipt_long_outlined, Icons.receipt_long, "Orders", isDark),
+                    _navItem(4, Icons.person_outline, Icons.person, "Profile", isDark),
                   ],
                 ),
               ),
@@ -107,7 +110,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
     );
   }
 
-  Widget _navItem(int index, IconData iconOutlined, IconData iconFilled, String label) {
+  Widget _navItem(int index, IconData iconOutlined, IconData iconFilled, String label, bool isDark) {
     final isSelected = _index == index;
     const Color activeColor = Color(0xFF27C16B); 
 
@@ -120,7 +123,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
             Icon(
               isSelected ? iconFilled : iconOutlined,
               size: 24,
-              color: isSelected ? activeColor : Colors.grey[600], 
+              color: isSelected ? activeColor : (isDark ? Colors.grey[400] : Colors.grey[600]), 
             ),
             const SizedBox(height: 4),
             Text(
@@ -128,7 +131,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? activeColor : Colors.grey[600],
+                color: isSelected ? activeColor : (isDark ? Colors.grey[400] : Colors.grey[600]),
               ),
             ),
           ],
@@ -137,7 +140,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
     );
   }
 
-  Widget _cartNavItem(int index, int count) {
+  Widget _cartNavItem(int index, int count, bool isDark) {
     final isSelected = _index == index;
     const Color activeColor = Color(0xFF27C16B);
 
@@ -155,7 +158,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
               child: Icon(
                 Icons.shopping_cart_outlined, 
                 size: 24, 
-                color: isSelected ? activeColor : Colors.grey[600]
+                color: isSelected ? activeColor : (isDark ? Colors.grey[400] : Colors.grey[600])
               ),
             ),
             const SizedBox(height: 4),
@@ -164,7 +167,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
               style: TextStyle(
                 fontSize: 10, 
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? activeColor : Colors.grey[600]
+                color: isSelected ? activeColor : (isDark ? Colors.grey[400] : Colors.grey[600])
               ),
             ),
           ],
