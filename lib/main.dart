@@ -10,6 +10,7 @@
 
 import 'dart:io';
 import 'package:bagisto_app_demo/screens/home_page/data_model/get_categories_drawer_data_model.dart';
+import 'package:bagisto_app_demo/utils/firebase_auth_config.dart'; // 🟢 FOR SECONDARY APP
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 import 'package:bagisto_app_demo/utils/app_navigation.dart';
 import 'package:bagisto_app_demo/utils/push_notifications_manager.dart';
@@ -67,6 +68,13 @@ Future<void> main() async {
   ]);
 
   await Firebase.initializeApp();
+  
+  // 🟢 Initialize Secondary App for ST-PRO Phone Auth Compatibility
+  await Firebase.initializeApp(
+    name: 'st_pro_auth',
+    options: FirebaseAuthConfig.stProOptions,
+  );
+  
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<

@@ -145,6 +145,19 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
          'fcm_token': fcmToken ?? "" // 🟢 SEND TO BACKEND
        });
 
+       // 🟢 EXPLICITLY SAVE FCM TOKEN VIA DELIVERY API (Bypass broken Final Order script)
+       try {
+         if (fcmToken != null && fcmToken.isNotEmpty && customerId != "0") {
+             debugPrint("⏳ Starting FCM Token Sync to Delivery API for user $customerId...");
+             await Dio().post('https://ecom.thesmartedgetech.com/delivery-api.php', 
+                 data: {'action': 'update_customer_fcm', 'customer_id': customerId, 'fcm_token': fcmToken}
+             );
+             debugPrint("✅ FCM Token Sync Complete.");
+         } else {
+             debugPrint("⚠️ Skipping FCM Token sync: customerId is zero or token null.");
+         }
+       } catch(e) { debugPrint("❌ FCM Sync Failed: $e"); }
+
        var response = await dio.post(
          'https://ecom.thesmartedgetech.com/mobikul_final_order.php',
          data: formData
@@ -156,6 +169,20 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
 
        if (response.data['success'] == true) {
            var orderId = response.data['order_id'];
+           
+           // 🟢 VENDOR NOTIFICATION WEBHOOK (Triggers Push Message Server-Side)
+           try {
+              Dio().post(
+                'https://ecom.thesmartedgetech.com/mobikul-vendor-api.php',
+                data: {
+                  'action': 'notify_vendor_new_order',
+                  'order_id': orderId.toString(),
+                },
+                options: Options(contentType: Headers.formUrlEncodedContentType),
+              ).then((res) => debugPrint("Vendor Ping Sent!")).catchError((err) => debugPrint("Vendor Ping Err: $err"));
+           } catch (e) {
+              debugPrint("Vendor Ping Exception: $e");
+           }
            
            // 🟢 FIX: Clear Local Cart State
            GlobalData.updateCartState(null);

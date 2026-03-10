@@ -459,7 +459,23 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         var jsonResponse = jsonDecode(response.body);
         if (jsonResponse['success'] == true) {
              appStoragePref.setCartCount(0); // Clear Cart
-             return SaveOrderModel(success: true, order: Order(id: jsonResponse['order_id']));
+             
+             // 🟢 GUARANTEED VENDOR PING (Bypasses UI BLoC parsing errors)
+             try {
+               http.post(
+                 Uri.parse("https://ecom.thesmartedgetech.com/mobikul-vendor-api.php"),
+                 body: {
+                   "action": "notify_vendor_new_order",
+                   "order_id": jsonResponse['order_id'].toString()
+                 }
+               ).then((res) => print("Vendor PING fired: ${res.body}")).catchError((e) => print("Ping err: $e"));
+             } catch (e) {
+               print("Ping synchronous error: $e");
+             }
+
+             // Handle string/int type clash safely
+             int safeOrderId = int.tryParse(jsonResponse['order_id'].toString()) ?? 0;
+             return SaveOrderModel(success: true, order: Order(id: safeOrderId));
         } else {
              return SaveOrderModel(success: false, message: jsonResponse['message'] ?? "Failed");
         }

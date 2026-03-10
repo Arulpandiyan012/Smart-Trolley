@@ -12,6 +12,7 @@
 
 
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
+import 'package:dio/dio.dart';
 
 import '../../data_model/save_order_model.dart';
 

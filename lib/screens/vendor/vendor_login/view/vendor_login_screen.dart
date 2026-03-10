@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../dashboard/view/vendor_dashboard_screen.dart';
-import 'package:bagisto_app_demo/utils/index.dart'; // 🟢 For appStoragePref
-
+import 'package:bagisto_app_demo/utils/index.dart'; // For appStoragePref
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:dio/dio.dart';
 class VendorLoginScreen extends StatefulWidget {
   const VendorLoginScreen({Key? key}) : super(key: key);
 
@@ -290,6 +291,25 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     if (email == "vendor@gmail.com" && password == "SMT@26") {
       // 🟢 Save Session
       appStoragePref.setVendorLoggedIn(true);
+      
+      // 🟢 Register Vendor FCM Token for Push Notifications
+      try {
+        String? token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await Dio().post(
+            'https://ecom.thesmartedgetech.com/mobikul-vendor-api.php',
+            data: {
+              'action': 'update_fcm_token',
+              'fcm_token': token,
+            },
+            options: Options(
+              contentType: Headers.formUrlEncodedContentType, // Just in case it checks $_POST
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('FCM Token error: \$e');
+      }
       
       if (mounted) {
          Navigator.pushReplacement(
