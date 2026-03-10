@@ -17,6 +17,8 @@ import 'package:bagisto_app_demo/utils/server_configuration.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:bagisto_app_demo/screens/tracking/live_tracking_map_screen.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class PushNotificationsManager {
   static PushNotificationsManager instance = PushNotificationsManager();
@@ -141,6 +143,15 @@ class PushNotificationsManager {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint("OnAppOpened}");
       debugPrint(message.data.toString());
+      
+      if (message.data['action'] == 'track_order' && message.data['order_id'] != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LiveTrackingMapScreen(orderId: message.data['order_id']),
+          ),
+        );
+      }
     });
   }
 
