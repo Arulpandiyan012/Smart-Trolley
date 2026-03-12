@@ -215,30 +215,45 @@ class _AddReviewState extends State<AddReview> {
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    const SizedBox(height: AppSizes.spacingMedium * 2),
-                    // AddImageView(addReviewBloc: addReviewBloc),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    MaterialButton(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(
-                            Radius.circular(AppSizes.spacingSmall)),
-                      ),
-                      elevation: 0.0,
+                    Container(
+                      width: double.infinity,
                       height: AppSizes.buttonHeight,
-                      minWidth: MediaQuery.of(context).size.width,
-                      color: Theme.of(context).colorScheme.onBackground,
-                      textColor:
-                          Theme.of(context).colorScheme.secondaryContainer,
-                      onPressed: () {
-                        _onPressSubmitButton();
-                      },
-                      child: Text(
-                        StringConstants.submitReview.localized().toUpperCase(),
-                        style: TextStyle(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)], // Trendy Iris to Purple gradient
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(AppSizes.spacingSmall),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF764BA2).withOpacity(0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSizes.spacingSmall),
+                          ),
+                        ),
+                        onPressed: () {
+                          _onPressSubmitButton();
+                        },
+                        child: Text(
+                          StringConstants.submitReview.localized().toUpperCase(),
+                          style: const TextStyle(
                             fontSize: AppSizes.spacingLarge,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer),
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSizes.spacingWide),

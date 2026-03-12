@@ -18,6 +18,7 @@ mixin OrderStatusBGColorHelper {
   getOrderBgColor(String state) {
     switch (state.toLowerCase()) {
       case StringConstants.completed:
+      case 'delivered':
         return AppColors.orderCompleteColor;
       case StringConstants.pending:
         return AppColors.orderPendingColor;
