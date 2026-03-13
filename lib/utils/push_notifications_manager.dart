@@ -57,6 +57,17 @@ class PushNotificationsManager {
         Map<String, dynamic> payloadData = jsonDecode(payload ?? "");
         if (payloadData["type"] == "openFile") {
           openFile(payloadData["path"].toString());
+        } else if (payloadData["action"] == "track_order" &&
+            payloadData["order_id"] != null) {
+          // 🟢 Track Order: Navigate to Live Tracking Map
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LiveTrackingMapScreen(
+                orderId: payloadData["order_id"].toString(),
+              ),
+            ),
+          );
         }
       }
     });
