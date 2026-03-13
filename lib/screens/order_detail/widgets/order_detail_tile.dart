@@ -14,6 +14,7 @@ import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.d
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_bloc.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_event.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_state.dart';
+import 'package:bagisto_app_demo/data_model/app_route_arguments.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_repository.dart';
 
 // Cache for product images to avoid repeated API calls
@@ -472,36 +473,75 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item.formattedPrice?.price ?? "", 
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: canNavigate ? Colors.green[50] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: canNavigate ? Colors.green[200]! : Colors.grey[300]!, 
-                      width: 0.5
-                    )
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    item.formattedPrice?.price ?? "", 
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)
                   ),
-                  child: Text(
-                    canNavigate ? "View" : "N/A",
-                    style: TextStyle(
-                      fontSize: 10, 
-                      fontWeight: FontWeight.bold, 
-                      color: canNavigate ? Colors.green : Colors.grey
-                    )
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      // Review Button (Only if Completed/Delivered)
+                      if ((orderDetailModel?.status?.toLowerCase() ?? "") == "completed" || 
+                          (orderDetailModel?.status?.toLowerCase() ?? "") == "delivered")
+                        GestureDetector(
+                          onTap: () {
+                            String image = "";
+                            if (item.product?.images != null && item.product!.images!.isNotEmpty) {
+                              image = item.product!.images![0].url ?? "";
+                            }
+                            Navigator.pushNamed(buildContext, addReviewScreen,
+                                arguments: AddReviewDetail(
+                                    productId: item.product?.id?.toString(), 
+                                    productName: item.product?.name, 
+                                    imageUrl: image,
+                                ));
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.amber[50],
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.amber[300]!, width: 0.5),
+                            ),
+                            child: const Text(
+                              "Review",
+                              style: TextStyle(
+                                fontSize: 10, 
+                                fontWeight: FontWeight.bold, 
+                                color: Colors.amber
+                              )
+                            ),
+                          ),
+                        ),
+                      // Existing View Button
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: canNavigate ? Colors.green[50] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: canNavigate ? Colors.green[200]! : Colors.grey[300]!, 
+                            width: 0.5
+                          )
+                        ),
+                        child: Text(
+                          canNavigate ? "View" : "N/A",
+                          style: TextStyle(
+                            fontSize: 10, 
+                            fontWeight: FontWeight.bold, 
+                            color: canNavigate ? Colors.green : Colors.grey
+                          )
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

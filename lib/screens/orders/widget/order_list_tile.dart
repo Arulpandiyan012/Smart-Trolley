@@ -234,9 +234,10 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
     } else if (status == "processing") {
       bgColor = const Color(0xFFE3F2FD); 
       textColor = const Color(0xFF1976D2); 
-    } else if (status == "completed") {
+    } else if (status == "completed" || status == "delivered") {
       bgColor = const Color(0xFFE8F5E9); 
       textColor = const Color(0xFF388E3C); 
+      text = "Delivered"; // Force the text "Delivered" when status is "completed"
     } else if (status == "canceled") {
       bgColor = const Color(0xFFFFEBEE); 
       textColor = const Color(0xFFD32F2F); 

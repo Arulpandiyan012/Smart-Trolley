@@ -27,12 +27,26 @@ abstract class CategoriesRepository{
 
 }
 class CategoriesRepo implements CategoriesRepository {
+  // 🟢 SYNC MAP: Groups of Category IDs that should show the same products
+  final Map<String, List<String>> _syncCategoryMap = {
+    "67": ["67", "105"],    // Eggs (Dairy & Meat)
+    "105": ["67", "105"],   // Eggs (Dairy & Meat)
+    "102": ["102", "161"],  // Frozen Non-Veg Snacks
+    "161": ["102", "161"],  // Frozen Non-Veg Snacks
+    "72": ["72", "136"],    // Soy Milk & More
+    "136": ["72", "136"],   // Soy Milk & More
+    "137": ["137", "155"],  // Cold Coffee & Ice Tea
+    "155": ["137", "155"],  // Cold Coffee & Ice Tea
+    "167": ["167", "148"],  // Energy Bars
+    "148": ["167", "148"],  // Energy Bars
+    "187": ["187", "175", "149"], // Syrups
+    "175": ["187", "175", "149"], // Syrups
+    "149": ["187", "175", "149"], // Syrups
+  };
+
   @override
   Future<NewProductsModel?> callCategoriesData({List<Map<String, dynamic>>? filters, int? page}) async {
-    // 🟢 CUSTOM API PRODUCT FETCH
     try {
-      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
-      
       // Extract Category ID from filters
       String categoryId = "";
       if (filters != null) {
@@ -43,35 +57,67 @@ class CategoriesRepo implements CategoriesRepository {
          }
       }
 
+      // 🟢 SYNC LOGIC: If this ID is synced, fetch all related IDs and merge
+      if (_syncCategoryMap.containsKey(categoryId)) {
+          List<String> syncGroup = _syncCategoryMap[categoryId]!;
+          debugPrint("🔄 SYNC CATEGORY: Fetching merged products for group: $syncGroup");
+          
+          List<NewProductsModel> results = [];
+          for (var id in syncGroup) {
+              var model = await _fetchSingleCategory(id, page);
+              if (model != null) results.add(model);
+          }
+          
+          if (results.isEmpty) return null;
+          if (results.length == 1) return results.first;
+
+          // Merge and Deduplicate
+          Map<String, NewProducts> mergedProducts = {};
+          for (var res in results) {
+              for (var p in (res.data ?? [])) {
+                  if (p.id != null) {
+                      mergedProducts[p.id.toString()] = p;
+                  }
+              }
+          }
+
+          // Return combined model (using first result as base for paginatorInfo etc)
+          var baseModel = results.first;
+          baseModel.data = mergedProducts.values.toList();
+          return baseModel;
+      }
+
+      // Standard Fetch
+      return await _fetchSingleCategory(categoryId, page);
+
+    } catch (e, stack) {
+      debugPrint("🔴 CATEGORY REPO ERROR: $e");
+      debugPrint("🔴 STACK: $stack");
+    }
+    return null;
+  }
+
+  // 🟢 Helper to fetch a single category's products
+  Future<NewProductsModel?> _fetchSingleCategory(String categoryId, int? page) async {
+    try {
+      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
       debugPrint("🔵 CATEGORY REPO: Fetching Products for CatID: $categoryId (Page: $page)");
       
       var response = await http.post(url, body: {
           "action": "get_category_products",
           "category_id": categoryId,
-          "page": page.toString()
+          "page": page?.toString() ?? "1"
       });
 
       if (response.statusCode == 200) {
-          debugPrint("🔵 PRODUCT API RESPONSE: ${response.body}"); // 🟢 DEBUG: Print full JSON
           var json = jsonDecode(response.body);
-          
           if (json['success'] == true) {
-               // 🟢 DEBUG: Check types of first item
-               if (json['data'] != null && (json['data'] as List).isNotEmpty) {
-                  final first = json['data'][0];
-                  debugPrint("🔍 First Product Types:");
-                  first.forEach((k, v) => debugPrint("  - $k: ${v.runtimeType} ($v)"));
-               }
-               
-               // 🟢 SANITIZE JSON (Fix String -> Num issues)
                json = _sanitizeProductIds(json);
-               
                return NewProductsModel.fromJson(json);
           }
       }
-    } catch (e, stack) {
-      debugPrint("🔴 CATEGORY REPO ERROR: $e");
-      debugPrint("🔴 STACK: $stack");
+    } catch (e) {
+      debugPrint("⚠️ FETCH SINGLE CAT FAILED ($categoryId): $e");
     }
     return null;
   }
