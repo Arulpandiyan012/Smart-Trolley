@@ -39,6 +39,8 @@ class CategoriesRepo implements CategoriesRepository {
     "155": ["137", "155"],  // Cold Coffee & Ice Tea
     "167": ["167", "148"],  // Energy Bars
     "148": ["167", "148"],  // Energy Bars
+    "70": ["70", "164"],    // Batter (Dairy & Instant Foods)
+    "164": ["70", "164"],   // Batter (Dairy & Instant Foods)
     "187": ["187", "175", "149"], // Syrups
     "175": ["187", "175", "149"], // Syrups
     "149": ["187", "175", "149"], // Syrups
