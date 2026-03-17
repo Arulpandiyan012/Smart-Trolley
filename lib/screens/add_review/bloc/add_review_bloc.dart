@@ -25,7 +25,7 @@ class AddReviewBloc extends Bloc<AddReviewBaseEvent, AddReviewBaseState> {
     if (event is AddReviewFetchEvent) {
       try {
         AddReviewModel addReviewModel = await repository!.callAddReviewApi(event.name??"",event.title??"",event.rating??0,event.comment??"",event.productId??0,
-        event.attachments);
+        event.attachments, reviewId: event.reviewId);
 
         emit (AddReviewFetchState.success(addReviewModel: addReviewModel));
       } catch (e) {

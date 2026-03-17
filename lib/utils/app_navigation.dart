@@ -312,7 +312,12 @@ case checkoutScreen:
               child: AddReview(
                   imageUrl: addReviewDetail.imageUrl,
                   productId: addReviewDetail.productId,
-                  productName: addReviewDetail.productName)));
+                  productName: addReviewDetail.productName,
+                  reviewId: addReviewDetail.reviewId, // 🟢 ADDED
+                  rating: addReviewDetail.rating,     // 🟢 ADDED
+                  title: addReviewDetail.title,       // 🟢 ADDED
+                  comment: addReviewDetail.comment    // 🟢 ADDED
+              )));
 
     case compareScreen:
       return MaterialPageRoute(

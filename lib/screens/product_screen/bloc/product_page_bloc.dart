@@ -53,9 +53,18 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
 
         List<Map<String, dynamic>> filters = [];
         if (urlKey.isNotEmpty) {
-          filters = [{"key": '"url_key"', "value": '"$urlKey"'}];
-        } else {
-          filters = [{"key": '"id"', "value": '"$productId"'}];
+          filters.add({"key": '"url_key"', "value": '"$urlKey"'});
+        }
+        if (productId != null && productId > 0) {
+          filters.add({"key": '"id"', "value": '"$productId"'});
+        }
+
+        if (filters.isEmpty) {
+          emit(FetchProductState.fail(error: "No product identifier provided"));
+          return;
+        }
+
+        if (productId != null && productId > 0 && urlKey.isEmpty) {
           if (event.title != null && event.title!.isNotEmpty) {
             filters.add({"key": '"name"', "value": '"${event.title}"'});
           }
@@ -173,6 +182,18 @@ class ProductScreenBLoc extends Bloc<ProductScreenBaseEvent, ProductBaseState> {
       } catch (e) {
         emit(DownloadProductSampleState.fail(
             error: StringConstants.somethingWrong.localized()));
+      }
+    } else if (event is DeleteReviewEvent) {
+      try {
+        BaseModel? baseModel = await repository?.deleteReview(event.reviewId);
+        if (baseModel?.success == true || baseModel?.status == true) {
+          emit(DeleteReviewState.success(
+              baseModel: baseModel, successMsg: baseModel?.message));
+        } else {
+          emit(DeleteReviewState.fail(error: baseModel?.message));
+        }
+      } catch (e) {
+        emit(DeleteReviewState.fail(error: e.toString()));
       }
     }
   }

@@ -63,19 +63,20 @@ class _BlinkitProductBodyState extends State<BlinkitProductBody> {
                  _buildProductInfo(), 
                  _buildExpandableDescription(),
                  
-                 // 🟢 ADDED: Review Section
-                 if (widget.productData != null)
-                   ProductReviewSummaryView(
-                     review: widget.productData!.reviews,
-                     productId: widget.productData!.id,
-                     averageRating: widget.productData!.averageRating,
-                     percentage: widget.productData!.percentageRating,
-                     productName: widget.productData!.name,
-                     productImage: (widget.productData!.images?.isNotEmpty ?? false) 
-                        ? widget.productData!.images![0].url 
-                        : "",
-                     isLogin: appStoragePref.getCustomerLoggedIn(),
-                   ),
+                  // 🟢 ADDED: Review Section
+                  if (widget.productData != null)
+                    ProductReviewSummaryView(
+                      review: widget.productData!.reviews,
+                      productId: widget.productData!.id,
+                      averageRating: widget.productData!.averageRating,
+                      percentage: widget.productData!.percentageRating,
+                      productName: widget.productData!.name,
+                      productImage: (widget.productData!.images?.isNotEmpty ?? false) 
+                         ? widget.productData!.images![0].url 
+                         : "",
+                      isLogin: appStoragePref.getCustomerLoggedIn(),
+                      productScreenBLoc: widget.productScreenBLoc, // 🟢 PASS BLOC
+                    ),
               ],
             ),
           ),

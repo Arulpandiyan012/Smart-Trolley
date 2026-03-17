@@ -30,6 +30,19 @@ class ReviewsBloc extends Bloc<ReviewsBaseEvent, ReviewsBaseState> {
         emit(FetchReviewState.fail(
             error: StringConstants.somethingWrong.localized()));
       }
+    } else if (event is RemoveReviewEvent) {
+      try {
+        BaseModel? baseModel = await repository!.callDeleteReviewApi(event.reviewId ?? "");
+        if (baseModel?.success == true || baseModel?.status == true) {
+          // Re-fetch reviews to update the list
+          ReviewModel reviewModel = await repository!.callReviewApi(1);
+          emit(FetchReviewState.success(reviewModel: reviewModel));
+        } else {
+          emit(FetchReviewState.fail(error: baseModel?.message ?? "Failed to delete"));
+        }
+      } catch (e) {
+        emit(FetchReviewState.fail(error: e.toString()));
+      }
     }
   }
 }

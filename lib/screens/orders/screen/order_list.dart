@@ -55,7 +55,7 @@ class _OrdersListState extends State<OrdersList> with OrderStatusBGColorHelper {
     _quickFilters = [
       {"label": StringConstants.all.localized(), "value": ""},
       {"label": StringConstants.pending.localized(), "value": "pending"},
-      {"label": "Delivered", "value": "delivered"},
+      {"label": "Delivered", "value": "completed,delivered,picked up,received"},
       {"label": StringConstants.canceled.localized(), "value": "canceled"},
     ];
     super.initState();

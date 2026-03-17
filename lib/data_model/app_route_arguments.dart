@@ -65,6 +65,10 @@ class AddReviewDetail {
   String? imageUrl;
   String? productId;
   String? productName;
+  String? reviewId;
+  int? rating;
+  String? title;
+  String? comment;
 
-  AddReviewDetail({this.imageUrl, this.productId, this.productName});
+  AddReviewDetail({this.imageUrl, this.productId, this.productName, this.reviewId, this.rating, this.title, this.comment});
 }

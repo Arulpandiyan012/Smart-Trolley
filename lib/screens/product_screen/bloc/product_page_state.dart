@@ -91,3 +91,15 @@ class AddToCartProductState extends ProductBaseState{
 
 }
 
+class DeleteReviewState extends ProductBaseState {
+  final BaseModel? baseModel;
+  final String? successMsg;
+  final String? error;
+  final ProductStatus status;
+
+  DeleteReviewState.success({this.baseModel, this.successMsg})
+      : status = ProductStatus.success, error = null;
+  DeleteReviewState.fail({this.error})
+      : status = ProductStatus.fail, successMsg = null, baseModel = null;
+}
+

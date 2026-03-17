@@ -12,6 +12,7 @@
 
 
 import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart';
+import 'package:bagisto_app_demo/data_model/review_model/review_model.dart';
 import '../../../utils/index.dart';
 import '../../cart_screen/cart_model/add_to_cart_model.dart';
 
@@ -19,6 +20,7 @@ abstract class OrderDetailRepository{
   Future<OrderDetail> getOrderDetails(int orderId);
   Future<BaseModel> cancelOrder(int id);
   Future<AddToCartModel?> reOrderCustomerOrder(String? id);
+  Future<ReviewModel?> getReviewList(int page);
 }
 class OrderDetailRepositoryImp implements OrderDetailRepository {
   @override
@@ -59,5 +61,16 @@ class OrderDetailRepositoryImp implements OrderDetailRepository {
       print("StackTrace --> $stacktrace");
     }
     return baseModel!;
+  }
+
+  @override
+  Future<ReviewModel?> getReviewList(int page) async {
+    try {
+      return await ApiClient().getReviewList(page);
+    } catch (error, stacktrace) {
+      print("Error --> $error");
+      print("StackTrace --> $stacktrace");
+    }
+    return null;
   }
 }

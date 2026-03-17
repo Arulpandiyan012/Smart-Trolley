@@ -23,12 +23,27 @@ class OrderListRepositoryImp implements OrderListRepository {
     OrdersListModel? ordersListModel;
 
     try {
+      // 🟢 NEW: Handle client-side filtering for multiple statuses
+      // Backend PHP api doesn't support comma-separated status. 
+      // We fetch ALL and filter locally when a multi-status filter is active.
+      bool isMultiStatus = status != null && status.contains(",");
+      String? apiStatus = isMultiStatus ? "" : status;
+
       ordersListModel = await ApiClient()
-          .getOrderList(id, startDate, endDate, status, total, page,isFilterApply);
+          .getOrderList(id, startDate, endDate, apiStatus, total, page, isFilterApply);
+
+      if (isMultiStatus && ordersListModel?.data != null) {
+        debugPrint("🎯 OrderListRepo: Filtering orders locally for multi-status: $status");
+        List<String> allowedStatuses = status!.split(",").map((e) => e.trim().toLowerCase()).toList();
+        ordersListModel!.data = ordersListModel.data!.where((order) {
+           String s = order.status?.toLowerCase() ?? "";
+           return allowedStatuses.contains(s);
+        }).toList();
+      }
     } catch (error, stacktrace) {
       debugPrint("Error --> $error");
       debugPrint("StackTrace --> $stacktrace");
     }
-    return ordersListModel!;
+    return ordersListModel ?? OrdersListModel(data: []);
   }
 }

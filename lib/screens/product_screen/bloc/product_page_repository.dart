@@ -40,9 +40,15 @@ abstract class ProductScreenRepository {
   Future<AddToCartModel?> removeItemFromWishlist(String wishListProductId);
 
   Future<DownloadSampleModel?> downloadSample(String type, String id);
+
+  Future<BaseModel?> deleteReview(String reviewId);
 }
 
 class ProductScreenRepo implements ProductScreenRepository {
+  @override
+  Future<BaseModel?> deleteReview(String reviewId) async {
+    return await ApiClient().deleteReview(reviewId);
+  }
   @override
   Future<NewProductsModel?> getProductDetails(
       List<Map<String, dynamic>>? filters) async {
@@ -62,11 +68,14 @@ class ProductScreenRepo implements ProductScreenRepository {
     try {
       // 1. Try Fallback to CUSTOM API FIRST (Ensures consistency with Grids)
       debugPrint("🔵 Fetching Product via PHP Custom API (urlKey: $urlKey, ID: $productId)");
-      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php");
+      String t = DateTime.now().millisecondsSinceEpoch.toString();
+      var url = Uri.parse("$baseDomain/mobikul-vendor-api.php?t=$t");
+      debugPrint("🚀 Fetching Product fresh via PHP: $url");
+      
       var response = await http.post(url, body: {
           "action": "get_single_product",
           "url_key": urlKey,
-          "product_id": productId?.toString() ?? ""
+          "product_id": productId?.toString() ?? "",
       });
 
       if (response.statusCode == 200) {
