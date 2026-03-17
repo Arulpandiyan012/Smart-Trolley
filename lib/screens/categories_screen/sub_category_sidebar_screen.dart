@@ -62,11 +62,18 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
       _selectedSidebarIndex = (widget.initialSelectedIndex >= 0 && widget.initialSelectedIndex < widget.subCategories.length) 
           ? widget.initialSelectedIndex 
           : 0;
-      _onSidebarItemSelected(_selectedSidebarIndex);
+      debugPrint("🟢 AUTO-SELECT Index: $_selectedSidebarIndex (Total Subcats: ${widget.subCategories.length})");
+      
+      // 🟢 DELAY: Ensure BlocConsumer is mounted before adding event
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _onSidebarItemSelected(_selectedSidebarIndex);
+      });
     } else {
-       // Fallback: Load products of L2 itself if no L3
-       debugPrint("🟡 No L3 Categories. Loading products for L2 ID: ${widget.parentId} Slug: ${widget.parentSlug}");
-       _fetchProducts(widget.parentId, widget.parentSlug);  // 🟢 USE SLUG 
+       // Fallback: Load products for Parent itself if no children
+       debugPrint("🟡 No Sub-Categories. Loading products for Parent: ${widget.title} (ID: ${widget.parentId})");
+       WidgetsBinding.instance.addPostFrameCallback((_) {
+         if (mounted) _fetchProducts(widget.parentId, widget.parentSlug);
+       });
     }
 
     _listController.addListener(() {
@@ -86,17 +93,17 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
         _selectedSidebarIndex = index;
         final cat = widget.subCategories[index];
         
-        // 🔍 DEBUG: Check for L3 Children
-        final children = (cat as dynamic).children;
-        debugPrint("🟢 Selected L2: ${_getName(cat)}");
-        if (children != null && (children is List) && children.isNotEmpty) {
-           debugPrint("   👉 Has ${children.length} L3 Children!");
-           children.forEach((c) => debugPrint("      - L3: ${(c as dynamic).name ?? ''}"));
+        // 🟢 AUTO-SELECT L3 logic
+        final children = (cat as dynamic).children as List?;
+        
+        if (children != null && children.isNotEmpty) {
+           final firstL3 = children[0];
+           debugPrint("🟢 Auto-selecting first L3: ${_getName(firstL3)} (Slug: ${_getSlug(firstL3)})");
+           _fetchProducts(_getId(firstL3), _getSlug(firstL3));
         } else {
-           debugPrint("   ❌ No L3 Children found.");
+           debugPrint("🟡 No L3 found. Fetching L2: ${_getName(cat)}");
+           _fetchProducts(_getId(cat), _getSlug(cat));
         }
-
-        _fetchProducts(_getId(cat), _getSlug(cat));
       });
   }
 
@@ -167,6 +174,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
              listener: (context, state) {
                 if (state is FilterFetchState) {
                     _filterData = state.filterModel;
+                    // 🟢 ALWAYS try to fetch products even if filters fail/error
                     _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
                 }
                 if (state is FetchSubCategoryState) {
@@ -179,7 +187,9 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                           _productsData?.data?.addAll(state.categoriesData?.data ?? []);
                         }
                       });
-                    } else if (state.status == CategoriesStatus.fail) {
+                    } else {
+                       // 🔴 ERROR Handle
+                       debugPrint("❌ FetchSubCategoryState Failed: ${state.error}");
                        setState(() => _isLoading = false);
                     }
                 }
@@ -370,6 +380,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                        listener: (context, state) {
                           if (state is FilterFetchState) {
                               _filterData = state.filterModel;
+                              // 🟢 ALWAYS try to fetch products even if filters fail
                               _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
                           }
                           if (state is FetchSubCategoryState) {
@@ -382,7 +393,8 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                                     _productsData?.data?.addAll(state.categoriesData?.data ?? []);
                                   }
                                 });
-                              } else if (state.status == CategoriesStatus.fail) {
+                              } else {
+                                 debugPrint("❌ FetchSubCategoryState Failed: ${state.error}");
                                  setState(() => _isLoading = false);
                               }
                           }
@@ -453,7 +465,9 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
       child: Container(
         // Full width container
         decoration: BoxDecoration(
-          color: isSelected ? (isDark ? const Color(0xFF2A2A2A) : Colors.white) : Colors.transparent,
+          color: isSelected 
+             ? (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE8F5E9)) 
+             : Colors.transparent,
           border: isSelected 
              ? const Border(left: BorderSide(color: Color(0xFF27C16B), width: 4))
              : const Border(left: BorderSide(color: Colors.transparent, width: 4)),

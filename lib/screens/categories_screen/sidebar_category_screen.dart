@@ -125,23 +125,38 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             
             // 🟢 DEEP SEARCH: Find target slug at ANY level (L1, L2, L3)
             if (widget.initialSlug != null && widget.initialSlug!.isNotEmpty) {
-               final target = _findCategoryRecursively(list, widget.initialSlug!);
+               final rawSlug = widget.initialSlug!.trim().toLowerCase();
+               debugPrint("🔍 SIDEBAR SEARCH: Looking for slug '$rawSlug' in ${list.length} root categories.");
+               
+               final target = _findCategoryRecursively(list, rawSlug);
                if (target != null) {
+                  final targetSlug = _getSlug(target).toLowerCase();
+                  debugPrint("✅ SIDEBAR SEARCH: Found target '${_getName(target)}' (Slug: $targetSlug)");
+                  
                   final children = ((target as dynamic).children as List?) ?? [];
                   if (children.isNotEmpty) {
+                      debugPrint("   👉 Root/Parent found. Selecting it as Target.");
                       _directModeTarget = target; 
+                      _directModeSelectedIndex = 0; // Select first child
                   } else {
-                      // It has no children (probably L2), so find its parent (L1) to show the sidebar navigation
-                      final parent = _findCategoryParentRecursively(list, widget.initialSlug!);
+                      // It has no children (probably leaf L2/L3), so find its parent to show the sidebar navigation
+                      debugPrint("   👉 Leaf Category found. Searching for parent...");
+                      final parent = _findCategoryParentRecursively(list, targetSlug);
                       if (parent != null) {
+                         debugPrint("      ✅ Parent found: ${_getName(parent)}");
                          _directModeTarget = parent;
                          // Find the index of the child to select it
                          final parentChildren = ((parent as dynamic).children as List?) ?? [];
-                         _directModeSelectedIndex = parentChildren.indexWhere((c) => _getSlug(c) == widget.initialSlug);
+                         _directModeSelectedIndex = parentChildren.indexWhere((c) => _getSlug(c).toLowerCase() == targetSlug);
+                         debugPrint("      🎯 Selected Child Index: $_directModeSelectedIndex");
                       } else {
+                         debugPrint("      🟡 No parent found. Using target as is.");
                          _directModeTarget = target;
+                         _directModeSelectedIndex = 0;
                       }
                   }
+               } else {
+                 debugPrint("❌ SIDEBAR SEARCH: Slug '$rawSlug' not found in any category level.");
                }
             }
             
@@ -184,13 +199,14 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   // 🟢 NEW: Deep Search Helper
   dynamic _findCategoryRecursively(List<dynamic> nodes, String slug) {
+     final searchSlug = slug.trim().toLowerCase();
      for (var node in nodes) {
-        if (_getSlug(node) == slug) return node;
+        if (_getSlug(node).toLowerCase() == searchSlug) return node;
         
         // Search Children
         final children = ((node as dynamic).children as List?) ?? [];
         if (children.isNotEmpty) {
-           final found = _findCategoryRecursively(children, slug);
+           final found = _findCategoryRecursively(children, searchSlug);
            if (found != null) return found;
         }
      }
@@ -199,12 +215,13 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   // 🟢 NEW: Parent Search Helper
   dynamic _findCategoryParentRecursively(List<dynamic> nodes, String slug) {
+     final searchSlug = slug.trim().toLowerCase();
      for (var node in nodes) {
         final children = ((node as dynamic).children as List?) ?? [];
-        if (children.any((c) => _getSlug(c) == slug)) return node;
+        if (children.any((c) => _getSlug(c).toLowerCase() == searchSlug)) return node;
         
         if (children.isNotEmpty) {
-           final found = _findCategoryParentRecursively(children, slug);
+           final found = _findCategoryParentRecursively(children, searchSlug);
            if (found != null) return found;
         }
      }
