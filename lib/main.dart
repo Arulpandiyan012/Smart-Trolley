@@ -10,8 +10,10 @@
 
 import 'dart:io';
 import 'package:bagisto_app_demo/screens/home_page/data_model/get_categories_drawer_data_model.dart';
+import 'package:bagisto_app_demo/utils/firebase_auth_config.dart'; // 🟢 FOR SECONDARY APP
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 import 'package:bagisto_app_demo/utils/app_navigation.dart';
+import 'package:bagisto_app_demo/utils/app_navigation_key.dart';
 import 'package:bagisto_app_demo/utils/push_notifications_manager.dart';
 import 'package:bagisto_app_demo/utils/theme_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -67,6 +69,13 @@ Future<void> main() async {
   ]);
 
   await Firebase.initializeApp();
+  
+  // 🟢 Initialize Secondary App for ST-PRO Phone Auth Compatibility
+  await Firebase.initializeApp(
+    name: 'st_pro_auth',
+    options: FirebaseAuthConfig.stProOptions,
+  );
+  
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
@@ -150,7 +159,12 @@ class _BagistoAppState extends State<BagistoApp> {
     GlobalData.currencyCode = appStoragePref.getCurrencyCode();
     GlobalData.currencySymbol = appStoragePref.getCurrencySymbol();
     _locale = Locale(GlobalData.locale);
-    PushNotificationsManager.instance.setUpFirebase(context);
+    
+    // 🟢 ENSURE NAVIGATOR IS READY: Wait for first frame before setting up FCM
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationsManager.instance.setUpFirebase(context);
+    });
+
     notification();
     super.initState();
   }
@@ -191,6 +205,7 @@ class _BagistoAppState extends State<BagistoApp> {
                 theme: MobiKulTheme.lightTheme,
                 darkTheme: MobiKulTheme.darkTheme,
                 themeMode: themeNotifier.isDark == "true" ? ThemeMode.dark : ThemeMode.light,
+                navigatorKey: navigatorKey,
                 initialRoute: appRoot,
                 onGenerateRoute: generateRoute,
                 title: defaultAppTitle,

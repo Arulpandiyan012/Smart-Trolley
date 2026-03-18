@@ -10,6 +10,7 @@
 
 
 import 'package:bagisto_app_demo/screens/sign_up/utils/index.dart';
+import 'package:bagisto_app_demo/utils/push_notifications_manager.dart';
 
 import '../widgets/news_letter_checkbox.dart';
 
@@ -83,6 +84,14 @@ class _SignUpScreenState extends State<SignUpScreen> with EmailValidator {
             if (_signUpModel?.status == true) {
               Future.delayed(const Duration(seconds: 1)).then((value) {
                 _updateSharedPreferences(_signUpModel);
+                
+                // 🟢 PROACTIVE FCM SYNC: Sync token immediately after registration
+                PushNotificationsManager.createFcmToken().then((token) {
+                  if (token != null) {
+                    PushNotificationsManager.syncToken(token);
+                  }
+                });
+
                 Navigator.of(context).pushNamedAndRemoveUntil(
                     home, (Route<dynamic> route) => false);
               });
@@ -363,6 +372,14 @@ class _SignUpScreenState extends State<SignUpScreen> with EmailValidator {
     appStoragePref.setCustomerEmail(signInModel?.data?.email ?? "");
     appStoragePref.setCustomerToken("${signInModel?.tokenType} ${signInModel?.token}");
     appStoragePref.setCustomerId(int.parse(signInModel?.data?.id ?? "2"));
+
+    // 🟢 PROACTIVE FCM SYNC: Sync token immediately after registration
+    PushNotificationsManager.createFcmToken().then((token) {
+      if (token != null) {
+        PushNotificationsManager.syncToken(token);
+      }
+    });
+
     return true;
   }
 }

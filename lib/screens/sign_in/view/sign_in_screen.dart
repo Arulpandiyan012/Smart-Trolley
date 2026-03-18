@@ -6,9 +6,11 @@
 
 
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bagisto_app_demo/screens/sign_in/utils/index.dart';
 import 'package:bagisto_app_demo/screens/vendor/vendor_login/view/vendor_login_screen.dart';
+import 'package:bagisto_app_demo/utils/push_notifications_manager.dart';
 
 
 class SignInScreen extends StatefulWidget {
@@ -426,10 +428,13 @@ class _SignInScreenState extends State<SignInScreen> {
            return;
         }
 
-        await FirebaseAuth.instance.verifyPhoneNumber(
+        // 🟢 FIXED: Target the Secondary FirebaseAuth Instance
+        final FirebaseAuth auth = FirebaseAuth.instanceFor(app: Firebase.app('st_pro_auth'));
+        await auth.verifyPhoneNumber(
           phoneNumber: '$_countryCode${phoneController.text.trim()}',
           verificationCompleted: (credential) async {
-             UserCredential userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+             final FirebaseAuth auth = FirebaseAuth.instanceFor(app: Firebase.app('st_pro_auth'));
+             UserCredential userCred = await auth.signInWithCredential(credential);
              if (userCred.user != null) await _authenticateWithBackend(userCred.user!);
           },
           verificationFailed: (e) {
@@ -447,7 +452,8 @@ class _SignInScreenState extends State<SignInScreen> {
            return; 
         }
         final credential = PhoneAuthProvider.credential(verificationId: verificationId!, smsCode: otpController.text.trim());
-        UserCredential userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+        final FirebaseAuth auth = FirebaseAuth.instanceFor(app: Firebase.app('st_pro_auth'));
+        UserCredential userCred = await auth.signInWithCredential(credential);
         if (userCred.user != null) await _authenticateWithBackend(userCred.user!);
       }
     } catch (e) {
@@ -463,6 +469,14 @@ class _SignInScreenState extends State<SignInScreen> {
       var result = await ApiClient().firebaseOtpLogin(idToken!, phone);
       if (result != null && result.status == true) {
         appStoragePref.setCustomerPhone(phone);
+        
+        // 🟢 PROACTIVE FCM SYNC: Sync token immediately after login
+        PushNotificationsManager.createFcmToken().then((token) {
+          if (token != null) {
+            PushNotificationsManager.syncToken(token);
+          }
+        });
+
         if(mounted) Navigator.of(context).pushNamedAndRemoveUntil(home, (route) => false);
       } else {
         setState(() => isLoggingIn = false);

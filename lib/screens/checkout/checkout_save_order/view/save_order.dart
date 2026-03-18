@@ -16,6 +16,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:bagisto_app_demo/main.dart'; // For flutterLocalNotificationsPlugin
+import 'package:bagisto_app_demo/utils/push_notifications_manager.dart';
 
 class CheckOutSaveOrder extends StatefulWidget {
   const CheckOutSaveOrder({Key? key}) : super(key: key);
@@ -37,10 +38,17 @@ class _CheckOutSaveOrderState extends State<CheckOutSaveOrder> {
     // Calling the API here triggers the "Network Error" loop.
     // We just display the success message using the ID passed from Checkout.
     
-    // 🟢 TRIGGER LOCAL NOTIFICATION
+    // 🟢 TRIGGER LOCAL NOTIFICATION & PROACTIVE FCM SYNC
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (orderId != null && orderId! > 0) {
         _showLocalNotification(orderId!);
+        
+        // 🟢 PROACTIVE FCM SYNC: Link this order to the device token immediately
+        PushNotificationsManager.createFcmToken().then((token) {
+          if (token != null) {
+            PushNotificationsManager.syncToken(token, orderId: orderId);
+          }
+        });
       }
     });
   }
