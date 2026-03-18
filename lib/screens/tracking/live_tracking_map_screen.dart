@@ -86,11 +86,15 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen>
         double lat = (response.data['latitude'] as num).toDouble();
         double lng = (response.data['longitude'] as num).toDouble();
         bool isLive = response.data['is_live'] ?? false;
+        String? startTimeStr = response.data['start_time'];
 
         setState(() {
           _driverLocation = LatLng(lat, lng);
           _isLive = isLive;
           _isLoading = false;
+          if (startTimeStr != null) {
+            _startTime = DateTime.tryParse(startTimeStr);
+          }
         });
 
         _updateMarkers();
@@ -109,13 +113,22 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen>
     }
   }
 
+  DateTime? _startTime;
+
   void _updateEta() {
     if (_driverLocation == null || _myLocation == null) return;
     double distKm = _haversineDistance(_driverLocation!, _myLocation!);
     int etaMin = (distKm / 30 * 60).ceil(); // ~30 km/h average delivery speed
+    
+    String tripDuration = "";
+    if (_startTime != null) {
+      final diff = DateTime.now().difference(_startTime!);
+      tripDuration = "\nStarted ${diff.inMinutes} mins ago";
+    }
+
     setState(() {
       _distanceText = "${distKm.toStringAsFixed(1)} km away";
-      _etaText = etaMin <= 1 ? "Arriving soon!" : "ETA: ~$etaMin mins";
+      _etaText = etaMin <= 1 ? "Arriving soon!$tripDuration" : "ETA: ~$etaMin mins$tripDuration";
     });
   }
 
