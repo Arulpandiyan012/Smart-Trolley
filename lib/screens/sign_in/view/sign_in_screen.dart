@@ -10,6 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bagisto_app_demo/screens/sign_in/utils/index.dart';
 import 'package:bagisto_app_demo/screens/vendor/vendor_login/view/vendor_login_screen.dart';
+import 'package:bagisto_app_demo/utils/push_notifications_manager.dart';
 
 
 class SignInScreen extends StatefulWidget {
@@ -468,6 +469,14 @@ class _SignInScreenState extends State<SignInScreen> {
       var result = await ApiClient().firebaseOtpLogin(idToken!, phone);
       if (result != null && result.status == true) {
         appStoragePref.setCustomerPhone(phone);
+        
+        // 🟢 PROACTIVE FCM SYNC: Sync token immediately after login
+        PushNotificationsManager.createFcmToken().then((token) {
+          if (token != null) {
+            PushNotificationsManager.syncToken(token);
+          }
+        });
+
         if(mounted) Navigator.of(context).pushNamedAndRemoveUntil(home, (route) => false);
       } else {
         setState(() => isLoggingIn = false);

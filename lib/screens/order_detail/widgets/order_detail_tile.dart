@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import 'package:bagisto_app_demo/utils/index.dart';
+import 'package:bagisto_app_demo/screens/tracking/live_tracking_map_screen.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_bloc.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_event.dart';
@@ -58,6 +59,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     }
 
     bool isPending = (orderDetailModel?.status?.toLowerCase() ?? "") == "pending";
+    bool isPickedUp = (orderDetailModel?.status?.toLowerCase() ?? "").contains("picked");
 
     return Container(
       color: Colors.grey[100], 
@@ -256,6 +258,40 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                               ),
                               onPressed: onCancelOrder,
                               child: const Text("Cancel Order", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            ),
+                          ),
+                        ],
+
+                        // 🟢 ADDED: TRACK ORDER BUTTON (Manual Entry)
+                        if (isPickedUp) ...[
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LiveTrackingMapScreen(
+                                      orderId: (orderDetailModel?.id ?? 0).toString(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.location_on),
+                              label: const Text(
+                                "Track Your Order Live", 
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                              ),
                             ),
                           ),
                         ]
