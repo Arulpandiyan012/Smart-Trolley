@@ -381,7 +381,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     if (isCanceled) {
       stages = [
         {"label": "Placed", "icon": Icons.assignment_outlined, "active": true},
-        {"label": "Canceled", "icon": Icons.cancel, "active": true, "color": Colors.red},
+        {"label": "Cancelled", "icon": Icons.cancel, "active": true, "color": Colors.red},
       ];
     }
 
@@ -445,6 +445,9 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     String s = status.toLowerCase();
     if (s == "completed" || s == "delivered" || s == "picked up" || s == "picked_up" || s == "received") {
       return "DELIVERED";
+    }
+    if (s == "canceled" || s == "closed") {
+      return "CANCELLED";
     }
     return s.toUpperCase();
   }
