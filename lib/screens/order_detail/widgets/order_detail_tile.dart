@@ -655,7 +655,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                       (orderDetailModel?.status?.toLowerCase() ?? "") == "picked up" ||
                       (orderDetailModel?.status?.toLowerCase() ?? "") == "picked_up" ||
                       (orderDetailModel?.status?.toLowerCase() ?? "") == "received") ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 4),
                       _buildReviewSection(item, buildContext),
                   ],
                 ],
@@ -708,83 +708,54 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     }
 
     if (existingReview != null) {
-      // ✅ TRENDY DISPLAY: PROMINENT RATINGS for Reviewed Items
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        constraints: const BoxConstraints(maxWidth: 180),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.amber.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.amber.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.1),
-              blurRadius: 8,
-              spreadRadius: 1,
-            )
-          ],
-          border: Border.all(color: Colors.amber.withOpacity(0.4), width: 1)
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      // ✅ SIMPLIFIED DISPLAY: Just stars and edit icon, no box/highlight
+      return Padding(
+        padding: const EdgeInsets.only(top: 4.0),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Display stars
             Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Display stars prominently
-                Row(
-                  children: List.generate(5, (index) {
-                    return Icon(
-                      index < (existingReview?.rating ?? 0) ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 16,
-                    );
-                  }),
-                ),
-                const SizedBox(width: 8),
-                // ✏️ TRENDY EDIT LINK
-                GestureDetector(
-                  onTap: () {
-                    String image = "";
-                    if (item.product?.images != null && item.product!.images!.isNotEmpty) {
-                      image = item.product!.images![0].url ?? "";
-                    }
-                    Navigator.pushNamed(context, addReviewScreen,
-                        arguments: AddReviewDetail(
-                            productId: item.product?.id?.toString(), 
-                            productName: item.product?.name, 
-                            imageUrl: image,
-                            reviewId: existingReview!.id,
-                            rating: existingReview!.rating,
-                            title: existingReview.title,
-                            comment: existingReview.comment,
-                        )).then((_) {
-                          if (orderId != null) {
-                            orderDetailBloc?.add(OrderDetailFetchDataEvent(orderId));
-                          }
-                        });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.edit, size: 12, color: Colors.blue),
-                  ),
-                ),
-              ],
+              children: List.generate(5, (index) {
+                return Icon(
+                  index < (existingReview?.rating ?? 0) ? Icons.star : Icons.star_border,
+                  color: Colors.amber,
+                  size: 14,
+                );
+              }),
             ),
-            if (existingReview?.title != null && existingReview!.title!.isNotEmpty) 
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  existingReview.title!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodySmall?.color),
+            const SizedBox(width: 8),
+            // ✏️ EDIT LINK
+            GestureDetector(
+              onTap: () {
+                String image = "";
+                if (item.product?.images != null && item.product!.images!.isNotEmpty) {
+                  image = item.product!.images![0].url ?? "";
+                }
+                Navigator.pushNamed(context, addReviewScreen,
+                    arguments: AddReviewDetail(
+                        productId: item.product?.id?.toString(), 
+                        productName: item.product?.name, 
+                        imageUrl: image,
+                        reviewId: existingReview!.id,
+                        rating: existingReview!.rating,
+                        title: existingReview.title,
+                        comment: existingReview.comment,
+                    )).then((_) {
+                      if (orderId != null) {
+                        orderDetailBloc?.add(OrderDetailFetchDataEvent(orderId));
+                      }
+                    });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.edit, size: 10, color: Colors.blue),
               ),
+            ),
           ],
         ),
       );
