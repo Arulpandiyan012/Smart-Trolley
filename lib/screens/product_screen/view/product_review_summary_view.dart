@@ -18,6 +18,7 @@ class ProductReviewSummaryView extends StatefulWidget {
   final String? productName;
   final String? productImage;
   final bool? isLogin;
+  final ProductScreenBLoc? productScreenBLoc;
 
   const ProductReviewSummaryView({
     Key? key,
@@ -28,6 +29,7 @@ class ProductReviewSummaryView extends StatefulWidget {
     this.percentage,
     this.productId,
     this.isLogin,
+    this.productScreenBLoc,
   }) : super(key: key);
 
   @override
@@ -64,12 +66,48 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
 
   @override
   Widget build(BuildContext context) {
-    final reviews = widget.review ?? [];
+    // 🟢 DE-DUPLICATE REVIEWS BY ID
+    final rawReviews = widget.review ?? [];
+    final Map<String, Reviews> uniqueMap = {};
+    for (var r in rawReviews) {
+      if (r.id != null) uniqueMap[r.id!] = r;
+    }
+    final reviews = uniqueMap.values.toList();
+    
+    // Sort reviews (Current user's reviews first)
+    final String currentCustId = appStoragePref.getCustomerId().toString();
+    reviews.sort((a, b) {
+       if (a.customerId == currentCustId && b.customerId != currentCustId) return -1;
+       if (a.customerId != currentCustId && b.customerId == currentCustId) return 1;
+       return 0;
+    });
+
     final hasReviews = reviews.isNotEmpty;
 
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
+    return BlocListener<ProductScreenBLoc, ProductBaseState>(
+      bloc: widget.productScreenBLoc,
+      listener: (context, state) {
+        if (state is DeleteReviewState) {
+          if (state.status == ProductStatus.success) {
+             ShowMessage.successNotification(state.successMsg ?? "Deleted", context);
+             
+             // 🟢 RE-FETCH PRODUCT TO UPDATE REVIEWS (with slight delay for server settlement)
+             if (widget.productId != null) {
+               Future.delayed(const Duration(milliseconds: 800), () {
+                 widget.productScreenBLoc?.add(FetchProductEvent(
+                   "", // sku 
+                   productId: int.tryParse(widget.productId!)
+                 ));
+               });
+             }
+          } else {
+             ShowMessage.errorNotification(state.error ?? "Failed", context);
+          }
+        }
+      },
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
         iconColor: Theme.of(context).iconTheme.color,
         collapsedIconColor: Theme.of(context).iconTheme.color,
         tilePadding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingLarge),
@@ -107,16 +145,40 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                     elevation: 0,
                   ),
                   onPressed: () {
-                    widget.isLogin ?? false
-                        ? Navigator.pushNamed(context, addReviewScreen,
-                            arguments: AddReviewDetail(
-                                imageUrl: widget.productImage,
-                                productId: widget.productId,
-                                productName: widget.productName))
-                        : ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(StringConstants.pleaseLoginReview.localized()),
-                            duration: const Duration(seconds: 3),
+                    if (widget.isLogin ?? false) {
+                      // 🟢 SMART PREFILL: Look for current user's review in the list
+                      Reviews? myReview;
+                      final String currentId = appStoragePref.getCustomerId().toString();
+                      if (widget.review != null) {
+                        try {
+                          myReview = widget.review!.firstWhere((r) => r.customerId == currentId);
+                        } catch (_) {}
+                      }
+
+                      Navigator.pushNamed(context, addReviewScreen,
+                          arguments: AddReviewDetail(
+                              imageUrl: widget.productImage,
+                              productId: widget.productId,
+                              productName: widget.productName,
+                              reviewId: myReview?.id,
+                              rating: int.tryParse(myReview?.rating?.toString() ?? ""),
+                              title: myReview?.title,
+                              comment: myReview?.comment
+                          )).then((_) {
+                        // 🟢 REFRESH PRODUCT ON RETURN
+                        if (widget.productId != null) {
+                          widget.productScreenBLoc?.add(FetchProductEvent(
+                            "", 
+                            productId: int.tryParse(widget.productId!)
                           ));
+                        }
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(StringConstants.pleaseLoginReview.localized()),
+                        duration: const Duration(seconds: 3),
+                      ));
+                    }
                   },
                   icon: const Icon(Icons.edit_note, size: 20),
                   label: Text(
@@ -165,6 +227,7 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -209,6 +272,9 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
     final name = item.customerName?.isNotEmpty == true ? item.customerName! : 'Customer';
     final initial = _getInitial(name);
     final rating = double.tryParse(item.rating?.toString() ?? '0') ?? 0.0;
+    
+    final String currentCustId = appStoragePref.getCustomerId().toString();
+    final bool isOwner = item.customerId == currentCustId;
 
     Color ratingColor;
     if (rating >= 4) {
@@ -264,7 +330,10 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         // Compact rating badge (Flipkart style)
                         Container(
@@ -289,7 +358,6 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
                         // Verified Buyer badge
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -327,6 +395,37 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                     color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
                   ),
                 ),
+              
+              // 🟢 EDIT / DELETE BUTTONS
+              if (isOwner) ...[
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, addReviewScreen,
+                        arguments: AddReviewDetail(
+                            reviewId: item.id,
+                            rating: item.rating,
+                            title: item.title,
+                            comment: item.comment,
+                            imageUrl: widget.productImage,
+                            productId: widget.productId,
+                            productName: widget.productName));
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.edit, size: 14, color: Color(0xFF27C16B)),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    _showDeleteConfirmation(context, item.id!);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.delete_outline, size: 14, color: Colors.red),
+                  ),
+                ),
+              ]
             ],
           ),
 
@@ -418,6 +517,26 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
           },
         );
       },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String reviewId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Review"),
+        content: const Text("Are you sure you want to delete your review? This action cannot be undone."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.productScreenBLoc?.add(DeleteReviewEvent(reviewId));
+            }, 
+            child: const Text("Delete", style: TextStyle(color: Colors.red))
+          ),
+        ],
+      ),
     );
   }
 }

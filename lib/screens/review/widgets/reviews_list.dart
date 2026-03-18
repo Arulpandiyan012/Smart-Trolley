@@ -11,6 +11,7 @@
 
 
 import  'package:bagisto_app_demo/screens/review/utils/index.dart';
+import 'package:bagisto_app_demo/data_model/app_route_arguments.dart';
 
 //ignore: must_be_immutable
 class ReviewsList extends StatefulWidget {
@@ -150,6 +151,34 @@ class _ReviewsListState extends State<ReviewsList> {
                 ],
               ),
               const SizedBox(height: AppSizes.spacingNormal),
+              widget.reviewData?.customerId == appStoragePref.getCustomerId().toString()
+                  ? Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, addReviewScreen,
+                                arguments: AddReviewDetail(
+                                    reviewId: widget.reviewData?.id?.toString(),
+                                    rating: widget.reviewData?.rating,
+                                    title: widget.reviewData?.title,
+                                    comment: widget.reviewData?.comment,
+                                    productId: widget.reviewData?.product?.id,
+                                    productName: widget.reviewData?.product?.name))
+                                .then((_) {
+                              if (widget.reviewsBloc != null) {
+                                widget.reviewsBloc?.add(FetchReviewsEvent(1));
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.edit, size: 18, color: Colors.green),
+                        ),
+                        IconButton(
+                          onPressed: () => _onPressRemove(context),
+                          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                        ),
+                      ],
+                    )
+                  : const SizedBox(),
             ],
           ),
         ),
@@ -157,40 +186,35 @@ class _ReviewsListState extends State<ReviewsList> {
     );
   }
 
-  // _onPressRemove(BuildContext context) {
-  //   return showDialog(
-  //     barrierDismissible: false,
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         backgroundColor: Theme.of(context).colorScheme.background,
-  //         title: Text(
-  //           StringConstants.deleteReviewWarning.localized(),
-  //           style: Theme.of(context).textTheme.labelMedium,
-  //         ),
-  //         actions: [
-  //           MaterialButton(
-  //             onPressed: () {
-  //               Navigator.of(context, rootNavigator: true).pop();
-  //             },
-  //             child: Text(
-  //               StringConstants.no.localized(),
-  //               style: Theme.of(context).textTheme.bodyMedium,
-  //             ),
-  //           ),
-  //           TextButton(
-  //               onPressed: () {
-  //                 Navigator.of(context, rootNavigator: true).pop();
-  //
-  //                 if (widget.reviewsBloc != null) {
-  //                   widget.reviewsBloc
-  //                       ?.add(RemoveReviewEvent(widget.reviewData?.id, ""));
-  //                 }
-  //               },
-  //               child: Text(StringConstants.yes.localized(), style: Theme.of(context).textTheme.bodyMedium))
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  _onPressRemove(BuildContext context) {
+    return showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
+            StringConstants.deleteReviewWarning.localized(),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          content: const Text("This action cannot be undone."),
+          actions: [
+            MaterialButton(
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+              child: Text(StringConstants.no.localized()),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+                if (widget.reviewsBloc != null) {
+                  widget.reviewsBloc?.add(RemoveReviewEvent(widget.reviewData?.id, ""));
+                }
+              },
+              child: Text(StringConstants.yes.localized(), style: const TextStyle(color: Colors.red)),
+            )
+          ],
+        );
+      },
+    );
+  }
 }

@@ -18,5 +18,13 @@ class FetchReviewsEvent extends ReviewsBaseEvent {
   final int page;
   FetchReviewsEvent(this.page);
   @override
-  List<Object> get props => [];
+  List<Object> get props => [page];
+}
+
+class RemoveReviewEvent extends ReviewsBaseEvent {
+  final String? reviewId;
+  final String? productId; // Context
+  RemoveReviewEvent(this.reviewId, this.productId);
+  @override
+  List<Object> get props => [reviewId ?? ""];
 }

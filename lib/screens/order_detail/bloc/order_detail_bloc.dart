@@ -7,9 +7,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart';
+import 'package:bagisto_app_demo/data_model/review_model/review_model.dart';
 import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
 import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import '../../cart_screen/cart_model/add_to_cart_model.dart';
+import '../bloc/order_detail_repository.dart';
 
 class OrderDetailBloc extends Bloc<OrderDetailBaseEvent, OrderDetailBaseState> {
   OrderDetailRepository? repository;
@@ -37,7 +39,20 @@ class OrderDetailBloc extends Bloc<OrderDetailBaseEvent, OrderDetailBaseState> {
         }
 
         if (isSuccess) {
-          emit(OrderDetailFetchDataState.success(orderDetailModel: orderDetailModel));
+          // 🟢 RESTORED: Fetch reviews as well
+          List<ReviewData> reviews = [];
+          try {
+             ReviewModel? reviewModel = await repository!.getReviewList(1);
+             reviews = reviewModel?.data ?? [];
+             print('🔍 REVIEW DEBUG - Found ${reviews.length} reviews for user');
+          } catch (e) {
+             print('⚠️ Failed to fetch reviews for order screen: $e');
+          }
+
+          emit(OrderDetailFetchDataState.success(
+            orderDetailModel: orderDetailModel,
+            reviews: reviews
+          ));
         } else {
           emit(OrderDetailFetchDataState.fail(error: orderDetailModel.success.toString()));
         }

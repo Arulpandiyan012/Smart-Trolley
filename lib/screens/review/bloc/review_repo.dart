@@ -18,6 +18,7 @@ import 'package:bagisto_app_demo/utils/app_global_data.dart';
 
 abstract class ReviewsRepository {
   Future<ReviewModel> callReviewApi(int page);
+  Future<BaseModel?> callDeleteReviewApi(String reviewId);
 }
 
 
@@ -118,5 +119,10 @@ class ReviewsRepositoryImp implements ReviewsRepository {
     } catch (e) {
       print("❌ Global Ratings Fetch Error: $e");
     }
+  }
+
+  @override
+  Future<BaseModel?> callDeleteReviewApi(String reviewId) async {
+    return await ApiClient().deleteReview(reviewId);
   }
 }

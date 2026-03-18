@@ -25,6 +25,15 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListBaseState> {
       try {
         OrdersListModel? ordersListModel = await repository?.getOrderList(
             event.id, event.startDate, event.endDate, event.status, event.total, event.page,event.isFilterApply);
+        
+        // 🟢 DEBUG: Log statuses to help fix "Delivered" tab issues
+        if (ordersListModel?.data != null) {
+          debugPrint("📋 ORDER LIST FETCHED (${event.status}): ${ordersListModel!.data!.length} orders");
+          for (var order in ordersListModel.data!) {
+            debugPrint("   - Order #${order.id}: Status='${order.status}'");
+          }
+        }
+
         emit(FetchOrderListState.success(ordersListModel: ordersListModel));
       } catch (e) {
         emit(FetchOrderListState.fail(

@@ -14,9 +14,21 @@ class AddReview extends StatefulWidget {
   final String? imageUrl;
   final String? productId;
   final String? productName;
+  final String? reviewId; // 🟢 ADDED
+  final int? rating;      // 🟢 ADDED
+  final String? title;       // 🟢 ADDED
+  final String? comment;     // 🟢 ADDED
 
-  const AddReview({Key? key, this.imageUrl, this.productId, this.productName})
-      : super(key: key);
+  const AddReview({
+    Key? key, 
+    this.imageUrl, 
+    this.productId, 
+    this.productName,
+    this.reviewId,
+    this.rating,
+    this.title,
+    this.comment
+  }) : super(key: key);
 
   @override
   State<AddReview> createState() => _AddReviewState();
@@ -33,10 +45,18 @@ class _AddReviewState extends State<AddReview> {
       GlobalKey<ScaffoldMessengerState>();
   AddReviewBloc? addReviewBloc;
   List<Map<String, String>> images = [];
+  String? reviewId; // 🟢 STORE ID
 
   @override
   void initState() {
     addReviewBloc = context.read<AddReviewBloc>();
+
+    // 🟢 DIRECT PREFILL: From constructor parameters
+    reviewId = widget.reviewId;
+    titleController.text = widget.title ?? "";
+    commentController.text = widget.comment ?? "";
+    rating = widget.rating ?? 0;
+
     super.initState();
   }
 
@@ -145,7 +165,7 @@ class _AddReviewState extends State<AddReview> {
                     const SizedBox(height: AppSizes.spacingNormal),
                     RatingBar.builder(
                       itemSize: AppSizes.spacingMedium * 2,
-                      initialRating: num.tryParse('0.0')?.toDouble() ?? 0.0,
+                      initialRating: rating.toDouble(), // 🟢 FIXED: Use rating variable instead of hardcoded 0.0
                       minRating: 1,
                       direction: Axis.horizontal,
                       allowHalfRating: false,
@@ -313,6 +333,7 @@ class _AddReviewState extends State<AddReview> {
               title: titleController.text,
               comment: commentController.text,
               name: "",
+              reviewId: reviewId, // 🟢 PASS ID
               attachments: images));
           Future.delayed(const Duration(seconds: 3)).then((value) {
             Navigator.pop(context);

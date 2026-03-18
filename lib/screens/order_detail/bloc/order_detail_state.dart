@@ -10,6 +10,7 @@
 
 import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
 import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart';
+import 'package:bagisto_app_demo/data_model/review_model/review_model.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../cart_screen/cart_model/add_to_cart_model.dart';
@@ -31,12 +32,16 @@ class OrderDetailFetchDataState extends OrderDetailBaseState {
   OrderDetailStatus? status;
   String? error;
   OrderDetail? orderDetailModel;
+  List<ReviewData>? reviews;
 
-  OrderDetailFetchDataState.success({this.orderDetailModel}) : status = OrderDetailStatus.success;
+  OrderDetailFetchDataState.success({this.orderDetailModel, this.reviews}) : status = OrderDetailStatus.success;
   OrderDetailFetchDataState.fail({this.error}) : status = OrderDetailStatus.fail;
 
   @override
-  List<Object> get props => [if (orderDetailModel !=null) orderDetailModel! else ""];
+  List<Object> get props => [
+    if (orderDetailModel != null) orderDetailModel! else "",
+    if (reviews != null) reviews! else []
+  ];
 }
 
 

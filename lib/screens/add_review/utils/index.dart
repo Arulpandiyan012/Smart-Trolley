@@ -10,6 +10,7 @@
 
 
 export '../data_model/add_review_model.dart';
+export 'package:bagisto_app_demo/data_model/app_route_arguments.dart';
 export 'package:bagisto_app_demo/screens/add_review/bloc/add_review_event.dart';
 export 'package:bagisto_app_demo/screens/add_review/bloc/add_review_state.dart';
 export 'package:bagisto_app_demo/screens/add_review/bloc/add_review_repository.dart';

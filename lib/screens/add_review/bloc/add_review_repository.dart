@@ -20,7 +20,7 @@ import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 
 
 abstract class AddReviewRepository{
-  Future<AddReviewModel> callAddReviewApi(String name,String title,int rating,String comment,int productId, List<Map<String, String>> attachments);
+  Future<AddReviewModel> callAddReviewApi(String name,String title,int rating,String comment,int productId, List<Map<String, String>> attachments, {String? reviewId});
 }
 
 
@@ -28,7 +28,7 @@ abstract class AddReviewRepository{
 
 class AddReviewRepositoryImp implements AddReviewRepository {
   @override
-  Future<AddReviewModel> callAddReviewApi(String name, String title, int rating, String comment, int productId, List<Map<String, String>> attachments) async {
+  Future<AddReviewModel> callAddReviewApi(String name, String title, int rating, String comment, int productId, List<Map<String, String>> attachments, {String? reviewId}) async {
     try {
       // 🟢 CUSTOM API: Submit to Live Server (Auto-Approved)
       // URL: https://ecom.thesmartedgetech.com/mobikul-review-api.php
@@ -36,7 +36,7 @@ class AddReviewRepositoryImp implements AddReviewRepository {
       final Uri url = Uri.parse("https://ecom.thesmartedgetech.com/mobikul-review-api.php");
       
       final Map<String, dynamic> body = {
-        'action': 'submit',
+        'action': reviewId != null ? 'update' : 'submit',
         'customer_id': appStoragePref.getCustomerId().toString(),
         'product_id': productId.toString(),
         'name': name.isNotEmpty ? name : (appStoragePref.getCustomerName().isNotEmpty ? appStoragePref.getCustomerName() : "Guest"),
@@ -44,6 +44,10 @@ class AddReviewRepositoryImp implements AddReviewRepository {
         'rating': rating.toString(),
         'comment': comment,
       };
+
+      if (reviewId != null) {
+        body['review_id'] = reviewId;
+      }
 
       print("Submitting Review to Custom API: $body");
 

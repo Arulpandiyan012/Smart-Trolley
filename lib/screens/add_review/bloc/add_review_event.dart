@@ -20,8 +20,9 @@ class AddReviewFetchEvent extends AddReviewBaseEvent {
   int? rating;
   String? comment;
   int? productId;
+  String? reviewId; // 🟢 ADDED
   List<Map<String, String>> attachments;
-  AddReviewFetchEvent({this.name,this.productId,this.rating,this.title,this.comment, required this.attachments});
+  AddReviewFetchEvent({this.name,this.productId,this.rating,this.title,this.comment, this.reviewId, required this.attachments});
 }
 
 class ImagePickerEvent extends AddReviewBaseEvent {

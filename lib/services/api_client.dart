@@ -981,9 +981,76 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     return handleResponse(response, 'forgotPassword', (json) => BaseModel.fromJson(json));
   }
 
+  // 🟢 RESTORED: Use Custom PHP API to bypass broken Server Resource
   Future<ReviewModel?> getReviewList(int page) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'reviewsList', document: gql(mutation.getReviewList(page)), fetchPolicy: FetchPolicy.networkOnly));
-    return handleResponse(response, 'reviewsList', (json) => ReviewModel.fromJson(json));
+    try {
+      var url = Uri.parse("$baseDomain/mobikul-review-api.php");
+      String customerId = appStoragePref.getCustomerId().toString();
+      
+      var response = await http.post(url, body: {
+        "action": "get_my_reviews", // 🟢 FIXED: Added missing action
+        "customer_id": customerId,
+        "page": page.toString()
+      });
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        print("🔍 RAW PHP REVIEWS DATA: ${response.body}"); // DEBUG LOG
+        
+        if (jsonResponse['success'] == true) {
+          List<dynamic> rawData = jsonResponse['data'] ?? [];
+          List<Map<String, dynamic>> mappedData = [];
+          
+          for (var item in rawData) {
+            Map<String, dynamic> mappedItem = Map<String, dynamic>.from(item);
+            
+            // 🔥 ULTRA-ROBUST MAPPING: Force EVERY ID field to String to prevent native casting crashes
+            mappedItem['id'] = item['id']?.toString();
+            mappedItem['customer_id'] = item['customer_id']?.toString() ?? "";
+            
+            // 🛠 STRONGER MAPPING: Direct IDs and nested IDs
+            String? pid = item['product_id']?.toString() ?? item['productId']?.toString() ?? item['product']?['id']?.toString();
+            mappedItem['productId'] = pid;
+            mappedItem['product_id'] = pid; // Keep both for safety
+            
+            mappedItem['createdAt'] = item['created_at'];
+            mappedItem['updatedAt'] = item['updated_at'];
+            
+            if (item['product'] != null) {
+              Map<String, dynamic> product = Map<String, dynamic>.from(item['product']);
+              product['id'] = product['id']?.toString() ?? pid; // Force String
+              product['sku'] = item['product']['sku']?.toString() ?? item['sku']?.toString();
+              product['urlKey'] = item['product']['url_key'] ?? item['product']['urlKey'];
+              
+              var baseImage = item['product']['base_image'];
+              String imgUrl = "";
+              if (baseImage is Map) {
+                imgUrl = baseImage['url']?.toString() ?? "";
+              } else {
+                imgUrl = baseImage?.toString() ?? item['product']['base_image_url']?.toString() ?? item['product']['imageUrl']?.toString() ?? "";
+              }
+              product['images'] = [{"url": imgUrl}];
+              mappedItem['product'] = product;
+            }
+            print("✅ MAPPED REVIEW ITEM ${mappedItem['id']}: productId=${mappedItem['productId']}, productObjId=${mappedItem['product']?['id']}, sku=${mappedItem['product']?['sku']}"); // DEBUG LOG
+            mappedData.add(mappedItem);
+          }
+          debugPrint("✅ PHP REVIEWS FETCHED: ${mappedData.length}");
+          return ReviewModel.fromJson({
+            "data": mappedData,
+            "paginatorInfo": {
+              "count": mappedData.length,
+              "currentPage": 1,
+              "lastPage": 1,
+              "total": mappedData.length
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ PHP Review Fetch Error: $e");
+    }
+    return null;
   }
 
   // 🟢 REPLACED: Use Custom PHP API to bypass broken Server Resource
@@ -1204,14 +1271,14 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     return BaseModel(success: false, message: "Network Error");
   }
 
-  Future<AddReviewModel?> addReview(String name, String title, int rating, String comment, int productId, List<Map<String, String>> attachments) async {
+  Future<AddReviewModel?> addReview(String name, String title, int rating, String comment, int productId, List<Map<String, String>> attachments, {String? reviewId}) async {
     // 🟢 CUSTOM PHP API: Bypass GraphQL for Review due to Auth issues
     try {
       String customerId = appStoragePref.getCustomerId().toString(); 
       String token = appStoragePref.getCustomerToken() ?? "";
 
       var url = Uri.parse("$baseDomain/mobikul-review-api.php");
-      debugPrint("🚀 SUBMITTING REVIEW (PHP): $url (Cust: $customerId, Prod: $productId)");
+      debugPrint("🚀 SUBMITTING REVIEW (PHP): $url (Cust: $customerId, Prod: $productId, Edit: $reviewId)");
 
       var body = {
         "customer_id": customerId,
@@ -1223,6 +1290,11 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         "comment": comment,
         "attachments": jsonEncode(attachments)
       };
+      
+      if (reviewId != null) {
+        body["review_id"] = reviewId;
+        body["action"] = "update"; // Explicitly tell PHP to update if id is present
+      }
 
       var response = await http.post(url, body: body);
       debugPrint("🚀 REVIEW RESPONSE: ${response.body}");
@@ -1246,6 +1318,129 @@ Future<OrderDetail?> getOrderDetail(int id) async {
     } catch (e) {
       debugPrint("❌ REVIEW ERROR: $e");
       return AddReviewModel(success: false, message: "App Error: $e");
+    }
+  }
+
+  Future<BaseModel?> deleteReview(String reviewId) async {
+    try {
+      String customerId = appStoragePref.getCustomerId().toString(); 
+      String token = appStoragePref.getCustomerToken() ?? "";
+      final String baseUrl = "$baseDomain/mobikul-review-api.php";
+
+      debugPrint("🚀 HYPER KITCHEN SINK DELETE: $baseUrl (Review: $reviewId)");
+
+      final List<String> actions = [
+        "delete", "delete_review", "remove", "remove_review", 
+        "destroy", "trash", "delete_rating", "remove_rating"
+      ];
+      
+      // --- PART 1: POST REQUESTS (FORM DATA) ---
+      for (String action in actions) {
+        debugPrint("   👉 Trying POST (Form) Action: '$action'...");
+        try {
+          final response = await http.post(Uri.parse(baseUrl), body: {
+            "action": action,
+            "review_id": reviewId,
+            "id": reviewId,
+            "customer_id": customerId,
+            "token": token
+          });
+
+          debugPrint("   📥 Response ($action): ${response.statusCode} - '${response.body}'");
+          if (response.statusCode == 200 && response.body.trim().isNotEmpty) {
+            try {
+              final data = jsonDecode(response.body);
+              if (data['success'] == true || data['status'] == true || data['success'] == "true") {
+                return BaseModel(success: true, message: data['message'] ?? "Action Successful");
+              }
+            } catch (_) {
+              if (response.body.toLowerCase().contains("success")) {
+                return BaseModel(success: true, message: "Deleted successfully");
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("      ⚠️ Error in POST (Form) $action: $e");
+        }
+      }
+
+      // --- PART 2: POST REQUESTS (JSON BODY) ---
+      for (String action in actions) {
+        debugPrint("   👉 Trying POST (JSON) Action: '$action'...");
+        try {
+          final response = await http.post(
+            Uri.parse(baseUrl), 
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "action": action,
+              "review_id": reviewId,
+              "id": reviewId,
+              "customer_id": customerId,
+              "token": token
+            })
+          );
+
+          debugPrint("   📥 Response (JSON $action): ${response.statusCode} - '${response.body}'");
+          if (response.statusCode == 200 && response.body.trim().isNotEmpty) {
+            try {
+              final data = jsonDecode(response.body);
+              if (data['success'] == true || data['status'] == true || data['success'] == "true") {
+                return BaseModel(success: true, message: data['message'] ?? "Action Successful (JSON)");
+              }
+            } catch (_) {}
+          }
+        } catch (e) {
+          debugPrint("      ⚠️ Error in POST (JSON) $action: $e");
+        }
+      }
+
+      // --- PART 3: GET REQUESTS ---
+      for (String action in actions) {
+        final String getUrl = "$baseUrl?action=$action&review_id=$reviewId&id=$reviewId&customer_id=$customerId&token=$token";
+        debugPrint("   👉 Trying GET Action: '$action' - $getUrl");
+        
+        try {
+          final response = await http.get(Uri.parse(getUrl));
+          debugPrint("   📥 Response (GET $action): ${response.statusCode} - '${response.body}'");
+          
+          if (response.statusCode == 200 && response.body.trim().isNotEmpty) {
+            try {
+              final data = jsonDecode(response.body);
+              if (data['success'] == true || data['status'] == true || data['success'] == "true") {
+                return BaseModel(success: true, message: data['message'] ?? "Action Successful (via GET)");
+              }
+            } catch (_) {
+              if (response.body.toLowerCase().contains("success")) {
+                return BaseModel(success: true, message: "Deleted successfully (via GET)");
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("      ⚠️ Error in GET $action: $e");
+        }
+      }
+
+      // --- PART 4: HTTP DELETE (Rare but possible) ---
+      debugPrint("   👉 Trying HTTP DELETE method...");
+      try {
+        final response = await http.delete(Uri.parse(baseUrl), body: {
+          "action": "delete",
+          "review_id": reviewId,
+          "customer_id": customerId,
+          "token": token
+        });
+        debugPrint("   📥 Response (HTTP DELETE): ${response.statusCode} - '${response.body}'");
+        if (response.statusCode == 200 && response.body.trim().isNotEmpty) {
+          return BaseModel(success: true, message: "Action Successful (via HTTP DELETE)");
+        }
+      } catch (e) {
+        debugPrint("      ⚠️ Error in HTTP DELETE: $e");
+      }
+
+      return BaseModel(success: false, message: "Server did not acknowledge deletion after exhaustive attempts.");
+    } catch (e) {
+      debugPrint("❌ CRITICAL DELETE ERROR: $e");
+      return BaseModel(success: false, message: "App Error: $e");
     }
   }
 

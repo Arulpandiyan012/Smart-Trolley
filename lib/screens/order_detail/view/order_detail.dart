@@ -18,6 +18,7 @@ import 'package:bagisto_app_demo/screens/order_detail/bloc/order_detail_bloc.dar
 import 'package:bagisto_app_demo/screens/order_detail/bloc/order_detail_event.dart';
 import 'package:bagisto_app_demo/screens/order_detail/bloc/order_detail_state.dart';
 import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart';
+import 'package:bagisto_app_demo/data_model/review_model/review_model.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int? orderId;
@@ -37,6 +38,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       GlobalKey<ScaffoldMessengerState>();
   OrderDetailBloc? orderDetailBloc;
   OrderDetail? orderDetail;
+  List<ReviewData>? reviews;
   bool isLoading = false;
 
   @override
@@ -76,6 +78,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         builder: (BuildContext context, OrderDetailBaseState state) {
           if (state is OrderDetailFetchDataState && state.status == OrderDetailStatus.success) {
             orderDetail = state.orderDetailModel;
+            reviews = state.reviews;
           }
           
           return Scaffold(
@@ -141,6 +144,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         return OrderDetailTile(
           orderId: widget.orderId,
           orderDetailModel: state.orderDetailModel,
+          reviews: state.reviews,
           orderDetailBloc: orderDetailBloc,
           isLoading: isLoading,
           onCancelOrder: _cancelOrderFunc, // Pass function
@@ -162,6 +166,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     return OrderDetailTile(
       orderId: widget.orderId,
       orderDetailModel: orderDetail,
+      reviews: reviews,
       orderDetailBloc: orderDetailBloc,
       isLoading: isLoading,
       onCancelOrder: _cancelOrderFunc, // Pass function

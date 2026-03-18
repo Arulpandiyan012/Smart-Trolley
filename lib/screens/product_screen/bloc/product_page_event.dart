@@ -70,3 +70,9 @@ class DownloadProductSampleEvent extends ProductScreenBaseEvent {
   DownloadProductSampleEvent(this.type, this.id,this.fileName);
 
 }
+
+class DeleteReviewEvent extends ProductScreenBaseEvent {
+  final String reviewId;
+  final String? productId;
+  DeleteReviewEvent(this.reviewId, {this.productId});
+}

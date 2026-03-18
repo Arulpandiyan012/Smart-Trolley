@@ -73,10 +73,21 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     if (state is FetchReviewState) {
       if (state.status == ReviewStatus.success) {
         if (page > 1) {
-          reviewModel?.data?.addAll(state.reviewModel?.data ?? []);
+          // 🟢 DE-DUPLICATE: merge new data but filter out existing IDs
+          final existingIds = (reviewModel?.data ?? []).map((r) => r.id).toSet();
+          final newData = (state.reviewModel?.data ?? []).where((r) => !existingIds.contains(r.id)).toList();
+          
+          reviewModel?.data?.addAll(newData);
           reviewModel?.paginatorInfo = state.reviewModel?.paginatorInfo;
         } else {
+          // 🟢 DE-DUPLICATE INITIAL FETCH
+          final rawData = state.reviewModel?.data ?? [];
+          final Map<String, ReviewData> uniqueMap = {};
+          for (var r in rawData) {
+            if (r.id != null) uniqueMap[r.id!] = r;
+          }
           reviewModel = state.reviewModel;
+          reviewModel?.data = uniqueMap.values.toList();
         }
         return _reviewsList(reviewModel!);
       }
