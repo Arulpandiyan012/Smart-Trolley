@@ -8,6 +8,7 @@
  * @link https://store.webkul.com/license.html
  */
 
+import 'package:bagisto_app_demo/data_model/order_model/order_detail_model.dart' as order_detail;
 import 'package:bagisto_app_demo/data_model/graphql_base_model.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -50,13 +51,15 @@ class Data {
   int? totalQtyOrdered;
   String? createdAt;
   FormattedPrice? formattedPrice;
+  List<order_detail.Items>? items;
 
   Data(
       {this.id,
       this.status,
       this.totalQtyOrdered,
       this.createdAt,
-      this.formattedPrice});
+      this.formattedPrice,
+      this.items});
 
   // 🟢 FIXED: Manual mapping to ensure keys match API (snake_case -> camelCase)
   factory Data.fromJson(Map<String, dynamic> json) {
@@ -74,6 +77,11 @@ class Data {
       formattedPrice: (json['formatted_price'] ?? json['formattedPrice']) == null
           ? null
           : FormattedPrice.fromJson(json['formatted_price'] ?? json['formattedPrice']),
+
+      // 🟢 Added items parsing
+      items: (json['items'] as List?)
+          ?.map((i) => order_detail.Items.fromJson(i as Map<String, dynamic>))
+          .toList(),
     );
   }
 
