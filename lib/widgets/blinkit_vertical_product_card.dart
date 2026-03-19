@@ -67,26 +67,15 @@ class BlinkitVerticalProductCard extends StatelessWidget {
      dynamic ph;
      try { ph = (p as dynamic).priceHtml; } catch (_) {}
      
+     String priceText = "";
      try {
-       final f = (ph as dynamic)?.formattedFinalPrice?.toString();
-       if (f != null) return f;
+       priceText = (ph as dynamic)?.formattedFinalPrice?.toString() ?? "";
      } catch (_) {}
      
      final sym = "₹";
      try {
        final val = (p as dynamic).price;
-       if (val != null) {
-         if (val is num) {
-           return "$sym${val.toStringAsFixed(2)}";
-         } else if (val is String) {
-           final parsed = double.tryParse(val);
-           if (parsed != null) {
-             return "$sym${parsed.toStringAsFixed(2)}";
-           }
-           return "$sym$val";
-         }
-         return "$sym$val";
-       }
+       if (val != null) return "$sym$val";
      } catch (_) {}
      
      return "";

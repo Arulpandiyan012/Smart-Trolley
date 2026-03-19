@@ -1,13 +1,4 @@
-/*
- * Webkul Software.
- * @package Mobikul Application Code.
- * @Category Mobikul
- * @author Webkul <support@webkul.com>
- * @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- * @license https://store.webkul.com/license.html
- * @link https://store.webkul.com/license.html
- */
-
+import 'dart:async';
 import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -33,6 +24,7 @@ class _SearchScreenState extends State<SearchScreen>
     with TickerProviderStateMixin {
   final TextEditingController _searchText = TextEditingController();
   final SpeechToText _speechToText = SpeechToText();
+  final FocusNode _focusNode = FocusNode();
   AnimationController? _controller;
   String transcription = '';
   bool _isListening = false;
@@ -44,17 +36,41 @@ class _SearchScreenState extends State<SearchScreen>
   NewProductsModel? products;
   bool isLoading = false;
 
+  // 🟢 Recent Searches
+  List<String> _recentSearches = [];
+
+  // 🟢 Suggestions (live autocomplete from search results)
+  List<String> _suggestions = [];
+  bool _showSuggestions = false;
+
+  // Debounce timer
+  Timer? _debounce;
+
   @override
   void initState() {
+    super.initState();
     activateSpeechRecognizer();
     searchBloc = context.read<SearchBloc>();
-    // Fetch initial categories
     searchBloc?.add(FetchCategoryPageEvent([
       {"key": '"status"', "value": '"1"'},
       {"key": '"locale"', "value": '"${GlobalData.locale}"'},
       {"key": '"parent_id"', "value": '"1"'}
     ]));
-    super.initState();
+    _loadRecentSearches();
+  }
+
+  void _loadRecentSearches() {
+    if (mounted) setState(() => _recentSearches = appStoragePref.getRecentSearches());
+  }
+
+  void _saveRecentSearch(String query) {
+    appStoragePref.saveRecentSearch(query);
+    if (mounted) setState(() => _recentSearches = appStoragePref.getRecentSearches());
+  }
+
+  void _clearRecentSearches() {
+    appStoragePref.clearRecentSearches();
+    if (mounted) setState(() => _recentSearches = []);
   }
 
   void activateSpeechRecognizer() async {
@@ -72,99 +88,335 @@ class _SearchScreenState extends State<SearchScreen>
       transcription = result.recognizedWords;
       _searchText.text = transcription;
       if (transcription.length > 2) {
-        searchBloc?.add(CircularBarEvent(isReqToShowLoader: true));
-        searchBloc?.add(SearchBarTextEvent(searchText: transcription));
-        searchBloc?.add(FetchSearchEvent([
-          {"key": '"name"', "value": '"$transcription"'}
-        ]));
+        _triggerSearch(transcription);
       }
       stop();
     });
   }
 
+  void _triggerSearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      searchBloc?.add(CircularBarEvent(isReqToShowLoader: true));
+      searchBloc?.add(FetchSearchEvent([
+        {"key": '"name"', "value": '"$value"'}
+      ]));
+    });
+  }
+
+  void _onSearchChanged(String value) {
+    searchBloc?.add(SearchBarTextEvent(searchText: value));
+    if (value.length >= 2) {
+      _triggerSearch(value);
+      setState(() => _showSuggestions = true);
+    } else {
+      _debounce?.cancel();
+      setState(() {
+        _showSuggestions = false;
+        _suggestions = [];
+        if (value.isEmpty) products = null;
+      });
+    }
+  }
+
+  void _onSuggestionTap(String suggestion) {
+    _searchText.text = suggestion;
+    _searchText.selection = TextSelection.fromPosition(
+      TextPosition(offset: suggestion.length),
+    );
+    setState(() => _showSuggestions = false);
+    _saveRecentSearch(suggestion);
+    searchBloc?.add(SearchBarTextEvent(searchText: suggestion));
+    _triggerSearch(suggestion);
+  }
+
+  void _onSubmitted(String value) {
+    if (value.trim().isNotEmpty) {
+      _saveRecentSearch(value.trim());
+      setState(() => _showSuggestions = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SearchBloc, SearchBaseState>(
-        listener: (BuildContext context, SearchBaseState current) {},
-        builder: (BuildContext context, SearchBaseState state) {
-          _searchText.text = (state is AppBarSearchTextState
-              ? state.searchText
-              : ((state is ClearSearchBarTextState) ? "" : _searchText.text))!;
-          _searchText.value = _searchText.value.copyWith(
-            text: _searchText.text,
-            selection: TextSelection.fromPosition(
-              TextPosition(offset: _searchText.text.length),
-            ),
-          );
-          if (state is CircularBarState) {
-            isLoading = state.isReqToShowLoader!;
+      listener: (BuildContext context, SearchBaseState current) {},
+      builder: (BuildContext context, SearchBaseState state) {
+        // Sync text controller
+        _searchText.text = (state is AppBarSearchTextState
+            ? state.searchText
+            : ((state is ClearSearchBarTextState) ? "" : _searchText.text))!;
+        _searchText.value = _searchText.value.copyWith(
+          text: _searchText.text,
+          selection: TextSelection.fromPosition(
+            TextPosition(offset: _searchText.text.length),
+          ),
+        );
+
+        if (state is CircularBarState) {
+          isLoading = state.isReqToShowLoader!;
+        }
+        if (state is FetchCategoriesPageDataState) {
+          if (state.status == Status.success) {
+            data = state.getCategoriesData?.data;
           }
-          if (state is FetchCategoriesPageDataState) {
-            if (state.status == Status.success) {
-              data = state.getCategoriesData?.data;
-            }
+        }
+        if (state is FetchSearchDataState) {
+          searchBloc?.add(CircularBarEvent(isReqToShowLoader: false));
+          if (state.status == Status.success) {
+            products = state.products;
+            // Generate suggestions from product names
+            final q = _searchText.text.toLowerCase();
+            _suggestions = (products?.data ?? [])
+                .map((p) => p.name ?? "")
+                .where((n) => n.isNotEmpty && n.toLowerCase().contains(q))
+                .toSet()
+                .take(8)
+                .toList();
           }
-          if (state is FetchSearchDataState) {
-            searchBloc?.add(CircularBarEvent(isReqToShowLoader: false));
-            if (state.status == Status.success) {
-              products = state.products!;
-            }
-            if (state.status == Status.fail) {
-              return (state.products?.data ?? []).isEmpty
-                  ? const EmptyDataView(
-                      assetPath: AssetConstants.emptyCatalog,
-                      message: StringConstants.emptyPageGenericLabel,
-                    )
-                  : const SizedBox();
-            }
-          }
-          return Scaffold(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              appBar: _setAppBarView(context),
-              body: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  Visibility(
-                    visible: isLoading,
-                    child: const LinearProgressIndicator(
-                      backgroundColor: MobiKulTheme.accentColor,
-                      valueColor: AlwaysStoppedAnimation(Colors.white),
-                    ),
-                  ),
-                  
-                  // 🟢 Modern Grid for Categories
-                  if ((products?.data ?? []).isEmpty && _searchText.text.isEmpty)
-                    ((data ?? []).isNotEmpty)
-                        ? _buildModernCategoryGrid(data!)
-                        : Padding(
+        }
+
+        final bool isEmpty = _searchText.text.isEmpty;
+        final bool hasResults = (products?.data ?? []).isNotEmpty;
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: _buildAppBar(context),
+          body: Column(
+            children: [
+              // Loading indicator
+              if (isLoading)
+                const LinearProgressIndicator(
+                  backgroundColor: MobiKulTheme.accentColor,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                  minHeight: 3,
+                ),
+
+              // 🟢 Suggestions overlay
+              if (_showSuggestions && _suggestions.isNotEmpty && !isEmpty)
+                _buildSuggestionsOverlay(),
+
+              // Body
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 🟢 Empty state: Recent Searches + Categories
+                      if (isEmpty) ...[
+                        if (_recentSearches.isNotEmpty) _buildRecentSearches(),
+                        if ((data ?? []).isNotEmpty) _buildModernCategoryGrid(data!),
+                        if ((data ?? []).isEmpty && _recentSearches.isEmpty)
+                          Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: SkeletonLoader(
-                                highlightColor: Theme.of(context).highlightColor,
-                                baseColor: Theme.of(context).scaffoldBackgroundColor,
-                                builder: const SizedBox(
-                                  height: 100,
-                                  child: Card(color: Colors.red),
-                                )),
+                              highlightColor: Theme.of(context).highlightColor,
+                              baseColor: Theme.of(context).scaffoldBackgroundColor,
+                              builder: const SizedBox(height: 100, child: Card(color: Colors.red)),
+                            ),
                           ),
+                      ],
 
-                  // Search Results
-                  ((products?.data ?? []).isNotEmpty)
-                      ? _getSearchData(products)
-                      : _searchText.text.isNotEmpty
-                          ? (products?.data ?? []).isEmpty
-                              ? const EmptyDataView(
-                                  assetPath: AssetConstants.emptyCatalog,
-                                  message: StringConstants.emptyPageGenericLabel,
-                                )
-                              : const SizedBox()
-                          : const SizedBox(),
-                ]),
-              ));
-        });
+                      // 🟢 Results
+                      if (!isEmpty) ...[
+                        if (hasResults) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Text(
+                              "${products!.data!.length} results for \"${_searchText.text}\"",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
+                              ),
+                            ),
+                          ),
+                          _getSearchData(products),
+                        ] else if (!isLoading)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    "No results for \"${_searchText.text}\"",
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    "Try a different keyword",
+                                    style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
-  /// 🟢 Modern Category Grid
+  // ──────────────────────────────────────────────
+  // 🟢 SUGGESTIONS OVERLAY
+  // ──────────────────────────────────────────────
+  Widget _buildSuggestionsOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final query = _searchText.text.toLowerCase();
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 280),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        itemCount: _suggestions.length,
+        separatorBuilder: (_, __) => Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.3)),
+        itemBuilder: (context, index) {
+          final name = _suggestions[index];
+          final matchIdx = name.toLowerCase().indexOf(query);
+
+          return InkWell(
+            onTap: () => _onSuggestionTap(name),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.search, size: 18, color: Colors.grey[500]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: matchIdx >= 0
+                        ? RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                              ),
+                              children: [
+                                TextSpan(text: name.substring(0, matchIdx)),
+                                TextSpan(
+                                  text: name.substring(matchIdx, matchIdx + query.length),
+                                  style: const TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                TextSpan(text: name.substring(matchIdx + query.length)),
+                              ],
+                            ),
+                          )
+                        : Text(name, style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                  ),
+                  Icon(Icons.north_west, size: 16, color: Colors.grey[400]),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // 🟢 RECENT SEARCHES
+  // ──────────────────────────────────────────────
+  Widget _buildRecentSearches() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Recent searches",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
+                ),
+              ),
+              GestureDetector(
+                onTap: _clearRecentSearches,
+                child: const Text(
+                  "clear",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF27C16B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: _recentSearches.map((term) {
+              return GestureDetector(
+                onTap: () {
+                  _searchText.text = term;
+                  searchBloc?.add(SearchBarTextEvent(searchText: term));
+                  setState(() => _showSuggestions = false);
+                  _triggerSearch(term);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.history, size: 14, color: Colors.grey[500]),
+                      const SizedBox(width: 6),
+                      Text(
+                        term,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // 🟢 CATEGORY GRID
+  // ──────────────────────────────────────────────
   Widget _buildModernCategoryGrid(List<HomeCategories> categories) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,15 +437,14 @@ class _SearchScreenState extends State<SearchScreen>
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, // 3 Columns
+            crossAxisCount: 3,
             childAspectRatio: 0.85,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
           ),
           itemCount: categories.length,
           itemBuilder: (context, index) {
-            final item = categories[index];
-            return _buildCategoryCard(item, index);
+            return _buildCategoryCard(categories[index], index);
           },
         ),
         const SizedBox(height: 20),
@@ -201,80 +452,47 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  /// 🟢 Helper to safely get image URL
   String _getCategoryImageUrl(HomeCategories item) {
     try {
       final dynamicItem = item as dynamic;
-      try {
-        if (dynamicItem.bannerUrl != null) return dynamicItem.bannerUrl;
-      } catch (_) {}
-      try {
-        if (dynamicItem.imageUrl != null) return dynamicItem.imageUrl;
-      } catch (_) {}
+      try { if (dynamicItem.bannerUrl != null) return dynamicItem.bannerUrl; } catch (_) {}
+      try { if (dynamicItem.imageUrl != null) return dynamicItem.imageUrl; } catch (_) {}
       return "";
-    } catch (_) {
-      return "";
-    }
+    } catch (_) { return ""; }
   }
 
-  /// 🟢 ICON MAPPER: Ensures every category gets a relevant icon/image
   IconData _categoryIconFor(String name) {
     final n = name.toLowerCase();
-
-    if (n.contains('event') || n.contains('party') || n.contains('wedding')) return Icons.event_outlined;
-    if (n.contains('dairy') || n.contains('bread') || n.contains('breakfast') || n.contains('bakery')) return Icons.breakfast_dining_outlined; 
-    if (n.contains('grain') || n.contains('cereal') || n.contains('oat') || n.contains('pulse') || n.contains('rice') || n.contains('atta')) return Icons.grass_outlined; 
-    
-    // Fresh
+    if (n.contains('dairy') || n.contains('bread') || n.contains('breakfast') || n.contains('bakery')) return Icons.breakfast_dining_outlined;
+    if (n.contains('grain') || n.contains('rice') || n.contains('atta')) return Icons.grass_outlined;
     if (n.contains('fruit')) return Icons.apple_outlined;
     if (n.contains('vegetable') || n.contains('farm')) return Icons.eco_outlined;
-    if (n.contains('meat') || n.contains('fish') || n.contains('chicken') || n.contains('non veg')) return Icons.set_meal_outlined;
-    if (n.contains('egg')) return Icons.egg_outlined; 
-    
-    // Grocery
+    if (n.contains('meat') || n.contains('fish') || n.contains('chicken')) return Icons.set_meal_outlined;
+    if (n.contains('egg')) return Icons.egg_outlined;
     if (n.contains('grocery') || n.contains('staple')) return Icons.shopping_basket_outlined;
     if (n.contains('oil') || n.contains('ghee')) return Icons.opacity_outlined;
     if (n.contains('spice') || n.contains('masala')) return Icons.whatshot_outlined;
-
-    // Snacks
-    if (n.contains('snack') || n.contains('chip') || n.contains('biscuit') || n.contains('namkeen')) return Icons.fastfood_outlined;
-    if (n.contains('beverage') || n.contains('drink') || n.contains('juice') || n.contains('tea') || n.contains('coffee')) return Icons.local_cafe_outlined;
-    if (n.contains('sweet') || n.contains('chocolate') || n.contains('ice cream')) return Icons.icecream_outlined;
-
-    // Other
-    if (n.contains('personal') || n.contains('beauty') || n.contains('skin') || n.contains('hair') || n.contains('face')) return Icons.face_retouching_natural_outlined;
-    if (n.contains('home') || n.contains('clean') || n.contains('detergent') || n.contains('wash')) return Icons.cleaning_services_outlined;
+    if (n.contains('snack') || n.contains('chip') || n.contains('biscuit')) return Icons.fastfood_outlined;
+    if (n.contains('beverage') || n.contains('drink') || n.contains('tea') || n.contains('coffee')) return Icons.local_cafe_outlined;
+    if (n.contains('sweet') || n.contains('chocolate')) return Icons.icecream_outlined;
+    if (n.contains('personal') || n.contains('beauty') || n.contains('skin')) return Icons.face_retouching_natural_outlined;
+    if (n.contains('home') || n.contains('clean') || n.contains('detergent')) return Icons.cleaning_services_outlined;
     if (n.contains('baby') || n.contains('diaper')) return Icons.child_care_outlined;
-    if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return Icons.pets_outlined;
+    if (n.contains('pet')) return Icons.pets_outlined;
     if (n.contains('kitchen')) return Icons.kitchen_outlined;
-    if (n.contains('pharmacy') || n.contains('medicin') || n.contains('health')) return Icons.medication_outlined;
-    if (n.contains('electr') || n.contains('mobile') || n.contains('phone')) return Icons.devices_outlined;
-    if (n.contains('fashion') || n.contains('cloth')) return Icons.checkroom_outlined;
-
     return Icons.category_outlined;
   }
 
-  /// 🟢 NEW: Single Category Card
   Widget _buildCategoryCard(HomeCategories item, int index) {
-    // 🎨 UPDATED COLORS: More vibrant & clean (Pastel Pop)
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> bgColors = isDark ? [
-      const Color(0xFF1B2A2B), // Dark Cyan
-      const Color(0xFF2B2A1B), // Dark Yellow
-      const Color(0xFF2A1B2B), // Dark Purple
-      const Color(0xFF1B2B1B), // Dark Green
-      const Color(0xFF1B1B2B), // Dark Blue
-      const Color(0xFF2B1B1B), // Dark Orange
+      const Color(0xFF1B2A2B), const Color(0xFF2B2A1B), const Color(0xFF2A1B2B),
+      const Color(0xFF1B2B1B), const Color(0xFF1B1B2B), const Color(0xFF2B1B1B),
     ] : [
-      const Color(0xFFE0F7FA), // Cyan tint
-      const Color(0xFFFFF9C4), // Yellow tint
-      const Color(0xFFE1BEE7), // Purple tint
-      const Color(0xFFC8E6C9), // Green tint
-      const Color(0xFFBBDEFB), // Blue tint
-      const Color(0xFFFFCCBC), // Deep Orange tint
+      const Color(0xFFE0F7FA), const Color(0xFFFFF9C4), const Color(0xFFE1BEE7),
+      const Color(0xFFC8E6C9), const Color(0xFFBBDEFB), const Color(0xFFFFCCBC),
     ];
     final color = bgColors[index % bgColors.length];
-    
     final String imageUrl = _getCategoryImageUrl(item);
     final String label = item.name ?? "";
 
@@ -288,7 +506,7 @@ class _SearchScreenState extends State<SearchScreen>
               categorySlug: item.slug,
               title: label,
               id: item.id?.toString(),
-              image: imageUrl, 
+              image: imageUrl,
               parentId: item.id?.toString(),
             ),
           );
@@ -298,13 +516,8 @@ class _SearchScreenState extends State<SearchScreen>
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
-          // No border, just a subtle shadow for pop
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
           ],
         ),
         child: Column(
@@ -314,16 +527,9 @@ class _SearchScreenState extends State<SearchScreen>
               flex: 3,
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: (imageUrl.isNotEmpty)
-                    ? ImageView(
-                        url: imageUrl,
-                        fit: BoxFit.contain,
-                      )
-                    : Icon(
-                        _categoryIconFor(label), 
-                        color: Colors.black54, 
-                        size: 32
-                      ),
+                child: imageUrl.isNotEmpty
+                    ? ImageView(url: imageUrl, fit: BoxFit.contain)
+                    : Icon(_categoryIconFor(label), color: Colors.black54, size: 32),
               ),
             ),
             Expanded(
@@ -335,24 +541,21 @@ class _SearchScreenState extends State<SearchScreen>
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700, // Bolder text
-                    color: Colors.black87,
-                    height: 1.2,
-                  ),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.black87, height: 1.2),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// App Bar View
-  _setAppBarView(BuildContext context) {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
+  // ──────────────────────────────────────────────
+  // 🟢 APP BAR
+  // ──────────────────────────────────────────────
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PreferredSize(
       preferredSize: const Size.fromHeight(60.0),
       child: AppBar(
@@ -365,7 +568,7 @@ class _SearchScreenState extends State<SearchScreen>
         ),
         title: Container(
           height: 40,
-          margin: const EdgeInsets.only(right: 8), 
+          margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
@@ -375,16 +578,10 @@ class _SearchScreenState extends State<SearchScreen>
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
-                  autofocus: true, 
-                  onChanged: (value) async {
-                    if (value.length > 2) {
-                      searchBloc?.add(SearchBarTextEvent(searchText: value));
-                      searchBloc?.add(CircularBarEvent(isReqToShowLoader: true));
-                      searchBloc?.add(FetchSearchEvent([
-                        {"key": '"name"', "value": '"$value"'}
-                      ]));
-                    }
-                  },
+                  autofocus: true,
+                  focusNode: _focusNode,
+                  onChanged: _onSearchChanged,
+                  onSubmitted: _onSubmitted,
                   readOnly: _isListening,
                   controller: _searchText,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -401,7 +598,11 @@ class _SearchScreenState extends State<SearchScreen>
                   onPressed: () {
                     _searchText.clear();
                     searchBloc?.add(SearchBarTextEvent(searchText: ""));
-                    setState(() {});
+                    setState(() {
+                      _showSuggestions = false;
+                      _suggestions = [];
+                      products = null;
+                    });
                   },
                 ),
             ],
@@ -409,10 +610,12 @@ class _SearchScreenState extends State<SearchScreen>
         ),
         actions: [
           IconButton(
-            icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: _isListening ? Colors.red : Colors.grey),
+            icon: Icon(
+              _isListening ? Icons.mic : Icons.mic_none,
+              color: _isListening ? Colors.red : Colors.grey,
+            ),
             onPressed: _speechToText.isNotListening ? start : stop,
           ),
-          // 🟢 Camera Icon (Restored)
           IconButton(
             icon: const Icon(Icons.camera_alt_outlined, color: Colors.grey),
             onPressed: () async {
@@ -430,39 +633,12 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  _getSearchData(NewProductsModel? model) {
+  Widget _getSearchData(NewProductsModel? model) {
     var productList = model?.data;
     return (productList != null && productList.isNotEmpty)
         ? ProductList(model: model!)
         : const SizedBox();
   }
-
-  Widget _buildVoiceInput({VoidCallback? onPressed}) => GestureDetector(
-      onTap: onPressed,
-      child: SizedBox(
-        width: 40,
-        child: AnimatedBuilder(
-          animation: CurvedAnimation(
-              parent: _controller!, curve: Curves.fastOutSlowIn),
-          builder: (context, child) {
-            return Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                _buildContainer(10 * (_isListening ? _controller!.value : 0)),
-                _buildContainer(20 * (_isListening ? _controller!.value : 0)),
-                _buildContainer(30 * (_isListening ? _controller!.value : 0)),
-                _buildContainer(40 * (_isListening ? _controller!.value : 0)),
-                Align(
-                  child: Icon(
-                    !_isListening ? Icons.mic : Icons.mic_off,
-                    size: AppSizes.spacingWide,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ));
 
   void stop() async {
     await _speechToText.stop();
@@ -471,22 +647,9 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   void start() async {
-    await _speechToText.listen(
-      onResult: onRecognitionResult,
-    );
+    await _speechToText.listen(onResult: onRecognitionResult);
     _isListening = true;
     setState(() {});
-  }
-
-  Widget _buildContainer(double radius) {
-    return Container(
-      width: radius,
-      height: radius,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.grey.shade400.withOpacity(1 - _controller!.value),
-      ),
-    );
   }
 
   Future<void> _checkPermission(Permission permission, String type) async {
@@ -526,8 +689,17 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   static Future<bool> connectedToNetwork() async {
-    bool result =
-        await InternetConnectionChecker.createInstance().hasConnection;
-    return result;
+    return await InternetConnectionChecker.createInstance().hasConnection;
+  }
+
+  Widget _buildContainer(double radius) {
+    return Container(
+      width: radius,
+      height: radius,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.grey.shade400.withOpacity(1 - _controller!.value),
+      ),
+    );
   }
 }

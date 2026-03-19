@@ -233,10 +233,23 @@ class _WishlistItemListState extends State<WishlistItemList> {
                             ),
                             const SizedBox(height: 6),
                             
-                            Text(
-                              item?.product?.priceHtml?.priceHtml ?? "",
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF27C16B)),
-                            ),
+                            Builder(builder: (ctx) {
+                              String wishPrice = "";
+                              // Use finalPrice (raw numeric) and format to 2 decimals
+                              final rawFinal = item?.product?.priceHtml?.finalPrice;
+                              if (rawFinal != null && rawFinal.isNotEmpty) {
+                                double parsedPrice = double.tryParse(rawFinal) ?? 0;
+                                wishPrice = "₹${parsedPrice.toStringAsFixed(2)}";
+                              } else {
+                                // Fallback: strip HTML tags from priceHtml and enforce 2 decimals
+                                wishPrice = (item?.product?.priceHtml?.priceHtml ?? "")
+                                    .replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
+                              }
+                              return Text(
+                                wishPrice,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF27C16B)),
+                              );
+                            }),
     
                             const SizedBox(height: 12),
     

@@ -366,7 +366,13 @@ class _DrawerSubCategoryViewState extends State<DrawerSubCategoryView> {
   Widget _buildDrawerBlinkitCard(NewProducts data) {
     // Price Logic
     String price = data.priceHtml?.formattedFinalPrice ?? "";
-    if (price.isEmpty) price = "₹${data.price ?? '0'}";
+    if (price.isEmpty) {
+      double parsedPrice = double.tryParse(data.price?.toString() ?? "0") ?? 0;
+      price = "₹${parsedPrice.toStringAsFixed(2)}";
+    } else {
+      // Enforce 2 decimals (API can return 4 decimals like ₹100.0000)
+      price = price.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
+    }
     
     String imageUrl = (data.images?.isNotEmpty ?? false) ? data.images![0].url ?? "" : data.url ?? "";
     bool isSaleable = data.isSaleable ?? false;
