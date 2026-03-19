@@ -128,16 +128,14 @@ class _AddReviewState extends State<AddReview> {
     return const SizedBox();
   }
 
-  /// review form
-  _reviewForm() {
+  Widget _reviewForm() {
     return Stack(
       children: [
-        SafeArea(
-          child: SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  vertical: AppSizes.spacingMedium,
-                  horizontal: AppSizes.spacingLarge),
+        Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Form(
                 key: _reviewFormKey,
                 autovalidateMode: _autoValidate
@@ -146,110 +144,146 @@ class _AddReviewState extends State<AddReview> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ImageView(
-                        url: widget.imageUrl ?? "",
-                        width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height * 0.4),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    Text(
-                      widget.productName ?? "",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: AppSizes.spacingLarge),
-                    ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    Text(
-                      StringConstants.rating.localized(),
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                    const SizedBox(height: AppSizes.spacingNormal),
-                    RatingBar.builder(
-                      itemSize: AppSizes.spacingMedium * 2,
-                      initialRating: rating.toDouble(), // 🟢 FIXED: Use rating variable instead of hardcoded 0.0
-                      minRating: 1,
-                      direction: Axis.horizontal,
-                      allowHalfRating: false,
-                      itemCount: 5,
-                      itemPadding: const EdgeInsets.symmetric(horizontal: 0),
-                      itemBuilder: (context, _) => const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                      ),
-                      onRatingUpdate: (updatedRating) {
-                        rating = updatedRating.toInt();
-                      },
-                    ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    CommonWidgets().getTextField(
-                      context,
-                      titleController,
-                      StringConstants.titleHint.localized(),
-                      label: StringConstants.titleLabel.localized(),
-                      validLabel: StringConstants.pleaseFillLabel.localized() +
-                          StringConstants.titleLabel.localized(),
-                      isRequired: true,
-                      validator: (email) {
-                        if (((email ?? "").trim()).isEmpty) {
-                          return StringConstants.pleaseFillLabel.localized() +
-                              StringConstants.titleLabel.localized();
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSizes.spacingWide),
-                    TextFormField(
-                      maxLines: 8,
-                      controller: commentController,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        alignLabelWithHint: true,
-                        labelText: StringConstants.commentLabel.localized(),
-                        hintText: StringConstants.commentHint.localized(),
-                        labelStyle: Theme.of(context).textTheme.bodyMedium,
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.all(
-                                Radius.circular(AppSizes.spacingSmall)),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade500)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.all(
-                                Radius.circular(AppSizes.spacingSmall)),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade500)),
-                        errorBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.all(
-                                Radius.circular(AppSizes.spacingSmall)),
-                            borderSide: BorderSide(color: Colors.red.shade500)),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: const BorderRadius.all(Radius.zero),
-                          borderSide: BorderSide(color: Colors.grey.shade500),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (((value ?? "").trim()).isEmpty) {
-                          return StringConstants.pleaseFillLabel.localized() +
-                              StringConstants.commentLabel.localized();
-                        }
-                        return null;
-                      },
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
+                    // 🟢 1. PRODUCT HERO CARD (Compact & Trendy)
                     Container(
-                      width: double.infinity,
-                      height: AppSizes.buttonHeight,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)], // Trendy Iris to Purple gradient
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppSizes.spacingSmall),
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF764BA2).withOpacity(0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: ImageView(
+                              url: widget.imageUrl ?? "",
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Reviewing",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.productName ?? "",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // 🟢 2. RATING SECTION
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            "How was your experience?",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          RatingBar.builder(
+                            itemSize: 45,
+                            initialRating: rating.toDouble(),
+                            minRating: 1,
+                            direction: Axis.horizontal,
+                            allowHalfRating: false,
+                            itemCount: 5,
+                            glow: true,
+                            glowColor: Colors.amber.withOpacity(0.3),
+                            itemPadding: const EdgeInsets.symmetric(horizontal: 4),
+                            itemBuilder: (context, _) => const Icon(
+                              Icons.star_rounded,
+                              color: Colors.amber,
+                            ),
+                            onRatingUpdate: (updatedRating) {
+                              setState(() {
+                                rating = updatedRating.toInt();
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _getRatingText(rating),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.amber,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // 🟢 3. FORM FIELDS
+                    _buildModernTextField(
+                      controller: titleController,
+                      hint: "e.g., Amazing product!",
+                      label: "Title",
+                      isRequired: true,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildModernTextField(
+                      controller: commentController,
+                      hint: "Share your detailed thoughts about the product...",
+                      label: "Your Review",
+                      maxLines: 5,
+                      isRequired: true,
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // 🟢 4. SUBMIT BUTTON
+                    Container(
+                      width: double.infinity,
+                      height: 55,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF27C16B), Color(0xFF1B8A4C)], // Trendy Green Gradient
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF27C16B).withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
@@ -258,32 +292,103 @@ class _AddReviewState extends State<AddReview> {
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,
                           shadowColor: Colors.transparent,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.spacingSmall),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        onPressed: () {
-                          _onPressSubmitButton();
-                        },
-                        child: Text(
-                          StringConstants.submitReview.localized().toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: AppSizes.spacingLarge,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
+                        onPressed: _onPressSubmitButton,
+                        child: const Text(
+                          "SUBMIT REVIEW",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spacingWide),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
           ),
         ),
-        if (isLoading) const Loader()
+        if (isLoading) Container(
+          color: Colors.black.withOpacity(0.3),
+          child: const Center(child: Loader()),
+        )
+      ],
+    );
+  }
+
+  String _getRatingText(int rating) {
+    switch (rating) {
+      case 1: return "Terrible";
+      case 2: return "Poor";
+      case 3: return "Average";
+      case 4: return "Good";
+      case 5: return "Excellent!";
+      default: return "Select Rating";
+    }
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String hint,
+    required String label,
+    int maxLines = 1,
+    bool isRequired = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Theme.of(context).hintColor.withOpacity(0.4), fontSize: 13),
+            filled: true,
+            fillColor: Theme.of(context).cardColor,
+            contentPadding: const EdgeInsets.all(16),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+            ),
+          ),
+          validator: (value) {
+            if (isRequired && (value == null || value.trim().isEmpty)) {
+              return "This field is required";
+            }
+            return null;
+          },
+        ),
       ],
     );
   }

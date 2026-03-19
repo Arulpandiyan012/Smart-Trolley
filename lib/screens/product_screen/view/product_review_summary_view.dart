@@ -9,6 +9,7 @@
  */
 
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
+import 'package:bagisto_app_demo/screens/orders/bloc/order_list_repo.dart';
 
 class ProductReviewSummaryView extends StatefulWidget {
   final List<Reviews>? review;
@@ -39,6 +40,8 @@ class ProductReviewSummaryView extends StatefulWidget {
 class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
   dynamic percentage;
   bool _showAll = false;
+  bool _isPurchased = false;
+  bool _isLoadingPurchase = false;
 
   @override
   void initState() {
@@ -46,6 +49,47 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
         ? json.decode(widget.percentage.toString())
         : [];
     super.initState();
+    if (widget.isLogin ?? false) {
+      _checkPurchaseStatus();
+    }
+  }
+
+  Future<void> _checkPurchaseStatus() async {
+    if (!(widget.isLogin ?? false) || widget.productId == null) return;
+
+    if (mounted) setState(() => _isLoadingPurchase = true);
+    try {
+      final repo = OrderListRepositoryImp();
+      // Fetch delivered/completed orders to verify purchase
+      final orders = await repo.getOrderList(
+        "", "", "", "completed,delivered,picked up,received", 0, 1, true
+      );
+
+      bool found = false;
+      if (orders.data != null) {
+        for (var order in orders.data!) {
+          if (order.items != null) {
+            for (var item in order.items!) {
+              if (item.productId == widget.productId) {
+                found = true;
+                break;
+              }
+            }
+          }
+          if (found) break;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPurchased = found;
+          _isLoadingPurchase = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ ERROR checking purchase status: $e");
+      if (mounted) setState(() => _isLoadingPurchase = false);
+    }
   }
 
   String _getInitial(String? name) {
@@ -133,58 +177,65 @@ class ProductReviewSummaryViewState extends State<ProductReviewSummaryView> {
                   const Divider(),
                 ],
 
-                // ── Write a Review Button ──────────────────────────────────
+                // ── Write a Review Button (Restricted) ───────────────────────────
                 const SizedBox(height: 4),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF27C16B), width: 1.2),
-                    backgroundColor: const Color(0xFFF0FDF4),
-                    foregroundColor: const Color(0xFF27C16B),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    if (widget.isLogin ?? false) {
-                      // 🟢 SMART PREFILL: Look for current user's review in the list
-                      Reviews? myReview;
-                      final String currentId = appStoragePref.getCustomerId().toString();
-                      if (widget.review != null) {
-                        try {
-                          myReview = widget.review!.firstWhere((r) => r.customerId == currentId);
-                        } catch (_) {}
-                      }
-
-                      Navigator.pushNamed(context, addReviewScreen,
-                          arguments: AddReviewDetail(
-                              imageUrl: widget.productImage,
-                              productId: widget.productId,
-                              productName: widget.productName,
-                              reviewId: myReview?.id,
-                              rating: int.tryParse(myReview?.rating?.toString() ?? ""),
-                              title: myReview?.title,
-                              comment: myReview?.comment
-                          )).then((_) {
-                        // 🟢 REFRESH PRODUCT ON RETURN
-                        if (widget.productId != null) {
-                          widget.productScreenBLoc?.add(FetchProductEvent(
-                            "", 
-                            productId: int.tryParse(widget.productId!)
-                          ));
-                        }
-                      });
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(StringConstants.pleaseLoginReview.localized()),
-                        duration: const Duration(seconds: 3),
-                      ));
+                if (_isLoadingPurchase)
+                  const Center(child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF27C16B))),
+                  ))
+                else if ((widget.isLogin ?? false) && _isPurchased) 
+                Builder(
+                  builder: (context) {
+                    // Check if current user has already reviewed
+                    Reviews? myReview;
+                    final String currentId = appStoragePref.getCustomerId().toString();
+                    if (widget.review != null) {
+                      try {
+                        myReview = widget.review!.firstWhere((r) => r.customerId == currentId);
+                      } catch (_) {}
                     }
-                  },
-                  icon: const Icon(Icons.edit_note, size: 20),
-                  label: Text(
-                    StringConstants.writeReview.localized().toUpperCase(),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-                  ),
+                    
+                    // If already reviewed, hide the "Write a Review" button according to user request
+                    if (myReview != null) return const SizedBox.shrink();
+
+                    return OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF27C16B), width: 1.2),
+                        backgroundColor: const Color(0xFFF0FDF4),
+                        foregroundColor: const Color(0xFF27C16B),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                          Navigator.pushNamed(context, addReviewScreen,
+                              arguments: AddReviewDetail(
+                                  imageUrl: widget.productImage,
+                                  productId: widget.productId,
+                                  productName: widget.productName,
+                                  reviewId: myReview?.id,
+                                  rating: int.tryParse(myReview?.rating?.toString() ?? ""),
+                                  title: myReview?.title,
+                                  comment: myReview?.comment
+                              )).then((_) {
+                            // 🟢 REFRESH PRODUCT ON RETURN
+                            if (widget.productId != null) {
+                              widget.productScreenBLoc?.add(FetchProductEvent(
+                                "", 
+                                productId: int.tryParse(widget.productId!)
+                              ));
+                              _checkPurchaseStatus(); // Re-check purchase/review status
+                            }
+                          });
+                      },
+                      icon: const Icon(Icons.edit_note, size: 20),
+                      label: Text(
+                        StringConstants.writeReview.localized().toUpperCase(),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      ),
+                    );
+                  }
                 ),
 
                 // ── Review Cards ───────────────────────────────────────────

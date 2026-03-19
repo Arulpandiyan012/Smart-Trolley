@@ -90,7 +90,7 @@ class MobiKulTheme {
     ),
     textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
     dividerTheme: const DividerThemeData(color: Colors.black12),
-    bottomAppBarTheme: const BottomAppBarTheme(color: Color(0xFF2A65B3)),
+    bottomAppBarTheme: const BottomAppBarThemeData(color: Color(0xFF2A65B3)),
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -137,7 +137,7 @@ class MobiKulTheme {
         backgroundColor: _darkOnPrimaryColor),
     textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
     dividerTheme: const DividerThemeData(color: Colors.white24),
-    bottomAppBarTheme: const BottomAppBarTheme(color: Color(0xFF121212)),
+    bottomAppBarTheme: const BottomAppBarThemeData(color: Color(0xFF121212)),
   );
 
   getColor(double rating) {

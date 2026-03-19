@@ -1733,6 +1733,9 @@ String cartDetails() {
                 taxAmount
                 shippingAmount
             }
+            items {
+                productId
+            }
         }
     }
 }
