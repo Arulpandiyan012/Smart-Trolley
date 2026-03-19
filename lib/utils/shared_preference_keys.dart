@@ -38,3 +38,4 @@ const String language = "language";
 const String sort = "sort";
 const String customerDetails = "customerDetails";
 const String drawerCatData = "drawerCatData";
+const String recentSearches = "recentSearches";

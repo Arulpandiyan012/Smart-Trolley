@@ -294,6 +294,24 @@ class SharedPreferenceHelper {
 
 
 
+  // 🟢 Recent Searches
+  List<String> getRecentSearches() {
+    final data = configurationStorage.read(recentSearches);
+    if (data is List) return List<String>.from(data);
+    return [];
+  }
+
+  void saveRecentSearch(String query) {
+    if (query.trim().isEmpty) return;
+    final existing = getRecentSearches();
+    final updated = [query, ...existing.where((s) => s != query)].take(5).toList();
+    configurationStorage.write(recentSearches, updated);
+  }
+
+  void clearRecentSearches() {
+    configurationStorage.remove(recentSearches);
+  }
+
   // 🟢 DIAGNOSTIC: Check storage state on boot
   void debugCheckStorage() {
     print("----------------------------------------");

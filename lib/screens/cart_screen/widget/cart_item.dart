@@ -198,9 +198,9 @@ class CartListItem extends StatelessWidget {
                      
                      const SizedBox(height: 8),
                      
-                     // Price (Bottom Right)
+                     // Price (Bottom Right) — shows line total (qty × unit price)
                      Text(
-                        _formatPrice(item?.formattedPrice?.price),
+                        _formatPrice(item?.formattedPrice?.total ?? item?.formattedPrice?.price),
                         style: TextStyle(
                           fontWeight: FontWeight.bold, 
                           fontSize: 14,
@@ -234,16 +234,28 @@ class CartListItem extends StatelessWidget {
     cartScreenBloc?.add(UpdateCartEvent(updateItem));
   }
 
-  // Helper to format price (2 decimals)
+  // Helper to format price (2 decimals, handles ₹ prefix and raw numbers)
   String _formatPrice(dynamic price) {
     if (price == null) return "";
-    String priceStr = price.toString();
-    if (priceStr.contains('.')) {
-      int dotIndex = priceStr.indexOf('.');
-      if (dotIndex + 3 <= priceStr.length) {
-        return priceStr.substring(0, dotIndex + 3); 
+    String priceStr = price.toString().trim();
+    if (priceStr.isEmpty) return "";
+
+    // If already a formatted string like "₹120.00", enforce 2 decimals
+    final prefixMatch = RegExp(r'^([^\d]*)([\d.]+)(.*)$').firstMatch(priceStr);
+    if (prefixMatch != null) {
+      final prefix = prefixMatch.group(1)!;
+      final numStr = prefixMatch.group(2)!;
+      final suffix = prefixMatch.group(3)!;
+      final value = double.tryParse(numStr);
+      if (value != null) {
+        return '$prefix${value.toStringAsFixed(2)}$suffix';
       }
     }
+
+    // Fallback: try parse whole string as number
+    final value = double.tryParse(priceStr.replaceAll(RegExp(r'[^\d.]'), ''));
+    if (value != null) return '₹${value.toStringAsFixed(2)}';
+
     return priceStr;
   }
 
