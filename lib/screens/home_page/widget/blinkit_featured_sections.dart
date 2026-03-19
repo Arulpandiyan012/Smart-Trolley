@@ -10,7 +10,10 @@ import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_event.dart';
 import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_bloc.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_bloc.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_event.dart';
-import 'package:bagisto_app_demo/screens/home_page/widget/featured_category_screen.dart'; // 🟢 For See All Navigator
+import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_screen.dart';
+import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_bloc.dart';
+import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repository.dart';
+import 'package:bagisto_app_demo/screens/home_page/widget/featured_section_sidebar_screen.dart';
 
 class BlinkitFeaturedSections extends StatefulWidget {
   final bool isLogin;
@@ -84,6 +87,131 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
     }
   }
 
+  // 🟢 Resolve a category slug from a section title
+  // First: try static mapping for known titles. Then: fuzzy-match from GlobalData.
+  String? _resolveSlugForTitle(String title) {
+    final t = title.toLowerCase().trim();
+
+    // Static slug map for well-known home section titles
+    const Map<String, String> _staticSlugMap = {
+      // ── Sweet Tooth / Chocolates ──────────────────────────────────────────
+      // Backend: "Sweets & Chocolates" → slug: sweets-chocolates (under Snacks & Drinks)
+      'sweet tooth': 'sweets-chocolates',
+      'sweets': 'sweets-chocolates',
+      'sweets & chocolates': 'sweets-chocolates',
+      'chocolates': 'sweets-chocolates',
+      'candies': 'sweets-chocolates',
+
+      // ── Dry Fruit, Masala & Oil ───────────────────────────────────────────
+      // Backend: "Oil, Ghee & Masala" → slug: oil-ghee-masala (under Grocery & Kitchen)
+      //          "Dry Fruits & Cereals" → slug: dry-fruits-cereals (under Grocery & Kitchen)
+      'dry fruit, masala & oil': 'oil-ghee-masala',
+      'dry fruit, masala and oil': 'oil-ghee-masala',
+      'dry fruits, masala & oil': 'oil-ghee-masala',
+      'masala and oil': 'oil-ghee-masala',
+      'masala & oil': 'oil-ghee-masala',
+      'oil, ghee & masala': 'oil-ghee-masala',
+      'oil ghee masala': 'oil-ghee-masala',
+      'dry fruits': 'dry-fruits-cereals',
+      'dry fruits & cereals': 'dry-fruits-cereals',
+
+      // ── Snacks & Drinks ───────────────────────────────────────────────────
+      'snacks': 'snacks-drinks',
+      'snacks & drinks': 'snacks-drinks',
+      'chips & namkeen': 'chips-namkeen',
+      'instant foods': 'instant-foods',
+      'sauces & spreads': 'sauces-spreads',
+
+      // ── Ice Creams ────────────────────────────────────────────────────────
+      'ice creams': 'ice-creams-more-',
+      'ice cream': 'ice-creams-more-',
+      'ice creams & more': 'ice-creams-more-',
+
+      // ── Grocery ───────────────────────────────────────────────────────────
+      'grocery': 'grocery-kitchen',
+      'grocery & kitchen': 'grocery-kitchen',
+      'atta, rice & dal': 'atta-rice-dal',
+      'bakery & biscuits': 'bakery-biscuits-',
+
+      // ── Dairy ─────────────────────────────────────────────────────────────
+      'dairy': 'dairy-bread-eggs',
+      'dairy, bread & eggs': 'dairy-bread-eggs',
+      'dairy & breakfast': 'dairy-bread-eggs',
+
+      // ── Beverages ─────────────────────────────────────────────────────────
+      'drinks & juices': 'drinks-juices',
+      'beverages': 'drinks-juices',
+      'tea, coffee & milk drinks': 'tea-coffee-milk-drinks',
+
+      // ── Beauty ────────────────────────────────────────────────────────────
+      'beauty & personal care': 'beauty-personal-care',
+      'beauty': 'beauty-personal-care',
+      'baby care': 'baby-care',
+
+      // ── Household ─────────────────────────────────────────────────────────
+      'household essentials': 'household-essentials',
+    };
+
+    if (_staticSlugMap.containsKey(t)) return _staticSlugMap[t];
+
+    // Fuzzy search: look in GlobalData categories tree
+    try {
+      final allCats = GlobalData.categoriesDrawerData?.data ?? [];
+      String? found;
+
+      void searchRecursive(List<dynamic> cats) {
+        for (var cat in cats) {
+          final catName = (cat.name?.toString() ?? cat['name']?.toString() ?? '').toLowerCase();
+          final catSlug = cat.slug?.toString() ?? cat['slug']?.toString() ?? '';
+          if (catName.isNotEmpty && (catName.contains(t) || t.contains(catName))) {
+            found = catSlug;
+            return;
+          }
+          final children = (cat.children as List?) ?? (cat['children'] as List?) ?? [];
+          if (children.isNotEmpty) searchRecursive(children);
+          if (found != null) return;
+        }
+      }
+
+      searchRecursive(allCats);
+      if (found != null && found!.isNotEmpty) return found;
+    } catch (_) {}
+
+    return null;
+  }
+
+  void _navigateToCategory(BuildContext context, String title) {
+    // 🟢 Priority 1: Custom FeaturedSectionSidebarScreen (hand-picked categories in sidebar)
+    if (FeaturedSectionConfig.hasConfig(title)) {
+      final entries = FeaturedSectionConfig.forTitle(title)!;
+      debugPrint("🟢 BlinkitFeaturedSections: Opening custom FeaturedSectionSidebarScreen for '$title'");
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => BlocProvider(
+            create: (_) => CategoryBloc(CategoriesRepo()),
+            child: FeaturedSectionSidebarScreen(
+              title: title,
+              sidebarEntries: entries,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // 🟡 Priority 2: Generic SidebarCategoryScreen (slug-based navigation)
+    final slug = _resolveSlugForTitle(title);
+    debugPrint("🟢 BlinkitFeaturedSections: See All '$title' → slug='$slug'");
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => BlocProvider(
+          create: (_) => CategoryBloc(CategoriesRepo()),
+          child: SidebarCategoryScreen(initialSlug: slug),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -128,20 +256,19 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
                    ],
                  ),
                ),
-               // Use NewProductView configured for a grid layout
+               // Product Cards Grid
                Padding(
                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
                  child: NewProductView(
                    model: products,
-                   title: "", // Title handled above
+                   title: "",
                    isLogin: widget.isLogin,
-                   useGrid: true, // Blinkit-like horizontal or standard grid
+                   useGrid: true,
                    onAddToCart: (id) {
                       if (id > 0) {
                         GlobalData.optimisticUpdateCart(id, 1);
                         widget.homePageBloc?.add(AddToCartEvent(id, 1, "Added"));
                       } else {
-                        // Decrement Logic
                         int pid = -id;
                         final cartMap = GlobalData.cartItemsController.value;
                         final info = cartMap[pid.toString()];
@@ -183,22 +310,12 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
                    },
                  ),
                ),
-               // See all products button (Blinkit style)
+               // 🟢 "See all products" button → Opens SidebarCategoryScreen
                Padding(
                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                  child: InkWell(
-                   onTap: () {
-                     Navigator.push(
-                       context,
-                       MaterialPageRoute(
-                         builder: (context) => FeaturedCategoryScreen(
-                           title: title,
-                           products: products,
-                           isLogin: widget.isLogin,
-                         ),
-                       ),
-                     );
-                   },
+                   borderRadius: BorderRadius.circular(8),
+                   onTap: () => _navigateToCategory(context, title),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 12),
