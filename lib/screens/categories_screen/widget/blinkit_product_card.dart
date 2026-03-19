@@ -34,7 +34,15 @@ class BlinkitProductCard extends StatelessWidget {
     String originalPrice = data?.priceHtml?.formattedRegularPrice ?? ""; 
 
     if (sellingPrice.isEmpty) {
-      sellingPrice = "₹${data?.price ?? '0'}";
+      double parsedPrice = double.tryParse(data?.price?.toString() ?? "0") ?? 0;
+      sellingPrice = "₹${parsedPrice.toStringAsFixed(2)}";
+    } else {
+      // API sometimes returns 4 decimals even in formatted strings, so enforce 2
+      sellingPrice = sellingPrice.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
+    }
+
+    if (originalPrice.isNotEmpty) {
+      originalPrice = originalPrice.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
     }
 
     bool hasDiscount = originalPrice.isNotEmpty && 

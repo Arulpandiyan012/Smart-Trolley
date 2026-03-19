@@ -1,47 +1,40 @@
-/*
- *   Webkul Software.
- *   @package Mobikul Application Code.
- *   @Category Mobikul
- *   @author Webkul <support@webkul.com>
- *   @Copyright (c) Webkul Software Private Limited (https://webkul.com)
- *   @license https://store.webkul.com/license.html
- *   @link https://store.webkul.com/license.html
- */
-
-
-
-
-import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import 'package:bagisto_app_demo/screens/search_screen/utils/index.dart';
-
-import '../../../../widgets/blinkit_product_card.dart';
-import '../../../../utils/prefetching_helper.dart';
+import '../../../../widgets/blinkit_vertical_product_card.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/index.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 
 class ProductList extends StatelessWidget {
   final NewProductsModel? model;
-  const ProductList({Key? key,required this.model}) : super(key: key);
+  const ProductList({Key? key, required this.model}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: model?.data?.length ?? 0,
-        itemBuilder: (BuildContext context, int index) {
-          NewProducts? product = model?.data?[index];
+    final items = model?.data ?? [];
+    if (items.isEmpty) return const SizedBox();
 
-          return BlinkitProductCard(
-            data: product,
-            isLoggedIn: appStoragePref.getCustomerLoggedIn(),
-            onAddToCart: (productId, quantity) {
-               context.read<HomePageBloc>().add(AddToCartEvent(
-                 productId, 1, "Added"
-               ));
-            },
-          );
-        });
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 0.58,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final product = items[index];
+        return BlinkitVerticalProductCard(
+          data: product,
+          isLoggedIn: appStoragePref.getCustomerLoggedIn(),
+          onAddToCart: (id) {
+            if (id > 0) {
+              context.read<HomePageBloc>().add(AddToCartEvent(id, 1, "Added"));
+            }
+          },
+        );
+      },
+    );
   }
-
 }
