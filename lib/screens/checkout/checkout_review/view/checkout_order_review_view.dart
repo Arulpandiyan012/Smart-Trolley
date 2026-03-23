@@ -128,7 +128,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
                         ],
                       ),
                     ),
-                    Text(item.formattedPrice?.price ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(_formatPrice(item.formattedPrice?.price ?? ""), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   ],
                 ),
               );
@@ -219,7 +219,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("To Pay", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                    Text(cart?.formattedPrice?.grandTotal ?? "", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(_formatPrice(cart?.formattedPrice?.grandTotal ?? ""), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   ],
                 )
               ],
@@ -258,16 +258,22 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
   }
 
   Widget _buildRow(String label, String value, {bool isGreen = false}) {
+    String cleanValue = _formatPrice(value);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(color: Colors.grey[700], fontSize: 13)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isGreen ? const Color(0xFF27C16B) : Colors.black87)),
+          Text(cleanValue, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isGreen ? const Color(0xFF27C16B) : Colors.black87)),
         ],
       ),
     );
+  }
+
+  String _formatPrice(String price) {
+    if (price.isEmpty) return price;
+    return price.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
   }
 
   reload(){

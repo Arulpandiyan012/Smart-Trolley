@@ -22,6 +22,55 @@ class BlinkitProductCard extends StatelessWidget {
     this.onAddToCart, 
   }) : super(key: key);
 
+  bool _isOutOfStock(dynamic p) {
+      if (p == null) return true;
+      try { if ((p as dynamic).isSaleable == false) return true; } catch (_) {}
+      
+      int stock = _getProductStock(p);
+      bool hasData = false;
+      try {
+          if ((p as dynamic).inventories is List && (p as dynamic).inventories.isNotEmpty) hasData = true;
+          if ((p as dynamic).totalQty != null) hasData = true;
+          if ((p as dynamic).quantity != null) hasData = true;
+      } catch (_) {}
+
+      if (hasData && stock <= 0) return true;
+      
+      return false;
+  }
+
+  int _getProductStock(dynamic p) {
+      if (p == null) return 0;
+      try {
+          // 1. Try inventories sum
+          if ((p as dynamic).inventories is List && (p as dynamic).inventories.isNotEmpty) {
+              int total = 0;
+              for (var i in (p as dynamic).inventories) {
+                  var q = (i as dynamic).qty;
+                  if (q != null) {
+                      total += int.tryParse(q.toString()) ?? 0;
+                  }
+              }
+              return total;
+          }
+          
+          // 2. Fallback to totalQty
+          var tq = (p as dynamic).totalQty;
+          if (tq != null) {
+            int? val = int.tryParse(tq.toString());
+            if (val != null) return val;
+          }
+          
+          // 3. Fallback to quantity
+          var q = (p as dynamic).quantity;
+          if (q != null) {
+            int? val = int.tryParse(q.toString());
+            if (val != null) return val;
+          }
+      } catch (_) {}
+      return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,6 +116,8 @@ class BlinkitProductCard extends StatelessWidget {
           cartItemId = info['cartItemId']?.toString();
         }
 
+        bool outOfStock = _isOutOfStock(data);
+
         return InkWell(
           onTap: () {
             Navigator.pushNamed(
@@ -95,9 +146,7 @@ class BlinkitProductCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ==============================
                 // 1. TOP: IMAGE & ICONS
-                // ==============================
                 Expanded(
                   flex: 5,
                   child: Stack(
@@ -106,7 +155,31 @@ class BlinkitProductCard extends StatelessWidget {
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
-                          child: ImageView(url: imageUrl, fit: BoxFit.contain),
+                          child: Builder(
+                            builder: (context) {
+                              return Opacity(
+                                opacity: outOfStock ? 0.6 : 1.0,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    ImageView(url: imageUrl, fit: BoxFit.contain),
+                                    if (outOfStock)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          "OUT OF STOCK", 
+                                          style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            }
+                          ),
                         ),
                       ),
                       
@@ -157,15 +230,45 @@ class BlinkitProductCard extends StatelessWidget {
                         child: SizedBox(
                           width: 48, 
                           height: 20, 
-                          child: SmartAddButton(
+                          child: outOfStock
+                            ? Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                               decoration: BoxDecoration(
+                                 color: Colors.grey[100],
+                                 borderRadius: BorderRadius.circular(8),
+                                 border: Border.all(color: Colors.grey[300]!),
+                               ),
+                               child: Center(
+                                 child: Text(
+                                   "OOS", 
+                                   style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.bold, fontSize: 9)
+                                 ),
+                               ),
+                             )
+                            : SmartAddButton(
                             qty: currentQty,
                             isLoading: false,
                             onAdd: () {
                               if (isLoggedIn) {
-                                if (data?.type == "simple" || data?.type == "virtual") {
-                                  if (onAddToCart != null) onAddToCart!(int.tryParse(data?.id ?? "0") ?? 0, 1);
+                                int stock = _getProductStock(data);
+                                bool isSaleable = true;
+                                try { if ((data as dynamic).isSaleable == false) isSaleable = false; } catch (_) {}
+                                
+                                bool block = !isSaleable;
+                                try {
+                                  if (data?.inventories != null && data!.inventories!.isNotEmpty) {
+                                    if (stock <= 0) block = true;
+                                  }
+                                } catch (_) {}
+
+                                if (!block) {
+                                  if (data?.type == "simple" || data?.type == "virtual") {
+                                    if (onAddToCart != null) onAddToCart!(int.tryParse(data?.id ?? "0") ?? 0, 1);
+                                  } else {
+                                    ShowMessage.warningNotification("Select Options", context);
+                                  }
                                 } else {
-                                  ShowMessage.warningNotification("Select Options", context);
+                                  ShowMessage.warningNotification("Out of Stock", context);
                                 }
                               } else {
                                 ShowMessage.warningNotification(StringConstants.pleaseLogin.localized(), context);
@@ -173,10 +276,18 @@ class BlinkitProductCard extends StatelessWidget {
                             },
                             onIncrease: () {
                               if (cartItemId != null) {
-                                GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, 1);
-                                context.read<CartScreenBloc>().add(UpdateCartEvent(
-                                  [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
-                                ));
+                                int stock = _getProductStock(data);
+                                bool hasInventory = false;
+                                try { hasInventory = (data?.inventories != null && data!.inventories!.isNotEmpty); } catch (_) {}
+
+                                if (!hasInventory || currentQty < stock) {
+                                    GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, 1);
+                                    context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                      [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
+                                    ));
+                                } else {
+                                    ShowMessage.warningNotification("Limited Stock: Only $stock items available", context);
+                                }
                               }
                             },
                             onDecrease: () {
@@ -200,9 +311,7 @@ class BlinkitProductCard extends StatelessWidget {
                   ),
                 ),
 
-                // ==============================
                 // 2. BOTTOM: DETAILS
-                // ==============================
                 Expanded(
                   flex: 6,
                   child: Padding(
@@ -225,31 +334,90 @@ class BlinkitProductCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          const SizedBox(height: 6),
-
-                          // Name
+                          const SizedBox(height: 2),
                           Text(
                             data?.name ?? "",
                             maxLines: 2, 
                             overflow: TextOverflow.ellipsis, 
                             style: TextStyle(
                               fontWeight: FontWeight.w600, 
-                              fontSize: 10,  // Reduced from 12
+                              fontSize: 10,  
                               height: 1.1,
-                              color: theme.textTheme.titleSmall?.color ?? (isDark ? Colors.white : Colors.black87)
                             )
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
 
-                          // Unit
                           Text(
                             "1 Unit", 
-                            style: TextStyle(color: theme.textTheme.bodySmall?.color ?? (isDark ? Colors.white70 : Colors.grey[500]), fontSize: 9, fontWeight: FontWeight.w500) // Reduced from 10
+                            style: TextStyle(color: theme.textTheme.bodySmall?.color ?? (isDark ? Colors.white70 : Colors.grey[500]), fontSize: 9, fontWeight: FontWeight.w500) 
+                          ),
+                          
+                          const SizedBox(height: 2),
+
+                          Builder(
+                            builder: (context) {
+                              double rating = 0.0;
+                              try {
+                                var r = (data as dynamic).averageRating ?? 
+                                        (data as dynamic).rating ?? 
+                                        (data as dynamic).avg_rating ?? 
+                                        (data as dynamic).average_rating;
+                                if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
+                                
+                                var reviews = (data as dynamic).reviews;
+                                if (reviews is List && rating == 0 && reviews.isNotEmpty) {
+                                  double totalObj = 0;
+                                  for (var r in reviews) {
+                                    var val = (r as dynamic).rating;
+                                    if (val != null) totalObj += double.tryParse(val.toString()) ?? 0;
+                                  }
+                                  rating = totalObj / reviews.length;
+                                }
+                              } catch (_) {}
+                              int reviewCount = 0;
+                              try {
+                                var reviews = (data as dynamic).reviews;
+                                if (reviews is List) reviewCount = reviews.length;
+                              } catch (_) {}
+                              return Row(
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(5, (index) {
+                                      return Icon(
+                                        index < rating.round() ? Icons.star : Icons.star_border,
+                                        size: 10,
+                                        color: index < rating.round() ? Colors.amber : (isDark ? Colors.white24 : Colors.grey[300]),
+                                      );
+                                    }),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  if (reviewCount > 0)
+                                    Text(
+                                      "($reviewCount)",
+                                      style: TextStyle(fontSize: 8, color: theme.textTheme.bodySmall?.color, fontWeight: FontWeight.w500),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                           
                           const Spacer(),
 
-                          // Price & Add Button Row
+                          Builder(builder: (context) {
+                            int stock = _getProductStock(data);
+                            if (stock > 0 && stock <= 5) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Text(
+                                  "Only $stock left", 
+                                  style: const TextStyle(color: Colors.red, fontSize: 8.5, fontWeight: FontWeight.bold)
+                                ),
+                              );
+                            }
+                            return const SizedBox();
+                          }),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -260,19 +428,11 @@ class BlinkitProductCard extends StatelessWidget {
                                   if (hasDiscount)
                                     Text(
                                       originalPrice, 
-                                      style: const TextStyle(
-                                        decoration: TextDecoration.lineThrough,
-                                        color: Colors.grey,
-                                        fontSize: 9,
-                                      )
+                                      style: const TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey, fontSize: 9)
                                     ),
                                   Text(
                                     sellingPrice, 
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800, 
-                                      fontSize: 12, 
-                                      color: isDark ? const Color(0xFF27C16B) : const Color(0xFF1B5E20)
-                                    )
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: isDark ? const Color(0xFF27C16B) : const Color(0xFF1B5E20))
                                   ),
                                 ],
                               ),

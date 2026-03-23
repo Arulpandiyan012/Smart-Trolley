@@ -142,7 +142,7 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          data?.formattedPrice?.grandTotal ?? "₹0.00",
+                          _formatPrice(data?.formattedPrice?.grandTotal ?? "₹0.00"),
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
@@ -181,6 +181,12 @@ class OrdersListTile extends StatelessWidget with OrderStatusBGColorHelper {
         ),
       ),
     );
+  }
+
+  // 🟢 HELPER: Enforce 2 decimal places (Handles ₹140.0000 -> ₹140.00)
+  String _formatPrice(String price) {
+    if (price.isEmpty) return price;
+    return price.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
   }
 
   // 🟢 HELPER: Stronger Date Parsing
