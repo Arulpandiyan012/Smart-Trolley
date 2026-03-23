@@ -14,6 +14,8 @@ import 'package:bagisto_app_demo/screens/categories_screen/sidebar_category_scre
 import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_bloc.dart';
 import 'package:bagisto_app_demo/screens/categories_screen/bloc/categories_repository.dart';
 import 'package:bagisto_app_demo/screens/home_page/widget/featured_section_sidebar_screen.dart';
+import 'package:bagisto_app_demo/screens/home_page/widget/featured_category_screen.dart';
+import 'package:bagisto_app_demo/screens/home_page/bloc/home_page_repository.dart';
 
 class BlinkitFeaturedSections extends StatefulWidget {
   final bool isLogin;
@@ -180,7 +182,7 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
     return null;
   }
 
-  void _navigateToCategory(BuildContext context, String title) {
+  void _navigateToCategory(BuildContext context, String title, List<NewProducts> products) {
     // 🟢 Priority 1: Custom FeaturedSectionSidebarScreen (hand-picked categories in sidebar)
     if (FeaturedSectionConfig.hasConfig(title)) {
       final entries = FeaturedSectionConfig.forTitle(title)!;
@@ -199,14 +201,17 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
       return;
     }
 
-    // 🟡 Priority 2: Generic SidebarCategoryScreen (slug-based navigation)
-    final slug = _resolveSlugForTitle(title);
-    debugPrint("🟢 BlinkitFeaturedSections: See All '$title' → slug='$slug'");
+    // 🟡 Priority 2: Generic FeaturedCategoryScreen (original grid layout)
+    debugPrint("🟢 BlinkitFeaturedSections: See All '$title' → FeaturedCategoryScreen");
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (ctx) => BlocProvider(
-          create: (_) => CategoryBloc(CategoriesRepo()),
-          child: SidebarCategoryScreen(initialSlug: slug),
+          create: (_) => HomePageBloc(HomePageRepositoryImp()),
+          child: FeaturedCategoryScreen(
+            title: title,
+            products: products,
+            isLogin: widget.isLogin,
+          ),
         ),
       ),
     );
@@ -315,7 +320,7 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                  child: InkWell(
                    borderRadius: BorderRadius.circular(8),
-                   onTap: () => _navigateToCategory(context, title),
+                   onTap: () => _navigateToCategory(context, title, products),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 12),
