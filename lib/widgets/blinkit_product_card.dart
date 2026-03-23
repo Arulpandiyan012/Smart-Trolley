@@ -34,21 +34,25 @@ class BlinkitProductCard extends StatelessWidget {
       imageUrl = data?.imageUrl ?? "";
     }
 
-    // Price Logic
-    String sellingPrice = data?.priceHtml?.formattedFinalPrice ?? "";
-    String originalPrice = data?.priceHtml?.formattedRegularPrice ?? ""; 
-
-    if (sellingPrice.isEmpty) {
-      double parsedPrice = double.tryParse(data?.price?.toString() ?? "0") ?? 0;
-      sellingPrice = "₹${parsedPrice.toStringAsFixed(2)}";
-    } else {
-      // API sometimes returns 4 decimals even in formatted strings, so enforce 2
-      sellingPrice = sellingPrice.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
+    String formatPrice(String? raw, dynamic fallbackP) {
+      String? srcStr = raw;
+      if (srcStr == null || srcStr.isEmpty) {
+        if (fallbackP != null) srcStr = fallbackP.toString();
+      }
+      if (srcStr == null || srcStr.isEmpty) return "";
+      
+      final cleanStr = srcStr.replaceAll(RegExp(r'[^0-9.]'), '');
+      if (cleanStr.isNotEmpty) {
+        final parsed = double.tryParse(cleanStr);
+        if (parsed != null) {
+          return "₹${parsed.toStringAsFixed(2)}";
+        }
+      }
+      return srcStr; // fallback
     }
 
-    if (originalPrice.isNotEmpty) {
-      originalPrice = originalPrice.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
-    }
+    String sellingPrice = formatPrice(data?.priceHtml?.formattedFinalPrice, data?.price);
+    String originalPrice = formatPrice(data?.priceHtml?.formattedRegularPrice, null);
 
     bool hasDiscount = originalPrice.isNotEmpty && 
                        originalPrice != sellingPrice && 

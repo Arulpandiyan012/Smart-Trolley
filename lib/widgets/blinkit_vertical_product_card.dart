@@ -64,21 +64,43 @@ class BlinkitVerticalProductCard extends StatelessWidget {
   }
 
   String _productPrice(dynamic p) {
-     dynamic ph;
-     try { ph = (p as dynamic).priceHtml; } catch (_) {}
-     
-     String priceText = "";
-     try {
-       priceText = (ph as dynamic)?.formattedFinalPrice?.toString() ?? "";
-     } catch (_) {}
-     
-     final sym = "₹";
-     try {
-       final val = (p as dynamic).price;
-       if (val != null) return "$sym$val";
-     } catch (_) {}
-     
-     return "";
+    if (p == null) return "";
+    final sym = "₹";
+
+    try {
+      dynamic ph;
+      try { ph = p.priceHtml; } catch (_) {}
+      
+      String? rawStr;
+      
+      // Try formattedFinalPrice first
+      try {
+        final f = ph?.formattedFinalPrice?.toString();
+        if (f != null && f.isNotEmpty) rawStr = f;
+      } catch (_) {}
+
+      // Try price property if first failed
+      if (rawStr == null || rawStr.isEmpty) {
+        try {
+          final val = p.price;
+          if (val != null) rawStr = val.toString();
+        } catch (_) {}
+      }
+
+      if (rawStr != null && rawStr.isNotEmpty) {
+        // Strip out the symbol or commas if present to parse
+        final cleanStr = rawStr.replaceAll(RegExp(r'[^0-9.]'), '');
+        if (cleanStr.isNotEmpty) {
+          final parsed = double.tryParse(cleanStr);
+          if (parsed != null) {
+            return "$sym${parsed.toStringAsFixed(2)}";
+          }
+        }
+        return rawStr; // Fallback to raw string if parsing fails
+      }
+    } catch (_) {}
+    
+    return "";
   }
 
   bool _isOutOfStock(dynamic p) {
