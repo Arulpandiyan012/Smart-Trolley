@@ -72,17 +72,11 @@ class BlinkitVerticalProductCard extends StatelessWidget {
        priceText = (ph as dynamic)?.formattedFinalPrice?.toString() ?? "";
      } catch (_) {}
      
-     if (priceText.isEmpty) {
-       try {
-         final val = (p as dynamic).price;
-         if (val != null) priceText = "₹$val";
-       } catch (_) {}
-     }
-     
-     if (priceText.isNotEmpty) {
-        // Enforce 2 decimals if it's a numeric string with more (e.g. 100.0000 -> 100.00)
-        return priceText.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
-     }
+     final sym = "₹";
+     try {
+       final val = (p as dynamic).price;
+       if (val != null) return "$sym$val";
+     } catch (_) {}
      
      return "";
   }
