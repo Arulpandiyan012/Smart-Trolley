@@ -215,7 +215,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.58, 
+                    childAspectRatio: 0.55, 
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
                   ),
@@ -420,7 +420,7 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.58, 
+                              childAspectRatio: 0.55, 
                               crossAxisSpacing: 8,
                               mainAxisSpacing: 8,
                             ),

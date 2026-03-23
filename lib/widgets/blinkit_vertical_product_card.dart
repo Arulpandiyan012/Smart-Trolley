@@ -64,66 +64,79 @@ class BlinkitVerticalProductCard extends StatelessWidget {
   }
 
   String _productPrice(dynamic p) {
-    if (p == null) return "";
-    final sym = "₹";
+     dynamic ph;
+     try { ph = (p as dynamic).priceHtml; } catch (_) {}
+     
+     String priceText = "";
+     try {
+       priceText = (ph as dynamic)?.formattedFinalPrice?.toString() ?? "";
+       if (priceText.isNotEmpty) {
+         // API sometimes returns 4 decimals even in formatted strings, so enforce 2
+         priceText = priceText.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
+       }
+     } catch (_) {}
+     
+     if (priceText.isNotEmpty) return priceText;
 
-    try {
-      dynamic ph;
-      try { ph = p.priceHtml; } catch (_) {}
-      
-      String? rawStr;
-      
-      // Try formattedFinalPrice first
+     final sym = "₹";
+     try {
+       final val = (p as dynamic).price;
+       if (val != null) {
+          double parsed = double.tryParse(val.toString()) ?? 0;
+          return "$sym${parsed.toStringAsFixed(2)}";
+       }
+     } catch (_) {}
+     
+     return "";
+  }
+
+  int _getProductStock(dynamic p) {
+      if (p == null) return 0;
       try {
-        final f = ph?.formattedFinalPrice?.toString();
-        if (f != null && f.isNotEmpty) rawStr = f;
-      } catch (_) {}
-
-      // Try price property if first failed
-      if (rawStr == null || rawStr.isEmpty) {
-        try {
-          final val = p.price;
-          if (val != null) rawStr = val.toString();
-        } catch (_) {}
-      }
-
-      if (rawStr != null && rawStr.isNotEmpty) {
-        // Strip out the symbol or commas if present to parse
-        final cleanStr = rawStr.replaceAll(RegExp(r'[^0-9.]'), '');
-        if (cleanStr.isNotEmpty) {
-          final parsed = double.tryParse(cleanStr);
-          if (parsed != null) {
-            return "$sym${parsed.toStringAsFixed(2)}";
+          // 1. Try inventories sum
+          if ((p as dynamic).inventories is List && (p as dynamic).inventories.isNotEmpty) {
+              int total = 0;
+              for (var i in (p as dynamic).inventories) {
+                  var q = (i as dynamic).qty;
+                  if (q != null) {
+                      total += int.tryParse(q.toString()) ?? 0;
+                  }
+              }
+              return total;
           }
-        }
-        return rawStr; // Fallback to raw string if parsing fails
-      }
-    } catch (_) {}
-    
-    return "";
+          
+          // 2. Fallback to totalQty
+          var tq = (p as dynamic).totalQty;
+          if (tq != null) {
+            int? val = int.tryParse(tq.toString());
+            if (val != null) return val;
+          }
+          
+          // 3. Fallback to quantity
+          var q = (p as dynamic).quantity;
+          if (q != null) {
+            int? val = int.tryParse(q.toString());
+            if (val != null) return val;
+          }
+      } catch (_) {}
+      return 0;
   }
 
   bool _isOutOfStock(dynamic p) {
       if (p == null) return true;
       try { if ((p as dynamic).isSaleable == false) return true; } catch (_) {}
       
+      int stock = _getProductStock(p);
+      bool hasData = false;
       try {
-          // Check Inventories List to see actual qty
-          // Because 'isSaleable' might be true even if request quantity logic differs
-          if ((p as dynamic).inventories is List) {
-              int total = 0;
-              bool found = false;
-              for (var i in (p as dynamic).inventories) {
-                  if (i.qty != null) {
-                      total += (i.qty as int);
-                      found = true;
-                  }
-              }
-              if (found) return total <= 0;
-          }
+          if ((p as dynamic).inventories is List && (p as dynamic).inventories.isNotEmpty) hasData = true;
+          if ((p as dynamic).totalQty != null) hasData = true;
+          if ((p as dynamic).quantity != null) hasData = true;
       } catch (_) {}
+
+      if (hasData && stock <= 0) return true;
       
-      return false; 
+      return false;
   }
 
   @override
@@ -177,7 +190,32 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                   ),
                   child: (imageUrl != null && imageUrl.isNotEmpty)
-                      ? ImageView(url: imageUrl, fit: BoxFit.contain)
+                      ? Builder(
+                          builder: (context) {
+                            bool outOfStock = _isOutOfStock(data);
+                            return Opacity(
+                              opacity: outOfStock ? 0.6 : 1.0,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  ImageView(url: imageUrl, fit: BoxFit.contain),
+                                  if (outOfStock)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        "OUT OF STOCK", 
+                                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          }
+                        )
                       : const Icon(Icons.image, size: 40, color: Colors.grey),
                 ),
                 Positioned(
@@ -248,6 +286,24 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                         final int currentQty = itemInfo?['qty'] ?? 0;
                         final String? cartItemId = itemInfo?['cartItemId']?.toString();
 
+                        if (_isOutOfStock(data)) {
+                            return Container(
+                              height: 24,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.grey[300]!),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "OOS", 
+                                  style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.bold, fontSize: 9)
+                                ),
+                              ),
+                            );
+                        }
+
                         if (currentQty > 0) {
                           return Container(
                             height: 24,
@@ -274,20 +330,47 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                                   "$currentQty",
                                   style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold, fontSize: 10), // Green Text
                                 ),
-                                InkWell(
-                                  onTap: () => onAddToCart?.call(productId),
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 6),
-                                    child: Icon(Icons.add, color: Color(0xFF27C16B), size: 12), // Green Icon
-                                  ),
-                                ),
+                                 InkWell(
+                                   onTap: () {
+                                     int stock = _getProductStock(data);
+                                     bool hasInventory = false;
+                                     try { hasInventory = (data?.inventories != null && data!.inventories!.isNotEmpty); } catch (_) {}
+                                     
+                                     if (!hasInventory || currentQty < stock) {
+                                       onAddToCart?.call(productId);
+                                     } else {
+                                       ShowMessage.warningNotification("Only $stock items available", context);
+                                     }
+                                   },
+                                   child: const Padding(
+                                     padding: EdgeInsets.symmetric(horizontal: 6),
+                                     child: Icon(Icons.add, color: Color(0xFF27C16B), size: 12), // Green Icon
+                                   ),
+                                 ),
                               ],
                             ),
                           );
                         }
 
                         return InkWell(
-                          onTap: () => onAddToCart?.call(productId),
+                          onTap: () {
+                             int stock = _getProductStock(data);
+                             bool isSaleable = true;
+                             try { if ((data as dynamic).isSaleable == false) isSaleable = false; } catch (_) {}
+                             
+                             bool block = !isSaleable;
+                             try {
+                               if ((data as dynamic).inventories is List && (data as dynamic).inventories.isNotEmpty) {
+                                 if (stock <= 0) block = true;
+                               }
+                             } catch (_) {}
+
+                             if (!block) {
+                               onAddToCart?.call(productId);
+                             } else {
+                               ShowMessage.warningNotification("Out of Stock", context);
+                             }
+                          },
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
@@ -323,14 +406,23 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, height: 1.1, color: Theme.of(context).textTheme.titleSmall?.color),
                   ),
                   const SizedBox(height: 1),
-                  Text("1 Unit", style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 10)),
+                  Text(
+                    (data as dynamic).weight ?? (data as dynamic).unit ?? '1 Unit', 
+                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 9, fontWeight: FontWeight.normal)
+                  ),
+                  
                   const SizedBox(height: 2),
                   Builder(
                     builder: (context) {
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
                       double rating = 0.0;
                       try {
-                        var r = (data as dynamic).averageRating ?? (data as dynamic).rating;
+                        var r = (data as dynamic).averageRating ?? 
+                                (data as dynamic).rating ?? 
+                                (data as dynamic).avg_rating ?? 
+                                (data as dynamic).average_rating;
                         if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
+                        
                         var reviews = (data as dynamic).reviews;
                         if (reviews is List && rating == 0 && reviews.isNotEmpty) {
                           double totalObj = 0;
@@ -353,8 +445,8 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                             children: List.generate(5, (index) {
                               return Icon(
                                 index < rating.round() ? Icons.star : Icons.star_border,
-                                size: 10,
-                                color: index < rating.round() ? Colors.amber : Theme.of(context).dividerColor,
+                                size: 10, // Slightly smaller for space
+                                color: index < rating.round() ? Colors.amber : (isDark ? Colors.white24 : Colors.grey[300]),
                               );
                             }),
                           ),
@@ -368,32 +460,49 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                       );
                     },
                   ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 1, bottom: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1), 
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 2),
+                  
+                  // Low Stock / Timer Row
+                  Builder(builder: (context) {
+                    int stock = _getProductStock(data);
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.timer_outlined, size: 10, color: Theme.of(context).textTheme.bodySmall?.color),
-                        const SizedBox(width: 4),
-                        Text("12 MINS", style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Theme.of(context).textTheme.bodySmall?.color)),
+                        if (stock > 0 && stock <= 5)
+                          Text("Only $stock left", style: const TextStyle(color: Colors.red, fontSize: 8, fontWeight: FontWeight.bold))
+                        else
+                          const SizedBox(),
+                        
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).dividerColor.withOpacity(0.05), 
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.timer_outlined, size: 8, color: Theme.of(context).textTheme.bodySmall?.color),
+                              const SizedBox(width: 2),
+                              Text("12 MINS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodySmall?.color)),
+                            ],
+                          ),
+                        ),
                       ],
-                    ),
-                  ),
+                    );
+                  }),
+
+                  const Spacer(),
                   Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
                           text: "₹",
-                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color),
+                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).textTheme.titleSmall?.color),
                         ),
                         TextSpan(
                           text: priceText.replaceAll("₹", "").trim(),
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.titleSmall?.color),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.titleSmall?.color),
                         ),
                       ],
                     ),

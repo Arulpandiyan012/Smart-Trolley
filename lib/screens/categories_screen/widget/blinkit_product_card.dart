@@ -22,6 +22,55 @@ class BlinkitProductCard extends StatelessWidget {
     this.onAddToCart, 
   }) : super(key: key);
 
+  int _getProductStock(dynamic p) {
+      if (p == null) return 0;
+      try {
+          // 1. Try inventories sum
+          if ((p as dynamic).inventories is List && (p as dynamic).inventories.isNotEmpty) {
+              int total = 0;
+              for (var i in (p as dynamic).inventories) {
+                  var q = (i as dynamic).qty;
+                  if (q != null) {
+                      total += int.tryParse(q.toString()) ?? 0;
+                  }
+              }
+              return total;
+          }
+          
+          // 2. Fallback to totalQty
+          var tq = (p as dynamic).totalQty;
+          if (tq != null) {
+            int? val = int.tryParse(tq.toString());
+            if (val != null) return val;
+          }
+          
+          // 3. Fallback to quantity
+          var q = (p as dynamic).quantity;
+          if (q != null) {
+            int? val = int.tryParse(q.toString());
+            if (val != null) return val;
+          }
+      } catch (_) {}
+      return 0;
+  }
+
+  bool _isOutOfStock(dynamic p) {
+      if (p == null) return true;
+      try { if ((p as dynamic).isSaleable == false) return true; } catch (_) {}
+      
+      int stock = _getProductStock(p);
+      bool hasData = false;
+      try {
+          if ((p as dynamic).inventories is List && (p as dynamic).inventories.isNotEmpty) hasData = true;
+          if ((p as dynamic).totalQty != null) hasData = true;
+          if ((p as dynamic).quantity != null) hasData = true;
+      } catch (_) {}
+
+      if (hasData && stock <= 0) return true;
+      
+      return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     String imageUrl = "";
@@ -111,7 +160,32 @@ class BlinkitProductCard extends StatelessWidget {
                             child: SizedBox(
                               height: 85, 
                               width: 85,
-                              child: ImageView(url: imageUrl, fit: BoxFit.contain),
+                              child: Builder(
+                                builder: (context) {
+                                  bool outOfStock = _isOutOfStock(data);
+                                  return Opacity(
+                                    opacity: outOfStock ? 0.6 : 1.0,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        ImageView(url: imageUrl, fit: BoxFit.contain),
+                                        if (outOfStock)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(0.6),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Text(
+                                              "OUT OF STOCK", 
+                                              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              ),
                             ),
                           ),
                           
@@ -188,99 +262,219 @@ class BlinkitProductCard extends StatelessWidget {
                               style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)
                             ),
                             
-                            const SizedBox(height: 6), // 🟢 Price now directly under unit
+                            const SizedBox(height: 4), 
 
-                            // 🟢 PRICE SECTION (Modern Vertical Stack)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (hasDiscount)
-                                  Text(
-                                    originalPrice, 
-                                    style: const TextStyle(
-                                      decoration: TextDecoration.lineThrough,
-                                      color: Colors.grey,
-                                      fontSize: 10,
-                                    )
-                                  ),
-                                  
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: "₹",
-                                        style: TextStyle(
-                                          fontFamily: 'Roboto', 
-                                          fontWeight: FontWeight.w800, 
-                                          fontSize: 14, 
-                                          color: const Color(0xFF1B5E20)
-                                        ),
+                            Builder(
+                              builder: (context) {
+                                double rating = 0.0;
+                                try {
+                                    var r = (data as dynamic).averageRating ?? 
+                                            (data as dynamic).rating ?? 
+                                            (data as dynamic).avg_rating ?? 
+                                            (data as dynamic).average_rating;
+                                    if (r != null) rating = double.tryParse(r.toString()) ?? 0.0;
+                                    
+                                    var reviews = (data as dynamic).reviews;
+                                    if (reviews is List && rating == 0 && reviews.isNotEmpty) {
+                                      double totalObj = 0;
+                                      for (var r in reviews) {
+                                        var val = (r as dynamic).rating;
+                                        if (val != null) totalObj += double.tryParse(val.toString()) ?? 0;
+                                      }
+                                      rating = totalObj / reviews.length;
+                                    }
+                                  } catch (_) {}
+                                  int reviewCount = 0;
+                                  try {
+                                    var reviews = (data as dynamic).reviews;
+                                    if (reviews is List) reviewCount = reviews.length;
+                                  } catch (_) {}
+                                return Row(
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: List.generate(5, (index) {
+                                        return Icon(
+                                          index < rating.round() ? Icons.star : Icons.star_border,
+                                          size: 11,
+                                          color: index < rating.round() ? Colors.amber : Colors.grey[300],
+                                        );
+                                      }),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    if (reviewCount > 0)
+                                      Text(
+                                        "($reviewCount)",
+                                        style: TextStyle(fontSize: 9, color: Colors.grey[500], fontWeight: FontWeight.w500),
                                       ),
-                                      TextSpan(
-                                        text: sellingPrice.replaceAll("₹", "").trim(), 
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900, 
-                                          fontSize: 17, // 🟢 Bold and Clear
-                                          color: Color(0xFF1B5E20)
-                                        )
-                                      ),
-                                    ],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                  ],
+                                );
+                              },
                             ),
-                            
+
+                            const SizedBox(height: 4), 
+
                             const Spacer(), 
 
-                            // 🟢 BOTTOM ROW (ADD BUTTON MOVED HERE)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                SizedBox(
-                                  width: 72, 
-                                  height: 32, 
-                                  child: SmartAddButton(
-                                    qty: currentQty,
-                                    isLoading: false,
-                                    onAdd: () {
-                                      if (isLoggedIn) {
-                                        if (data?.type == "simple" || data?.type == "virtual") {
-                                          if (onAddToCart != null) {
-                                            onAddToCart!(int.tryParse(data?.id ?? "0") ?? 0, 1);
-                                          }
-                                        } else {
-                                          ShowMessage.warningNotification("Select Options", context);
-                                        }
-                                      } else {
-                                        ShowMessage.warningNotification(StringConstants.pleaseLogin.localized(), context);
-                                      }
-                                    },
-                                    onIncrease: () {
-                                      if (cartItemId != null) {
-                                        context.read<CartScreenBloc>().add(UpdateCartEvent(
-                                          [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
-                                        ));
-                                      }
-                                    },
-                                    onDecrease: () {
-                                      if (cartItemId != null) {
-                                        if (currentQty > 1) {
-                                          context.read<CartScreenBloc>().add(UpdateCartEvent(
-                                            [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
-                                          ));
-                                        } else {
-                                           context.read<CartScreenBloc>().add(RemoveCartItemEvent(
-                                             cartItemId: int.tryParse(cartItemId ?? "") ?? 0
-                                           ));
-                                        }
-                                      }
-                                    },
-                                  ),
-                                )
-                              ],
-                            ),
+                             // 🟢 LOW STOCK INDICATOR (Moved here, above Price)
+                             Builder(builder: (context) {
+                               int stock = _getProductStock(data);
+                               if (stock > 0 && stock <= 5) {
+                                 return Padding(
+                                   padding: const EdgeInsets.only(bottom: 2),
+                                   child: Text(
+                                     "Only $stock left", 
+                                     style: const TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)
+                                   ),
+                                 );
+                               }
+                               return const SizedBox();
+                             }),
+
+                             // 🟢 BOTTOM ROW (ADD BUTTON MOVED HERE)
+                             Builder(
+                               builder: (context) {
+                                  bool outOfStock = _isOutOfStock(data);
+                                  if (outOfStock) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: Colors.grey[200]!),
+                                        ),
+                                        child: Text(
+                                          "OUT OF STOCK", 
+                                          style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w800, fontSize: 11)
+                                        ),
+                                      );
+                                  }
+                                  
+                                  return Row(
+                                    children: [
+                                      // 🟢 PRICE SECTION (Modern Vertical Stack)
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (hasDiscount)
+                                            Text(
+                                              originalPrice, 
+                                              style: const TextStyle(
+                                                decoration: TextDecoration.lineThrough,
+                                                color: Colors.grey,
+                                                fontSize: 10,
+                                              )
+                                            ),
+                                            
+                                          Text.rich(
+                                            TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: "₹",
+                                                  style: TextStyle(
+                                                    fontFamily: 'Roboto', 
+                                                    fontWeight: FontWeight.w800, 
+                                                    fontSize: 14, 
+                                                    color: const Color(0xFF1B5E20)
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: sellingPrice.replaceAll("₹", "").trim(), 
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w900, 
+                                                    fontSize: 17, // 🟢 Bold and Clear
+                                                    color: Color(0xFF1B5E20)
+                                                  )
+                                                ),
+                                              ],
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+
+                                      const Spacer(),
+
+                                      // 🟢 Modern Circular ADD Button
+                                      SizedBox(
+                                        width: 85, // 🟢 Fixed Width for "ADD" buttons
+                                        height: 34,
+                                        child: SmartAddButton(
+                                          qty: currentQty,
+                                          isLoading: false,
+                                          onAdd: () {
+                                            if (isLoggedIn) {
+                                              int stock = _getProductStock(data);
+                                              bool isSaleable = true;
+                                              try { if ((data as dynamic).isSaleable == false) isSaleable = false; } catch (_) {}
+                                              
+                                              bool block = !isSaleable;
+                                              try {
+                                                if ((data as dynamic).inventories is List && (data as dynamic).inventories.isNotEmpty) {
+                                                  if (stock <= 0) block = true;
+                                                }
+                                              } catch (_) {}
+
+                                              if (!block) {
+                                                if (data?.type == 'configurable') {
+                                                  Navigator.pushNamed(context, productScreen, arguments: PassProductData(
+                                                    title: data?.name ?? "",
+                                                    urlKey: data?.urlKey,
+                                                    productId: int.tryParse(data?.id ?? "0"),
+                                                  ));
+                                                  } else {
+                                                    int pId = int.tryParse(data?.id ?? "0") ?? 0;
+                                                    if (onAddToCart != null) {
+                                                      onAddToCart!(pId, 1);
+                                                    } else if (subCategoryBloc != null) {
+                                                      GlobalData.optimisticUpdateCart(pId, 1);
+                                                      subCategoryBloc?.add(AddToCartSubCategoryEvent(pId, 1));
+                                                    }
+                                                  }
+                                              } else {
+                                                ShowMessage.warningNotification("Out of Stock", context);
+                                              }
+                                            } else {
+                                              ShowMessage.warningNotification(StringConstants.pleaseLogin.localized(), context);
+                                            }
+                                          },
+                                          onDecrease: () {
+                                            if (cartItemId != null) {
+                                              GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, -1);
+                                              if (currentQty > 1) {
+                                                context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                                  [{'cartItemId': cartItemId, 'quantity': (currentQty - 1).toString()}]
+                                                ));
+                                              } else {
+                                                context.read<CartScreenBloc>().add(RemoveCartItemEvent(
+                                                  cartItemId: int.tryParse(cartItemId ?? "") ?? 0
+                                                ));
+                                              }
+                                            }
+                                          },
+                                          onIncrease: () {
+                                            if (cartItemId != null) {
+                                              int stock = _getProductStock(data);
+                                              bool hasInventory = false;
+                                              try { hasInventory = (data?.inventories != null && data!.inventories!.isNotEmpty); } catch (_) {}
+
+                                              if (!hasInventory || currentQty < stock) {
+                                                GlobalData.optimisticUpdateCart(int.tryParse(data?.id ?? "0") ?? 0, 1);
+                                                context.read<CartScreenBloc>().add(UpdateCartEvent(
+                                                  [{'cartItemId': cartItemId, 'quantity': (currentQty + 1).toString()}]
+                                                ));
+                                              } else {
+                                                ShowMessage.warningNotification("Limited Stock: Only $stock items available", context);
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                               }
+                             ),
                           ],
                         ),
                       ),
