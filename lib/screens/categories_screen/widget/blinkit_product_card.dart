@@ -71,6 +71,29 @@ class BlinkitProductCard extends StatelessWidget {
       return false;
   }
 
+  String _productUnit(dynamic p) {
+    if (p == null) return "1 Unit";
+    try {
+      if (p.productFlats is List && (p.productFlats as List).isNotEmpty) {
+        final pf = (p.productFlats as List).first;
+        try {
+          final w = (pf as dynamic).weight;
+          if (w != null && w.toString().isNotEmpty) return w.toString();
+        } catch (_) {}
+      }
+      if (p.additionalData is List && (p.additionalData as List).isNotEmpty) {
+        for (var d in (p.additionalData as List)) {
+          try {
+            if (d.code == 'weight' || d.code == 'unit') {
+              if (d.value != null && d.value.toString().isNotEmpty) return d.value.toString();
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+    return "1 Unit";
+  }
+
   @override
   Widget build(BuildContext context) {
     String imageUrl = "";
@@ -257,10 +280,10 @@ class BlinkitProductCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             
                             // Unit
-                            Text(
-                              "1 Unit", 
-                              style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)
-                            ),
+                             Text(
+                               _productUnit(data), 
+                               style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)
+                             ),
                             
                             const SizedBox(height: 4), 
 
