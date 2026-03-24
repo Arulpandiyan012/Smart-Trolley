@@ -12,6 +12,8 @@ import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_bloc.dart'
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_event.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_state.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:bagisto_app_demo/widgets/floating_cart_bar.dart'; 
+
 import 'package:bagisto_app_demo/screens/filter_screen/utils/index.dart' hide FilterFetchState;
 
 class SubCategorySidebarScreen extends StatefulWidget {
@@ -170,71 +172,78 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
             elevation: 0.5,
             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
           ),
-          body: BlocConsumer<CategoryBloc, CategoriesBaseState>(
-             listener: (context, state) {
-                if (state is FilterFetchState) {
-                    _filterData = state.filterModel;
-                    // 🟢 ALWAYS try to fetch products even if filters fail/error
-                    _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
-                }
-                if (state is FetchSubCategoryState) {
-                    if (state.status == CategoriesStatus.success) {
-                      setState(() {
-                        _isLoading = false;
-                        if (_page == 1) {
-                          _productsData = state.categoriesData;
-                        } else {
-                          _productsData?.data?.addAll(state.categoriesData?.data ?? []);
-                        }
-                      });
-                    } else {
-                       // 🔴 ERROR Handle
-                       debugPrint("❌ FetchSubCategoryState Failed: ${state.error}");
-                       setState(() => _isLoading = false);
+          body: Stack(
+            children: [
+              BlocConsumer<CategoryBloc, CategoriesBaseState>(
+                 listener: (context, state) {
+                    if (state is FilterFetchState) {
+                        _filterData = state.filterModel;
+                        // 🟢 ALWAYS try to fetch products even if filters fail/error
+                        _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
                     }
-                }
-                if (state is AddToCartSubCategoriesState) {
-                   if (state.status == CategoriesStatus.success) {
-                       context.read<CartScreenBloc>().add(FetchCartDataEvent());
-                       GlobalData.cartUpdateStream.add(null);
-                       ShowMessage.successNotification(state.successMsg ?? "Added", context);
-                   }
-                }
-             },
-             builder: (context, state) {
-                if (_isLoading && _page == 1) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)));
-                }
+                    if (state is FetchSubCategoryState) {
+                        if (state.status == CategoriesStatus.success) {
+                          setState(() {
+                            _isLoading = false;
+                            if (_page == 1) {
+                              _productsData = state.categoriesData;
+                            } else {
+                              _productsData?.data?.addAll(state.categoriesData?.data ?? []);
+                            }
+                          });
+                        } else {
+                           // 🔴 ERROR Handle
+                           debugPrint("❌ FetchSubCategoryState Failed: ${state.error}");
+                           setState(() => _isLoading = false);
+                        }
+                    }
+                    if (state is AddToCartSubCategoriesState) {
+                       if (state.status == CategoriesStatus.success) {
+                           context.read<CartScreenBloc>().add(FetchCartDataEvent());
+                           GlobalData.cartUpdateStream.add(null);
+                           ShowMessage.successNotification(state.successMsg ?? "Added", context);
+                       }
+                    }
+                 },
+                 builder: (context, state) {
+                    if (_isLoading && _page == 1) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)));
+                    }
 
-                if (_productsData?.data == null || _productsData!.data!.isEmpty) {
-                   return Center(child: Text("No products found", style: TextStyle(color: Colors.grey[400])));
-                }
+                    if (_productsData?.data == null || _productsData!.data!.isEmpty) {
+                       return Center(child: Text("No products found", style: TextStyle(color: Colors.grey[400])));
+                    }
 
-                return GridView.builder(
-                  controller: _listController,
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.55, 
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: _productsData!.data!.length,
-                  itemBuilder: (context, index) {
-                     return BlinkitProductCard(
-                        data: _productsData!.data![index],
-                        isLoggedIn: appStoragePref.getCustomerLoggedIn(),
-                        subCategoryBloc: _categoryBloc,
-                        onAddToCart: (id, qty) {
-                           GlobalData.optimisticUpdateCart(id, qty);
-                           _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
-                        },
-                        onAddToWishlist: (id, isIn, prod) {},
-                     );
-                  },
-                );
-             },
-           ),
+                    return GridView.builder(
+                      controller: _listController,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.55, 
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemCount: _productsData!.data!.length,
+                      itemBuilder: (context, index) {
+                         return BlinkitProductCard(
+                            data: _productsData!.data![index],
+                            isLoggedIn: appStoragePref.getCustomerLoggedIn(),
+                            subCategoryBloc: _categoryBloc,
+                            onAddToCart: (id, qty) {
+                               GlobalData.optimisticUpdateCart(id, qty);
+                               _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
+                            },
+                            onAddToWishlist: (id, isIn, prod) {},
+                         );
+                      },
+                    );
+                 },
+               ),
+               
+               // 🟢 FLOATING VIEW CART BAR
+               const FloatingCartBar(bottomMargin: 16),
+            ],
+          ),
         );
     }
     
@@ -254,201 +263,208 @@ class _SubCategorySidebarScreenState extends State<SubCategorySidebarScreen> {
         elevation: 0.5,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
       ),
-      body: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          // SIDEBAR (Level 2 Categories)
-          Container(
-            width: 70, 
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5), 
-              border: Border(right: BorderSide(color: theme.dividerColor)),
-            ),
-            child: ListView.separated(
-              padding: const EdgeInsets.only(bottom: 100), // 🟢 Added padding to avoid system navigation overlap
-              itemCount: widget.subCategories.length,
-              separatorBuilder: (ctx, i) => const SizedBox(height: 0),
-              itemBuilder: (context, index) {
-                return _buildSidebarItem(index);
-              },
-            ),
-          ),
-
-          // RIGHT: L3 + PRODUCTS
-          Expanded(
-            child: Column(
+          SafeArea(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 🟢 Sort & Filter Bar
-                Container(
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _openSortSheet(),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.swap_vert, size: 18, color: Theme.of(context).textTheme.bodySmall?.color),
-                              const SizedBox(width: 6),
-                              Text("Sort", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Container(width: 1, height: 24, color: Theme.of(context).dividerColor),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _openFilterScreen(),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.tune, size: 18, color: Theme.of(context).textTheme.bodySmall?.color),
-                              const SizedBox(width: 6),
-                              Text("Filters", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            children: [
+              // SIDEBAR (Level 2 Categories)
+              Container(
+                width: 70, 
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5), 
+                  border: Border(right: BorderSide(color: theme.dividerColor)),
                 ),
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 100), // 🟢 Added padding to avoid system navigation overlap
+                  itemCount: widget.subCategories.length,
+                  separatorBuilder: (ctx, i) => const SizedBox(height: 0),
+                  itemBuilder: (context, index) {
+                    return _buildSidebarItem(index);
+                  },
+                ),
+              ),
 
-                // 🟢 NEW: L3 Categories Horizontal List (if available)
-                if (deeperChildren.isNotEmpty)
-                  Container(
-                    height: 40,
-                    margin: const EdgeInsets.only(bottom: 8, top: 8),
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: deeperChildren.length,
-                      itemBuilder: (context, index) {
-                         final l3 = deeperChildren[index];
-                         final isSelected = _currentSlug == _getSlug(l3);
-                         return GestureDetector(
-                           onTap: () {
-                              final id = _getId(l3);
-                              final slug = _getSlug(l3);
-                              debugPrint("🟢 Selected L3: ${_getName(l3)} (ID: $id)");
-                              _fetchProducts(id, slug);
-                           },
-                           child: Container(
-                             margin: const EdgeInsets.only(right: 8),
-                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFF27C16B) : (isDark ? const Color(0xFF2A2A2A) : Theme.of(context).cardColor),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.grey[300]!)
+              // RIGHT: L3 + PRODUCTS
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 🟢 Sort & Filter Bar
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _openSortSheet(),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.swap_vert, size: 18, color: Theme.of(context).textTheme.bodySmall?.color),
+                                  const SizedBox(width: 6),
+                                  Text("Sort", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color)),
+                                ],
                               ),
-                             ),
-                             alignment: Alignment.center,
-                             child: Text(
-                               _getName(l3),
-                               style: TextStyle(
-                                 fontSize: 12,
-                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                 color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
-                               ),
-                             ),
-                           ),
-                         );
-                      },
-                    ),
-                  ),
-
-                // PRODUCT LIST
-                Expanded(
-                  child: BlocListener<CartScreenBloc, CartScreenBaseState>(
-                     listener: (context, state) {
-                        if (state is UpdateCartState && state.status == CartStatus.success) {
-                              context.read<CartScreenBloc>().add(FetchCartDataEvent());
-                              ShowMessage.successNotification("Cart Updated", context);
-                        }
-                        if (state is FetchCartDataState && state.status == CartStatus.success) {
-                            GlobalData.updateCartState(state.cartDetailsModel);
-                        }
-                     },
-                     child: BlocConsumer<CategoryBloc, CategoriesBaseState>(
-                       listener: (context, state) {
-                          if (state is FilterFetchState) {
-                              _filterData = state.filterModel;
-                              // 🟢 ALWAYS try to fetch products even if filters fail
-                              _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
-                          }
-                          if (state is FetchSubCategoryState) {
-                              if (state.status == CategoriesStatus.success) {
-                                setState(() {
-                                  _isLoading = false;
-                                  if (_page == 1) {
-                                    _productsData = state.categoriesData;
-                                  } else {
-                                    _productsData?.data?.addAll(state.categoriesData?.data ?? []);
-                                  }
-                                });
-                              } else {
-                                 debugPrint("❌ FetchSubCategoryState Failed: ${state.error}");
-                                 setState(() => _isLoading = false);
-                              }
-                          }
-                          if (state is AddToCartSubCategoriesState) {
-                             if (state.status == CategoriesStatus.success) {
-                                 context.read<CartScreenBloc>().add(FetchCartDataEvent());
-                                 GlobalData.cartUpdateStream.add(null);
-                                 ShowMessage.successNotification(state.successMsg ?? "Added", context);
-                             }
-                          }
-                       },
-                       builder: (context, state) {
-                          if (_isLoading && _page == 1) {
-                            return const Center(child: CircularProgressIndicator(color: Color(0xFFBDB76B)));
-                          }
-
-                          if (_productsData?.data == null || _productsData!.data!.isEmpty) {
-                             return Center(child: Text("No products found", style: TextStyle(color: Colors.grey[400])));
-                          }
-
-                          return GridView.builder(
-                            controller: _listController,
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.55, 
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
                             ),
-                            itemCount: _productsData!.data!.length,
-                            itemBuilder: (context, index) {
-                               return BlinkitProductCard(
-                                  data: _productsData!.data![index],
-                                  isLoggedIn: appStoragePref.getCustomerLoggedIn(),
-                                  subCategoryBloc: _categoryBloc,
-                                  onAddToCart: (id, qty) {
-                                     GlobalData.optimisticUpdateCart(id, qty);
-                                     _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
-                                  },
-                                  onAddToWishlist: (id, isIn, prod) { /* Optional implement */ },
-                               );
-                            },
-                          );
-                       },
-                     ),
-                  ),
+                          ),
+                          Container(width: 1, height: 24, color: Theme.of(context).dividerColor),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _openFilterScreen(),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.tune, size: 18, color: Theme.of(context).textTheme.bodySmall?.color),
+                                  const SizedBox(width: 6),
+                                  Text("Filters", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).textTheme.titleSmall?.color)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 🟢 NEW: L3 Categories Horizontal List (if available)
+                    if (deeperChildren.isNotEmpty)
+                      Container(
+                        height: 40,
+                        margin: const EdgeInsets.only(bottom: 8, top: 8),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: deeperChildren.length,
+                          itemBuilder: (context, index) {
+                             final l3 = deeperChildren[index];
+                             final isSelected = _currentSlug == _getSlug(l3);
+                             return GestureDetector(
+                               onTap: () {
+                                  final id = _getId(l3);
+                                  final slug = _getSlug(l3);
+                                  debugPrint("🟢 Selected L3: ${_getName(l3)} (ID: $id)");
+                                  _fetchProducts(id, slug);
+                               },
+                               child: Container(
+                                 margin: const EdgeInsets.only(right: 8),
+                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                 decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF27C16B) : (isDark ? const Color(0xFF2A2A2A) : Theme.of(context).cardColor),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected ? Colors.transparent : (isDark ? Colors.white24 : Colors.grey[300]!)
+                                  ),
+                                 ),
+                                 alignment: Alignment.center,
+                                 child: Text(
+                                   _getName(l3),
+                                   style: TextStyle(
+                                     fontSize: 12,
+                                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                     color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
+                                   ),
+                                 ),
+                               ),
+                             );
+                          },
+                        ),
+                      ),
+
+                    // PRODUCT LIST
+                    Expanded(
+                      child: BlocListener<CartScreenBloc, CartScreenBaseState>(
+                         listener: (context, state) {
+                            if (state is UpdateCartState && state.status == CartStatus.success) {
+                                  context.read<CartScreenBloc>().add(FetchCartDataEvent());
+                                  ShowMessage.successNotification("Cart Updated", context);
+                            }
+                            if (state is FetchCartDataState && state.status == CartStatus.success) {
+                                GlobalData.updateCartState(state.cartDetailsModel);
+                            }
+                         },
+                         child: BlocConsumer<CategoryBloc, CategoriesBaseState>(
+                           listener: (context, state) {
+                              if (state is FilterFetchState) {
+                                  _filterData = state.filterModel;
+                                  // 🟢 ALWAYS try to fetch products even if filters fail
+                                  _categoryBloc?.add(FetchSubCategoryEvent(_filters, _page));
+                              }
+                              if (state is FetchSubCategoryState) {
+                                  if (state.status == CategoriesStatus.success) {
+                                    setState(() {
+                                      _isLoading = false;
+                                      if (_page == 1) {
+                                        _productsData = state.categoriesData;
+                                      } else {
+                                        _productsData?.data?.addAll(state.categoriesData?.data ?? []);
+                                      }
+                                    });
+                                  } else {
+                                     debugPrint("❌ FetchSubCategoryState Failed: ${state.error}");
+                                     setState(() => _isLoading = false);
+                                  }
+                              }
+                              if (state is AddToCartSubCategoriesState) {
+                                 if (state.status == CategoriesStatus.success) {
+                                     context.read<CartScreenBloc>().add(FetchCartDataEvent());
+                                     GlobalData.cartUpdateStream.add(null);
+                                     ShowMessage.successNotification(state.successMsg ?? "Added", context);
+                                 }
+                              }
+                           },
+                           builder: (context, state) {
+                              if (_isLoading && _page == 1) {
+                                return const Center(child: CircularProgressIndicator(color: Color(0xFFBDB76B)));
+                              }
+
+                              if (_productsData?.data == null || _productsData!.data!.isEmpty) {
+                                 return Center(child: Text("No products found", style: TextStyle(color: Colors.grey[400])));
+                              }
+
+                              return GridView.builder(
+                                controller: _listController,
+                                padding: const EdgeInsets.fromLTRB(12, 12, 12, 80), 
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.55, 
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                ),
+                                itemCount: _productsData!.data!.length,
+                                itemBuilder: (context, index) {
+                                   return BlinkitProductCard(
+                                      data: _productsData!.data![index],
+                                      isLoggedIn: appStoragePref.getCustomerLoggedIn(),
+                                      subCategoryBloc: _categoryBloc,
+                                      onAddToCart: (id, qty) {
+                                         GlobalData.optimisticUpdateCart(id, qty);
+                                         _categoryBloc?.add(AddToCartSubCategoryEvent(id, qty));
+                                      },
+                                      onAddToWishlist: (id, isIn, prod) { /* Optional implement */ },
+                                   );
+                                },
+                              );
+                           },
+                         ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          ),
+          
+          // 🟢 FLOATING VIEW CART BAR
+          const FloatingCartBar(bottomMargin: 16),
         ],
       ),
-    ),
-   );
+    );
   }
 
   Widget _buildSidebarItem(int index) {

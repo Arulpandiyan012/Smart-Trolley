@@ -9,6 +9,8 @@
  */
 
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:bagisto_app_demo/widgets/floating_cart_bar.dart'; 
+
 import 'package:bagisto_app_demo/screens/product_screen/utils/index.dart';
 import 'package:hive/hive.dart';
 import 'package:share_plus/share_plus.dart';
@@ -74,88 +76,13 @@ class _ProductScreenState extends State<ProductScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         
-        // 🟢 FIX 1: Use FloatingActionButton for the "View Cart" bar
-        // This allows it to float OVER the content (using the SizedBox(100) as padding)
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: StreamBuilder(
-          // 🟢 FIX 2: Add initialData so it shows up IMMEDIATELY
-          initialData: appStoragePref.getCartCount(), 
-          stream: GlobalData.cartCountController.stream,
-          builder: (context, snapshot) {
-            int cartCount = int.tryParse(snapshot.data.toString()) ?? 0;
-            
-            // Hide if empty
-            if (cartCount == 0) return const SizedBox(); 
-
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              height: 60,
-              decoration: BoxDecoration(
-                color: const Color(0xFF27C16B), // Blinkit Green
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  )
-                ],
-              ),
-              child: InkWell(
-                onTap: () => Navigator.pushNamed(context, cartScreen).then((value) {
-                   // Refresh product when returning from cart
-                   productScreenBLoc?.add(FetchProductEvent(widget.urlKey ?? "", productId: widget.productId, title: widget.title));
-                }),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "$cartCount item${cartCount > 1 ? 's' : ''}", 
-                            style: const TextStyle(
-                              color: Colors.white, 
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 13
-                            )
-                          ),
-                          const Text(
-                            "Total includes taxes",
-                            style: TextStyle(
-                              color: Colors.white70, 
-                              fontSize: 10
-                            )
-                          ),
-                        ],
-                      ),
-                      const Row(
-                        children: [
-                          Text(
-                            "View Cart", 
-                            style: TextStyle(
-                              color: Colors.white, 
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 15
-                            )
-                          ),
-                          SizedBox(width: 6),
-                          Icon(Icons.arrow_right, color: Colors.white),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
         
-        body: _setProductData(context),
+        body: Stack(
+          children: [
+            _setProductData(context),
+            const FloatingCartBar(bottomMargin: 16),
+          ],
+        ),
       ),
     );
   }

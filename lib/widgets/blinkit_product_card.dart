@@ -71,6 +71,29 @@ class BlinkitProductCard extends StatelessWidget {
       return 0;
   }
 
+  String _productUnit(dynamic p) {
+    if (p == null) return "1 Unit";
+    try {
+      if (p.productFlats is List && (p.productFlats as List).isNotEmpty) {
+        final pf = (p.productFlats as List).first;
+        try {
+          final w = (pf as dynamic).weight;
+          if (w != null && w.toString().isNotEmpty) return w.toString();
+        } catch (_) {}
+      }
+      if (p.additionalData is List && (p.additionalData as List).isNotEmpty) {
+        for (var d in (p.additionalData as List)) {
+          try {
+            if (d.code == 'weight' || d.code == 'unit') {
+              if (d.value != null && d.value.toString().isNotEmpty) return d.value.toString();
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+    return "1 Unit";
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -229,8 +252,8 @@ class BlinkitProductCard extends StatelessWidget {
 
                       // Add Button placed bottom right of image
                       Positioned(
-                        bottom: -4,
-                        right: 0,
+                        bottom: 4,
+                        right: 4,
                         child: SizedBox(
                           width: 48, 
                           height: 20, 
@@ -352,7 +375,7 @@ class BlinkitProductCard extends StatelessWidget {
                           const SizedBox(height: 2),
 
                           Text(
-                            "1 Unit", 
+                            _productUnit(data), 
                             style: TextStyle(color: theme.textTheme.bodySmall?.color ?? (isDark ? Colors.white70 : Colors.grey[500]), fontSize: 9, fontWeight: FontWeight.w500) 
                           ),
                           

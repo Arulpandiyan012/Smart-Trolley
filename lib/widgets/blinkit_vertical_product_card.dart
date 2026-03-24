@@ -122,6 +122,31 @@ class BlinkitVerticalProductCard extends StatelessWidget {
       return 0;
   }
 
+  String _productUnit(dynamic p) {
+    if (p == null) return "1 Unit";
+    try {
+      // Priority 1: Check productFlats weight
+      if (p.productFlats is List && (p.productFlats as List).isNotEmpty) {
+        final pf = (p.productFlats as List).first;
+        try {
+          final w = (pf as dynamic).weight;
+          if (w != null && w.toString().isNotEmpty) return w.toString();
+        } catch (_) {}
+      }
+      // Priority 2: Check additionalData
+      if (p.additionalData is List && (p.additionalData as List).isNotEmpty) {
+        for (var d in (p.additionalData as List)) {
+          try {
+            if (d.code == 'weight' || d.code == 'unit') {
+              if (d.value != null && d.value.toString().isNotEmpty) return d.value.toString();
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+    return "1 Unit";
+  }
+
   bool _isOutOfStock(dynamic p) {
       if (p == null) return true;
       try { if ((p as dynamic).isSaleable == false) return true; } catch (_) {}
@@ -308,9 +333,9 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           return Container(
                             height: 24,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9), // Transparent/Frosted
+                              color: const Color(0xFF27C16B), // Green Background
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF27C16B)), // Green Border
+                              border: Border.all(color: Colors.white.withOpacity(0.5)), // White Border
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -323,12 +348,12 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 6),
-                                    child: Icon(Icons.remove, color: Color(0xFF27C16B), size: 12), // Green Icon
+                                    child: Icon(Icons.remove, color: Colors.white, size: 12), // White Icon
                                   ),
                                 ),
                                 Text(
                                   "$currentQty",
-                                  style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.bold, fontSize: 10), // Green Text
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10), // White Text
                                 ),
                                  InkWell(
                                    onTap: () {
@@ -344,7 +369,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                                    },
                                    child: const Padding(
                                      padding: EdgeInsets.symmetric(horizontal: 6),
-                                     child: Icon(Icons.add, color: Color(0xFF27C16B), size: 12), // Green Icon
+                                     child: Icon(Icons.add, color: Colors.white, size: 12), // White Icon
                                    ),
                                  ),
                               ],
@@ -372,11 +397,11 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                              }
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(4), // Slightly less padding for larger icon
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9), // Transparent/Frosted
+                              color: const Color(0xFF27C16B), // Green Background
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFF27C16B)), // Green Border
+                              border: Border.all(color: Colors.white.withOpacity(0.5)), // White Border
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.05),
@@ -385,7 +410,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.add, color: Color(0xFF27C16B), size: 18), // Green Icon
+                            child: const Icon(Icons.add, color: Colors.white, size: 18), // White Icon
                           ),
                         );
                       }
@@ -407,7 +432,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    (data as dynamic).weight ?? (data as dynamic).unit ?? '1 Unit', 
+                    _productUnit(data), 
                     style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 9, fontWeight: FontWeight.normal)
                   ),
                   
@@ -492,7 +517,7 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     );
                   }),
 
-                  const Spacer(),
+                  const SizedBox(height: 4),
                   Text.rich(
                     TextSpan(
                       children: [

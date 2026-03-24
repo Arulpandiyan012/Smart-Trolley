@@ -26,6 +26,8 @@ import 'reach_top.dart';
 import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments, categoryScreen;
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:bagisto_app_demo/widgets/floating_cart_bar.dart'; 
+
 import 'package:cached_network_image/cached_network_image.dart'; 
 
 String _catLabel(dynamic cat) {
@@ -706,100 +708,7 @@ class _HomePageViewState extends State<HomePageView> {
                   ),
 
                 // 🟢 FLOATING VIEW CART BAR (Blinkit Style)
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: StreamBuilder<int>(
-                    stream: GlobalData.cartCountController.stream,
-                    builder: (context, snapshot) {
-                      int count = 0;
-                      // Try to get from snapshot, fallback to storage
-                      if (snapshot.hasData) {
-                         count = snapshot.data ?? 0;
-                      } else {
-                         // Initial load might be empty stream, check pref
-                         count = appStoragePref.getCartCount();
-                      }
-
-                      if (count <= 0) return const SizedBox.shrink();
-
-                      return InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(context, cartScreen).then((_) {
-                             setState(() {}); // Refresh home on return
-                          });
-                        },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: BackdropFilter(
-                            filter: ColorFilter.mode(Colors.black.withOpacity(0.01), BlendMode.dstIn), // Optional slight tint
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                height: 50,
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xE627C16B), // 90% Opacity Blinkit Green
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5), // Trendy glass border
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.12),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "$count ${count == 1 ? 'Item' : 'Items'}",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12
-                                          ),
-                                        ),
-                                        const Text(
-                                          "View Total",
-                                          style: TextStyle(
-                                            color: Colors.white70, 
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w500
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                    Row(
-                                      children: const [
-                                        Text(
-                                          "View Cart",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Icon(Icons.arrow_right, color: Colors.white),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                FloatingCartBar(bottomMargin: 16),
               ],
             ),
           ),

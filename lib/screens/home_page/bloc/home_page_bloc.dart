@@ -132,8 +132,6 @@ class HomePageBloc extends Bloc<HomePageEvent, HomePageBaseState> {
         
         GlobalData.productsStream.sink.add(products);
         emit(FetchAllProductsState.success(allProducts: products));
-        GlobalData.cartCountController.sink
-            .add(products?.data?.firstOrNull?.cart?.itemsQty ?? 0);
       } catch (e) {
         emit(FetchAllProductsState.fail(
             error: StringConstants.somethingWrong.localized()));

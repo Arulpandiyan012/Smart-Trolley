@@ -13,6 +13,8 @@ import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 import 'package:bagisto_app_demo/widgets/image_view.dart';
 import 'package:bagisto_app_demo/widgets/blinkit_product_card.dart'; 
 import 'package:bagisto_app_demo/widgets/show_message.dart';
+import 'package:bagisto_app_demo/widgets/floating_cart_bar.dart'; 
+
 
 // 🟢 FIX: All necessary Cart imports
 import 'package:bagisto_app_demo/screens/cart_screen/bloc/cart_screen_bloc.dart';
@@ -476,14 +478,21 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             elevation: 0.5,
             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
           ),
-          body: ListView.separated(
-            padding: const EdgeInsets.only(bottom: 24),
-            itemCount: _categories.length,
-            separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)), // Thick separator
+          body: Stack(
+            children: [
+              ListView.separated(
+                padding: const EdgeInsets.only(bottom: 80), // 🟢 Increased to avoid Bar
+                itemCount: _categories.length,
+                separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)), // Thick separator
 
-            itemBuilder: (context, index) {
-               return _buildVerticalCategorySection(index);
-            },
+                itemBuilder: (context, index) {
+                   return _buildVerticalCategorySection(index);
+                },
+              ),
+              
+              // 🟢 FLOATING VIEW CART BAR
+              const FloatingCartBar(bottomMargin: 16),
+            ],
           ),
         );
     }
