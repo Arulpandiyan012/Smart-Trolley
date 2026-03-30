@@ -67,7 +67,7 @@ class _AddNewAddressState extends State<AddNewAddress> {
         ? emailController.text = widget.addressModel?.email ?? ""
         : "";
     widget.isEdit ?? false
-        ? phoneController.text = widget.addressModel?.phone ?? ""
+        ? phoneController.text = _sanitizePhone(widget.addressModel?.phone ?? "")
         : "";
     widget.isEdit ?? false
         ? street1Controller.text = widget.addressModel?.address1 ?? ''
@@ -99,6 +99,16 @@ class _AddNewAddressState extends State<AddNewAddress> {
         countryData?.data?.first.name;
     addEditAddressBloc = context.read<AddEditAddressBloc>();
     super.initState();
+  }
+
+  String _sanitizePhone(String phone) {
+    phone = phone.trim();
+    if (phone.startsWith("+91")) {
+      return phone.substring(3);
+    } else if (phone.startsWith("91") && phone.length > 10) {
+      return phone.substring(2);
+    }
+    return phone;
   }
 
   _fetchSharedPreferenceData() async {

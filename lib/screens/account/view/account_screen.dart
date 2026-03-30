@@ -67,6 +67,16 @@ class _AccountScreenState extends State<AccountScreen>
     return dob;
   }
 
+  String _sanitizePhone(String phone) {
+    phone = phone.trim();
+    if (phone.startsWith("+91")) {
+      return phone.substring(3);
+    } else if (phone.startsWith("91") && phone.length > 10) {
+      return phone.substring(2);
+    }
+    return phone;
+  }
+
   void _loadAccountData() {
     isLoggedIn = appStoragePref.getCustomerLoggedIn();
     if (isLoggedIn) {
@@ -89,8 +99,7 @@ class _AccountScreenState extends State<AccountScreen>
       
       emailController.text = appStoragePref.getCustomerEmail();
       String storedPhone = appStoragePref.getCustomerPhone();
-      // 🟢 REVERT: Removed Strict Sanitization
-      phoneController.text = storedPhone;
+      phoneController.text = _sanitizePhone(storedPhone);
 
       dobController.text = _formatDob(appStoragePref.getCustomerDob());
       
@@ -230,7 +239,7 @@ class _AccountScreenState extends State<AccountScreen>
           lastNameController.text =
               _accountInfoDetails!.lastName ?? "";
           emailController.text = _accountInfoDetails!.email ?? "";
-          phoneController.text = _accountInfoDetails!.phone ?? "";
+          phoneController.text = _sanitizePhone(_accountInfoDetails!.phone ?? "");
           dobController.text =
               _formatDob(_accountInfoDetails!.dateOfBirth ?? "");
           subscribeNewsletter =
@@ -303,7 +312,7 @@ class _AccountScreenState extends State<AccountScreen>
         gender: genderValues[currentGenderValue],
         email: emailController.text,
         dob: dobController.text,
-        phone: phoneController.text,
+        phone: "+91${phoneController.text.trim()}",
         oldPassword: "",
         password: "",
         confirmPassword: "",
@@ -321,7 +330,7 @@ class _AccountScreenState extends State<AccountScreen>
     String fName = firstNameController.text.trim();
     String lName = lastNameController.text.trim();
     String eMail = emailController.text.trim();
-    String phone = phoneController.text.trim();
+    String phone = "+91${phoneController.text.trim()}";
     String dob = dobController.text.trim();
     
     appStoragePref.setCustomerName("$fName $lName".trim());

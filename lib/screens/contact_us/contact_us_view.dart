@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:bagisto_app_demo/screens/account/utils/index.dart';
 
 import 'bloc/contact_us_bloc.dart';
@@ -127,10 +128,15 @@ class _ContactUsPageState extends State<ContactUsPage> with EmailValidator {
                   validLabel: StringConstants.pleaseFillLabel.localized() +
                       StringConstants.contactUsPhoneLabel.localized(),
                   keyboardType: TextInputType.phone,
+                  prefixText: "+91 ",
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
                   validator: (value) {
                     if ((value ?? "").isEmpty) {
                       return StringConstants.pleaseFillLabel.localized() +
                           StringConstants.contactUsPhoneLabel.localized();
+                    }
+                    if (value!.length != 10) {
+                      return "Enter 10 digit mobile number";
                     }
                     return null;
                   },
@@ -233,7 +239,7 @@ class _ContactUsPageState extends State<ContactUsPage> with EmailValidator {
 
       _name = nameController.text;
       _email = emailController.text;
-      _phone = phoneController.text;
+      _phone = "+91${phoneController.text.trim()}";
       _message = commentController.text;
 
       contactUsScreenBloc?.add(ContactUsEvent(_name, _email, _phone, _message));

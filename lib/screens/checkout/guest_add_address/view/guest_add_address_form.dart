@@ -212,7 +212,7 @@ class _GuestAddAddressFormState extends State<GuestAddAddressForm> {
         // --- 3. GENERATE DUMMY EMAIL ---
         // Backend needs email, so we create one using phone
         String phone = value['phone'] ?? "0000000000";
-        String generatedEmail = "$phone@mobile.com";
+        String generatedEmail = "guest.$phone@mobile.com";
 
         _street1Controller.text = "${value['flatHouseBuilding']}, ${value['landmark'] ?? ''}";
         _cityController.text = value['area'] ?? "";

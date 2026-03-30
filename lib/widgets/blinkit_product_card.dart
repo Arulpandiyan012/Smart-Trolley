@@ -74,22 +74,50 @@ class BlinkitProductCard extends StatelessWidget {
   String _productUnit(dynamic p) {
     if (p == null) return "1 Unit";
     try {
+      String? weight, unit;
+      
+      // 1. Try productFlats
       if (p.productFlats is List && (p.productFlats as List).isNotEmpty) {
         final pf = (p.productFlats as List).first;
         try {
-          final w = (pf as dynamic).weight;
-          if (w != null && w.toString().isNotEmpty) return w.toString();
+          weight = (pf as dynamic).weight?.toString();
+          unit = (pf as dynamic).unit?.toString();
         } catch (_) {}
       }
+
+      // 2. Try additionalData (EAV)
       if (p.additionalData is List && (p.additionalData as List).isNotEmpty) {
         for (var d in (p.additionalData as List)) {
           try {
-            if (d.code == 'weight' || d.code == 'unit') {
-              if (d.value != null && d.value.toString().isNotEmpty) return d.value.toString();
-            }
+            if (d.code == 'weight') weight = d.value?.toString();
+            if (d.code == 'unit') unit = d.value?.toString();
           } catch (_) {}
         }
       }
+
+      if (weight != null && weight.isNotEmpty) {
+        // Clean up "500.0" -> "500"
+        if (weight.endsWith(".0")) weight = weight.substring(0, weight.length - 2);
+        
+        // 🟢 FORMATTING: If grams >= 1000, show as kg
+        double? wVal = double.tryParse(weight);
+        if (wVal != null && wVal >= 1000) {
+           if (unit?.toLowerCase() == "g") {
+              return "${(wVal / 1000).toStringAsFixed(wVal % 1000 == 0 ? 0 : 1)} kg";
+           }
+           if (unit?.toLowerCase() == "ml") {
+              return "${(wVal / 1000).toStringAsFixed(wVal % 1000 == 0 ? 0 : 1)} l";
+           }
+        }
+        
+        if (unit != null && unit.isNotEmpty && unit != "pcs" && unit != "Units") {
+           return "$weight $unit";
+        }
+        return "$weight ${unit ?? 'Unit'}";
+      }
+
+      if (unit != null && unit.isNotEmpty) return unit;
+
     } catch (_) {}
     return "1 Unit";
   }

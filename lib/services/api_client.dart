@@ -1190,7 +1190,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
       var url = Uri.parse("$baseDomain/mobikul-save-address.php");
       var response = await http.post(url, body: { 
         "customer_id": customerId, 
-        "token": token, // 🟢 Added Token to fix "Unauthenticated"
+        "token": token,
         "company_name": companyName, 
         "first_name": firstName, 
         "last_name": lastName, 
@@ -1203,7 +1203,7 @@ Future<OrderDetail?> getOrderDetail(int id) async {
         "phone": phone, 
         "vat_id": vatId, 
         "default_address": isDefault.toString(), 
-        "email": email 
+        "email": (email.contains("@mobile.com") && customerId != "0") ? "" : email 
       });
       
       var data = jsonDecode(response.body);
@@ -1214,7 +1214,9 @@ Future<OrderDetail?> getOrderDetail(int id) async {
   }
 
   Future<UpdateAddressModel?> updateAddress(int id, String companyName, String firstName, String lastName, String address, String address2, String country, String state, String city, String postCode, String phone, String vatId, String email) async {
-    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'updateAddress', document: gql(mutation.updateAddress(id: id, companyName: companyName, firstName: firstName, lastName: lastName, address: address, address2: address2, country: country, state: state, city: city, email: email, postCode: postCode, phone: phone, vatId: vatId)), fetchPolicy: FetchPolicy.networkOnly));
+    String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
+    String safeEmail = (email.contains("@mobile.com") && customerId != "0") ? "" : email;
+    var response = await (client.clientToQuery()).mutate(MutationOptions(operationName: 'updateAddress', document: gql(mutation.updateAddress(id: id, companyName: companyName, firstName: firstName, lastName: lastName, address: address, address2: address2, country: country, state: state, city: city, email: safeEmail, postCode: postCode, phone: phone, vatId: vatId)), fetchPolicy: FetchPolicy.networkOnly));
     return handleResponse(response, 'updateAddress', (json) => UpdateAddressModel.fromJson(json));
   }
 
