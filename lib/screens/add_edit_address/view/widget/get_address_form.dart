@@ -8,6 +8,7 @@
  *   @link https://store.webkul.com/license.html
  */
 
+import 'package:flutter/services.dart';
 import 'package:bagisto_app_demo/screens/add_edit_address/utils/index.dart';
 class GetAddressForm extends StatelessWidget  with PhoneNumberValidator, EmailValidator{
   final bool? isCheckout;
@@ -101,10 +102,15 @@ class GetAddressForm extends StatelessWidget  with PhoneNumberValidator, EmailVa
             validLabel: StringConstants.pleaseFillLabel.localized() +
                 StringConstants.contactUsPhoneLabel.localized(),
             keyboardType: TextInputType.phone,
+            prefixText: "+91 ",
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
             validator: (phone) {
               if (phone!.isEmpty) {
                 return StringConstants.pleaseFillLabel.localized() +
                     StringConstants.contactUsPhoneLabel.localized();
+              }
+              if (phone.length != 10) {
+                return "Enter 10 digit mobile number";
               }
               return null;
             },

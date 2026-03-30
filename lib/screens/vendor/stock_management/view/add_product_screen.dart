@@ -28,7 +28,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
   
   String? _selectedCategoryId; // Store ID
   String? _selectedCategoryName; // Store Name for display if locked
-  String? _selectedFeaturedSection = "None"; // 🟢 Store Featured Section
+  String? _selectedFeaturedSection = "None"; 
+  String _selectedSellingMethod = "loose"; // 🟢 Default to Loose
+  String _selectedUnit = "pcs";
+  String _selectedWeight = "1";
+  List<String> _currentWeightOptions = ["1"];
+
+  final Map<String, List<String>> _weightOptionsMap = {
+    'pcs': ["1", "2", "3", "4", "5", "6", "10", "12", "15", "20", "24", "30", "50", "100"],
+    'qty': ["1", "2", "3", "4", "5", "6", "10", "12", "15", "20", "24", "30", "50", "100"],
+    'g': ["25", "50", "75", "100", "150", "200", "250", "300", "400", "500", "600", "700", "750", "800", "900", "1000"],
+    'kg': ["0.25", "0.5", "0.75", "1.0", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "3.0", "5.0", "10.0"],
+    'ml': ["10", "20", "25", "30", "40", "50", "75", "100", "150", "200", "250", "300", "400", "500", "750", "1000"],
+    'l': ["0.25", "0.50", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0", "2.5", "5.0"]
+  };
+
+  void _updateWeightOptions() {
+    setState(() {
+      _currentWeightOptions = _weightOptionsMap[_selectedUnit] ?? ["1"];
+      if (!_currentWeightOptions.contains(_selectedWeight)) {
+        _selectedWeight = _currentWeightOptions.first;
+      }
+    });
+  }
+
   File? _imageFile;
   bool _isLoading = false;
 
@@ -68,6 +91,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         "description": _descCtrl.text,
         "category_id": _selectedCategoryId ?? "1", // Default to Root if null
         "featured_section": _selectedFeaturedSection ?? "None", // 🟢 Passing Tag for Featured Section
+        "weight": _selectedWeight,
+        "unit": _selectedUnit,
+        "selling_method": _selectedSellingMethod, // 🟢 Pass Selling Method
         "image": base64Image
       };
 
@@ -114,9 +140,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     super.initState();
+    _updateWeightOptions();
     if (widget.initialCategoryId != null) {
+      _selectedCategoryName = widget.initialCategoryName;
       _selectedCategoryId = widget.initialCategoryId;
-      _selectedCategoryName = widget.initialCategoryName ?? "Selected Category";
       // We don't necessarily need to fetch all categories if it's locked, but we can to be safe.
     } else {
       _fetchCategories(); // 🟢 Fetch on Init only if not locked
@@ -205,61 +232,34 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image Picker
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[800] : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[400]!),
-                  ),
-                  child: _imageFile != null 
-                     ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
-                     : Column(
-                         mainAxisAlignment: MainAxisAlignment.center,
-                         children: const [
-                             Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
-                             SizedBox(height: 8),
-                             Text("Tap to add Image", style: TextStyle(color: Colors.grey))
-                         ],
-                       ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Fields
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: "Product Name", border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? "Required" : null,
-              ),
-              const SizedBox(height: 16),
-              
+              // 0. Selling Method (NEW)
+              const Text("Selling Method", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                   Expanded(
-                     child: TextFormField(
-                        controller: _priceCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: "Price (₹)", border: OutlineInputBorder()),
-                        validator: (v) => v!.isEmpty ? "Required" : null,
-                      ),
-                   ),
-                   const SizedBox(width: 16),
-                   Expanded(
-                     child: TextFormField(
-                        controller: _qtyCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: "Stock Qty", border: OutlineInputBorder()),
-                        validator: (v) => v!.isEmpty ? "Required" : null,
-                      ),
-                   ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text("Loose / Bulk", style: TextStyle(fontSize: 14)),
+                      value: "loose",
+                      groupValue: _selectedSellingMethod,
+                      onChanged: (v) => setState(() => _selectedSellingMethod = v!),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text("Packaged", style: TextStyle(fontSize: 14)),
+                      value: "packaged",
+                      groupValue: _selectedSellingMethod,
+                      onChanged: (v) => setState(() => _selectedSellingMethod = v!),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
 
+              // 1. Category Section
               widget.initialCategoryId != null 
                 ? // Locked Category UI
                   Row(
@@ -270,7 +270,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(4),
-                            color: Colors.grey[100],
+                            color: isDark ? Colors.grey[800] : Colors.grey[100],
                           ),
                           child: Row(
                             children: [
@@ -279,7 +279,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               Expanded(
                                 child: Text(
                                   "Category: ${_selectedCategoryName!}",
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black87),
                                 ),
                               ),
                               const Icon(Icons.lock, color: Colors.grey, size: 16), 
@@ -321,9 +321,93 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       )
                     ],
                   ),
+              const SizedBox(height: 20),
+
+              // 2. Product Name
+              TextFormField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: "Product Name", border: OutlineInputBorder(), hintText: "e.g. Fresh Red Apples"),
+                validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
               const SizedBox(height: 16),
               
-              // 🟢 NEW: Dropdown for Featured Section
+              // 3. Price
+              TextFormField(
+                controller: _priceCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Price (₹)", border: OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // 4. Units & Weight Selection
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: _selectedSellingMethod == "loose" ? "Base Unit" : "Pack Unit", 
+                        border: const OutlineInputBorder()
+                      ),
+                      value: _selectedUnit,
+                      items: ["pcs", "g", "kg", "ml", "l", "qty"].map((u) => DropdownMenuItem(
+                        value: u,
+                        child: Text(u),
+                      )).toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedUnit = v!;
+                          _updateWeightOptions();
+                        });
+                      },
+                    ),
+                  ),
+                  if (_selectedSellingMethod == "packaged") ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: "Net Volume per Pack", 
+                          border: OutlineInputBorder()
+                        ),
+                        value: _selectedWeight,
+                        items: _currentWeightOptions.map((w) => DropdownMenuItem(
+                          value: w,
+                          child: Text(w),
+                        )).toList(),
+                        onChanged: (v) => setState(() => _selectedWeight = v!),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 5. Stock (Dynamic Logic)
+              TextFormField(
+                controller: _qtyCtrl,
+                keyboardType: _selectedSellingMethod == "packaged"
+                    ? TextInputType.number
+                    : const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: _selectedSellingMethod == "loose" 
+                      ? "Total Stock (Bulk $_selectedUnit)" 
+                      : "Total Stock (Number of Packs)",
+                  hintText: _selectedSellingMethod == "packaged" ? "e.g. 50" : "e.g. 10.5",
+                  helperText: _selectedSellingMethod == "loose"
+                      ? "Enter total bulk inventory (Allows decimals)"
+                      : "Enter number of whole packets (Enforces integers)",
+                  border: const OutlineInputBorder()
+                ),
+                validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // 6. Home Page Placement
               DropdownButtonFormField<String>(
                 isExpanded: true,
                 decoration: const InputDecoration(labelText: "Home Page Placement (Optional)", border: OutlineInputBorder()),
@@ -336,10 +420,37 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 16),
 
+              // 7. Description
               TextFormField(
                 controller: _descCtrl,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: "Description", border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: "Description", border: OutlineInputBorder(), hintText: "Brief details about the product..."),
+              ),
+              const SizedBox(height: 20),
+
+              // 8. Image Picker (NOW AT BOTTOM)
+              const Text("Product Image", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[400]!),
+                  ),
+                  child: _imageFile != null 
+                     ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
+                     : Column(
+                         mainAxisAlignment: MainAxisAlignment.center,
+                         children: const [
+                             Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                             SizedBox(height: 8),
+                             Text("Tap to add Image", style: TextStyle(color: Colors.grey))
+                         ],
+                       ),
+                ),
               ),
               const SizedBox(height: 24),
               

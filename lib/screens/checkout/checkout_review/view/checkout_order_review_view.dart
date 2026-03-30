@@ -174,44 +174,22 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
                 if ((cart?.formattedPrice?.discountAmount ?? "0") != "₹0.00")
                    _buildRow("Discount", "- ${cart?.formattedPrice?.discountAmount}", isGreen: true),
                 
-                // 🟢 FIX: Delivery Charges (Robust Calculation)
+                // 🟢 FIX: Delivery Charges (Robust Calculation with Fixed ₹30 / FREE Threshold)
                 Builder(builder: (context) {
-                   String ship = cart?.formattedPrice?.shippingAmount ?? "0";
-                   
-                   // 1. Try direct field
-                   if (ship != "₹0.00" && ship != "0" && ship != "") {
-                      return _buildRow("Delivery Fees", ship);
+                   double parsePrice(dynamic p) {
+                      if (p == null) return 0.0;
+                      String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
+                      return double.tryParse(s) ?? 0.0;
                    }
 
-                   // 2. Try selected rate
-                   var rate = cart?.selectedShippingRate?.formattedPrice?.price;
-                   if (rate != null && rate.toString() != "₹0.00" && rate.toString() != "0") {
-                      return _buildRow("Delivery Fees", rate.toString());
+                   double sub = parsePrice(cart?.formattedPrice?.subTotal);
+                   bool isFreeDelivery = sub > 500;
+
+                   if (isFreeDelivery) {
+                      return _buildRow("Delivery Fees", "FREE", isGreen: true);
+                   } else {
+                      return _buildRow("Delivery Fees", "₹30.00");
                    }
-
-                   // 3. Fallback: Calculate Difference (Grand - (Sub + Tax - Discount))
-                   try {
-                      double parsePrice(dynamic p) {
-                         if (p == null) return 0.0;
-                         String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
-                         return double.tryParse(s) ?? 0.0;
-                      }
-
-                      double grand = parsePrice(cart?.formattedPrice?.grandTotal);
-                      double sub = parsePrice(cart?.formattedPrice?.subTotal);
-                      double tax = parsePrice(cart?.formattedPrice?.taxAmount);
-                      double discount = parsePrice(cart?.formattedPrice?.discountAmount);
-
-                      double calculatedDiff = grand - (sub + tax - discount);
-
-                      if (calculatedDiff > 0.5) { // Tolerance for rounding
-                         return _buildRow("Delivery Fees", "₹${calculatedDiff.toStringAsFixed(2)}");
-                      }
-                   } catch (e) {
-                      debugPrint("Price Calc Error: $e");
-                   }
-
-                   return const SizedBox();
                 }),
                 
                 const Divider(height: 24),
@@ -219,7 +197,25 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("To Pay", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                    Text(_formatPrice(cart?.formattedPrice?.grandTotal ?? ""), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Builder(builder: (context) {
+                       double parsePrice(dynamic p) {
+                          if (p == null) return 0.0;
+                          String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
+                          return double.tryParse(s) ?? 0.0;
+                       }
+
+                       double sub = parsePrice(cart?.formattedPrice?.subTotal);
+                       double tax = parsePrice(cart?.formattedPrice?.taxAmount);
+                       double discount = parsePrice(cart?.formattedPrice?.discountAmount);
+                       
+                       double deliveryFee = sub > 500 ? 0 : 30;
+                       double adjustedGrand = sub + tax + deliveryFee - discount;
+                       
+                       return Text(
+                          "₹${adjustedGrand.toStringAsFixed(2)}",
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        );
+                    }),
                   ],
                 )
               ],

@@ -121,7 +121,7 @@ class _AddressDetailsSheetState extends State<AddressDetailsSheet> {
       'floor': _floorCtrl.text.trim(),
       'area': _areaCtrl.text.trim(),
       'landmark': _landmarkCtrl.text.trim(),
-      'phone': _phoneCtrl.text.trim(),
+      'phone': '+91${_phoneCtrl.text.trim()}',
       'firstName': fName,
       'lastName': lName,
       'pincode': _pincodeCtrl.text.trim(),

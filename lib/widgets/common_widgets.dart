@@ -10,6 +10,7 @@
 
 import 'package:bagisto_app_demo/utils/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../utils/input_field_validators.dart';
 
 class CommonWidgets with EmailValidator {
@@ -24,6 +25,8 @@ class CommonWidgets with EmailValidator {
           bool showPassword = true,
           bool isRequired = false,
           Widget? prefixIcon,
+          String? prefixText, // 🟢 New Parameter
+          List<TextInputFormatter>? inputFormatters, // 🟢 New Parameter
           Widget? suffixIcon,
           bool? readOnly,
           EdgeInsetsGeometry? contentPadding,
@@ -65,6 +68,7 @@ class CommonWidgets with EmailValidator {
             ),
             floatingLabelBehavior: FloatingLabelBehavior.always,
             prefixIcon: prefixIcon,
+            prefixText: prefixText, // 🟢 New Parameter
             prefixIconColor: Theme.of(context).iconTheme.color,
             hintStyle: Theme.of(context)
                 .textTheme
@@ -89,6 +93,7 @@ class CommonWidgets with EmailValidator {
             ),
             suffixIcon: suffixIcon,
             suffixIconColor: Theme.of(context).iconTheme.color),
+        inputFormatters: inputFormatters, // 🟢 Pass to TextFormField
         validator: validator,
         onSaved: (val) {
           if (onSaved != null) {

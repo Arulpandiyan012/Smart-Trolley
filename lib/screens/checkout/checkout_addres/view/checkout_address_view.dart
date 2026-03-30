@@ -301,7 +301,7 @@ class _CheckoutAddressViewState extends State<CheckoutAddressView> {
          if (lName.isEmpty) lName = "User";
 
          String phone = value['phone'] ?? "0000000000";
-         String safeEmail = email ?? "$phone@mobile.com";
+         String safeEmail = email ?? "";
 
          // 🟢 FIX: Combine ALL fields so nothing is lost
          String house = value['flatHouseBuilding'] ?? '';

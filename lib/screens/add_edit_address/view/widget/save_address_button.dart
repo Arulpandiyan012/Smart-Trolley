@@ -149,8 +149,7 @@ class _SaveAddressButtonState extends State<SaveAddressButton> {
                       widget.selectedCountry?.code == null)
                   ? widget.countryCode
                   : widget.selectedCountry?.code ?? widget.countryCode,
-              // countryName: selectedCountry?.name ?? countryController.text,
-              phone: widget.phoneController.text,
+              phone: "+91${widget.phoneController.text.trim()}",
               postCode: widget.zipCodeController.text,
               state: widget.stateNameController.text.isNotEmpty
                   ? widget.stateNameController.text
@@ -168,7 +167,7 @@ class _SaveAddressButtonState extends State<SaveAddressButton> {
               address: widget.street1Controller.text,
               city: widget.cityController.text,
               country: widget.selectedCountry?.code ?? widget.countryCode,
-              phone: widget.phoneController.text,
+              phone: "+91${widget.phoneController.text.trim()}",
               postCode: widget.zipCodeController.text,
               state:
                   widget.selectedState?.code ?? widget.stateNameController.text,

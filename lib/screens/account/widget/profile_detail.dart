@@ -111,7 +111,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
-    String? prefixText, // 🟢 New Parameter
+    Widget? prefix, // 🟢 New Parameter
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,6 +128,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
           decoration: InputDecoration(
             counterText: "", 
             hintText: "Enter $label", 
+            prefixIcon: prefix != null ? Padding(padding: const EdgeInsets.only(left: 12, right: 8), child: prefix) : null,
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           ),
@@ -180,7 +182,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
               controller: widget.phoneController, 
               label: "Phone Number",
               isRequired: true, 
-              // 🟢 REVERT: Removed +91 Prefix for India
+              // 🟢 MANDATORY: +91 Prefix for India
+              prefix: const Text("+91 ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               keyboardType: TextInputType.number, 
               maxLength: 10,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
