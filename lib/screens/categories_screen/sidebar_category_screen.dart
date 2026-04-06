@@ -64,10 +64,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     _categoryBloc = context.read<CategoryBloc>();
     
     _loadCategories();
-
-    if (_categories.isEmpty) {
-      _startAutoRetry();
-    }
+    // 🟢 NOTE: No auto-retry timer here - _loadCategories already falls back to cache.
+    // The old retry was firing 10x per screen open, causing excessive API calls.
 
     _listController.addListener(() {
       if (_listController.position.pixels == _listController.position.maxScrollExtent) {
@@ -197,6 +195,24 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             }
         }
     }); // No catchError needed as the function handles exceptions
+  }
+
+  // 🟢 PULL-TO-REFRESH: Clears cache and forces fresh API fetch
+  Future<void> _refreshCategories() async {
+    // 1. Clear in-memory cache so stale data isn't served
+    GlobalData.categoriesDrawerData = null;
+    // 2. Clear on-disk cache
+    appStoragePref.setDrawerCategories(null);
+    // 3. Reset state so the screen shows the loader while fetching
+    if (mounted) {
+      setState(() {
+        _categories = [];
+        _directModeTarget = null;
+        _directModeSelectedIndex = 0;
+      });
+    }
+    // 4. Load fresh data from API
+    _loadCategories();
   }
 
   // 🟢 NEW: Deep Search Helper
@@ -446,11 +462,6 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Retry logic
-    if (_categories.isEmpty && GlobalData.categoriesDrawerData != null) {
-      _loadCategories();
-    }
-
     // 1. LOADING / ERROR STATE
     if (_categories.isEmpty) {
       return Scaffold(
@@ -459,6 +470,13 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           elevation: 0.5,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh categories',
+              onPressed: _refreshCategories,
+            ),
+          ],
         ),
         body: _buildEmptyState(),
       );
@@ -477,17 +495,27 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
             elevation: 0.5,
             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Refresh categories',
+                onPressed: _refreshCategories,
+              ),
+            ],
           ),
           body: Stack(
             children: [
-              ListView.separated(
-                padding: const EdgeInsets.only(bottom: 80), // 🟢 Increased to avoid Bar
-                itemCount: _categories.length,
-                separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)), // Thick separator
-
-                itemBuilder: (context, index) {
-                   return _buildVerticalCategorySection(index);
-                },
+              RefreshIndicator(
+                color: const Color(0xFF27C16B),
+                onRefresh: _refreshCategories,
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  itemCount: _categories.length,
+                  separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)),
+                  itemBuilder: (context, index) {
+                     return _buildVerticalCategorySection(index);
+                  },
+                ),
               ),
               
               // 🟢 FLOATING VIEW CART BAR
@@ -497,12 +525,54 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
         );
     }
 
-    // 2. DIRECT MODE (Keep existing logic)
-    // 🟢 DEEP LINK HANDLER
+    // 2. DIRECT MODE — Category found by slug
     if (_directModeTarget != null) {
        final cat = _directModeTarget;
+       final children = ((cat as dynamic).children as List?) ?? [];
+       final theme = Theme.of(context);
+       final isDark = theme.brightness == Brightness.dark;
+
+       // 🟢 If the category has sub-categories → show them as a GRID
+       // (User can then pick the specific sub-section before seeing products)
+       if (children.isNotEmpty) {
+         return Scaffold(
+           backgroundColor: theme.scaffoldBackgroundColor,
+           appBar: AppBar(
+             title: Text(
+               _getName(cat),
+               style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold),
+             ),
+             backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+             elevation: 0.5,
+             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+           ),
+           body: Stack(
+             children: [
+               RefreshIndicator(
+                 color: const Color(0xFF27C16B),
+                 onRefresh: _refreshCategories,
+                 child: GridView.builder(
+                   padding: const EdgeInsets.fromLTRB(12, 16, 12, 96),
+                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                     crossAxisCount: 3,
+                     childAspectRatio: 0.75,
+                     crossAxisSpacing: 12,
+                     mainAxisSpacing: 16,
+                   ),
+                   itemCount: children.length,
+                   itemBuilder: (ctx, idx) {
+                     return _buildVerticalSubCategoryItem(children[idx]);
+                   },
+                 ),
+               ),
+               const FloatingCartBar(bottomMargin: 16),
+             ],
+           ),
+         );
+       }
+
+       // 🟡 Leaf category (no children) → go straight to product sidebar
        final cartBloc = context.read<CartScreenBloc>();
-       
        return MultiBlocProvider(
           providers: [
             BlocProvider.value(value: _categoryBloc!),
@@ -511,9 +581,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           child: SubCategorySidebarScreen(
              title: _getName(cat),
              parentId: _getId(cat),
-             parentSlug: _getSlug(cat), 
-             subCategories: ((cat as dynamic).children as List?) ?? [],
-             initialSelectedIndex: _directModeSelectedIndex >= 0 ? _directModeSelectedIndex : 0,
+             parentSlug: _getSlug(cat),
+             subCategories: const [],
           ),
        );
     }

@@ -27,6 +27,7 @@ import 'package:bagisto_app_demo/screens/drawer_sub_categories/utils/index.dart'
     show drawerSubCategoryScreen, CategoriesArguments, categoryScreen;
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
 import 'package:bagisto_app_demo/widgets/floating_cart_bar.dart'; 
+import 'package:bagisto_app_demo/utils/shared_preference_helper.dart';
 
 import 'package:cached_network_image/cached_network_image.dart'; 
 
@@ -433,11 +434,15 @@ class _HomePageViewState extends State<HomePageView> {
                 RefreshIndicator(
                   color: Theme.of(context).primaryColor,
                   onRefresh: () async {
+                     // 🟢 Clear category cache so newly added backend categories appear
+                     GlobalData.categoriesDrawerData = null;
+                     appStoragePref.setDrawerCategories(null);
+                     // Re-fetch all home data fresh
                      widget.homePageBloc?.add(FetchHomeCustomData());
                      widget.homePageBloc?.add(FetchHomePageCategoriesEvent());
-                     // 🟢 NEW: Refresh the custom featured sections
+                     // 🟢 Also refresh the custom featured sections
                      _featuredSectionsKey.currentState?.fetchFeaturedSections();
-                     // Wait a moment for UX
+                     // Give the API a moment to respond
                      await Future.delayed(const Duration(seconds: 2));
                   },
                   child: CustomScrollView(
