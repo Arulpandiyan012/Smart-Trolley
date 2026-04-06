@@ -64,10 +64,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     _categoryBloc = context.read<CategoryBloc>();
     
     _loadCategories();
-
-    if (_categories.isEmpty) {
-      _startAutoRetry();
-    }
+    // 🟢 NOTE: No auto-retry timer here - _loadCategories already falls back to cache.
+    // The old retry was firing 10x per screen open, causing excessive API calls.
 
     _listController.addListener(() {
       if (_listController.position.pixels == _listController.position.maxScrollExtent) {
@@ -464,11 +462,6 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Retry logic
-    if (_categories.isEmpty && GlobalData.categoriesDrawerData != null) {
-      _loadCategories();
-    }
-
     // 1. LOADING / ERROR STATE
     if (_categories.isEmpty) {
       return Scaffold(

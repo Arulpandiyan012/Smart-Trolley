@@ -370,7 +370,7 @@ class BlinkitProductCard extends StatelessWidget {
                 Expanded(
                   flex: 6,
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -400,14 +400,14 @@ class BlinkitProductCard extends StatelessWidget {
                               height: 1.1,
                             )
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 1),
 
                           Text(
                             _productUnit(data), 
                             style: TextStyle(color: theme.textTheme.bodySmall?.color ?? (isDark ? Colors.white70 : Colors.grey[500]), fontSize: 9, fontWeight: FontWeight.w500) 
                           ),
                           
-                          const SizedBox(height: 2),
+                          // Removed SizedBox(height:2) here to fix 6px overflow
 
                           Builder(
                             builder: (context) {
