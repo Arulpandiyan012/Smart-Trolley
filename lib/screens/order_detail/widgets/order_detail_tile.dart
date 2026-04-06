@@ -12,6 +12,8 @@ import 'package:bagisto_app_demo/screens/order_detail/utils/index.dart';
 import 'package:bagisto_app_demo/utils/index.dart';
 import 'package:bagisto_app_demo/screens/tracking/live_tracking_map_screen.dart';
 import 'package:bagisto_app_demo/screens/home_page/utils/route_argument_helper.dart';
+import 'package:bagisto_app_demo/services/delivery_rating_service.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_bloc.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_event.dart';
 import 'package:bagisto_app_demo/screens/product_screen/bloc/product_page_state.dart';
@@ -38,7 +40,7 @@ class _ProductImageCache {
   }
 } 
 
-class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
+class OrderDetailTile extends StatefulWidget {
   final OrderDetail? orderDetailModel;
   final List<ReviewData>? reviews;
   final int? orderId;
@@ -57,13 +59,22 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
   }) : super(key: key);
 
   @override
+  State<OrderDetailTile> createState() => _OrderDetailTileState();
+}
+
+class _OrderDetailTileState extends State<OrderDetailTile> with OrderStatusBGColorHelper {
+  bool _isDeliveryExpanded = false;
+  bool _isBillingExpanded = false;
+  bool _isShippingExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (orderDetailModel == null) {
+    if (widget.orderDetailModel == null) {
       return const Center(child: CircularProgressIndicator(color: Colors.green));
     }
 
-    bool isPending = (orderDetailModel?.status?.toLowerCase() ?? "") == "pending";
-    bool isPickedUp = (orderDetailModel?.status?.toLowerCase() ?? "").contains("picked");
+    bool isPending = (widget.orderDetailModel?.status?.toLowerCase() ?? "") == "pending";
+    bool isPickedUp = (widget.orderDetailModel?.status?.toLowerCase() ?? "").contains("picked");
 
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor, 
@@ -73,7 +84,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
             color: Theme.of(context).primaryColor,
             onRefresh: () {
               return Future.delayed(const Duration(seconds: 1), () {
-                context.read<OrderDetailBloc>().add(OrderDetailFetchDataEvent(orderId));
+                context.read<OrderDetailBloc>().add(OrderDetailFetchDataEvent(widget.orderId));
               });
             },
             child: SingleChildScrollView(
@@ -110,7 +121,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "ORDER #${orderDetailModel?.id ?? ''}",
+                                  "ORDER #${widget.orderDetailModel?.id ?? ''}",
                                   style: TextStyle(
                                     fontSize: 18, 
                                     fontWeight: FontWeight.w900,
@@ -120,7 +131,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  _formatDateToLocal(orderDetailModel?.createdAt),
+                                  _formatDateToLocal(widget.orderDetailModel?.createdAt),
                                   style: TextStyle(
                                     fontSize: 12, 
                                     color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
@@ -132,12 +143,12 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: getOrderBgColor(orderDetailModel?.status ?? "").withOpacity(0.1),
+                                color: getOrderBgColor(widget.orderDetailModel?.status ?? "").withOpacity(0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                _getStatusIcon(orderDetailModel?.status),
-                                color: getOrderBgColor(orderDetailModel?.status ?? ""),
+                                _getStatusIcon(widget.orderDetailModel?.status),
+                                color: getOrderBgColor(widget.orderDetailModel?.status ?? ""),
                                 size: 20,
                               ),
                             ),
@@ -147,7 +158,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         const SizedBox(height: 20),
                         
                         // 🟢 TRENDY STATUS TIMELINE
-                        _buildStatusTimeline(context, orderDetailModel?.status ?? ""),
+                        _buildStatusTimeline(context, widget.orderDetailModel?.status ?? ""),
 
                         const SizedBox(height: 24),
                         Divider(thickness: 1, height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
@@ -156,7 +167,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         // 2. ITEMS ORDERED
                         const Text("Items Ordered", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                         const SizedBox(height: 12),
-                        if ((orderDetailModel?.items?.length ?? 0) == 0)
+                        if ((widget.orderDetailModel?.items?.length ?? 0) == 0)
                           const Padding(
                             padding: EdgeInsets.all(20.0),
                             child: Text('No items in this order', style: TextStyle(color: Colors.grey)),
@@ -165,10 +176,10 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                           ListView.separated(
                             physics: const NeverScrollableScrollPhysics(),
                             shrinkWrap: true,
-                            itemCount: orderDetailModel?.items?.length ?? 0,
+                            itemCount: widget.orderDetailModel?.items?.length ?? 0,
                             separatorBuilder: (context, index) => const Divider(height: 20),
                             itemBuilder: (buildContext, index) {
-                              final item = orderDetailModel?.items?[index];
+                              final item = widget.orderDetailModel?.items?[index];
                               return _buildProductItem(item, buildContext);
                             },
                           ),
@@ -177,47 +188,73 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         const Divider(thickness: 1, height: 1),
                         const SizedBox(height: 16),
 
-                        // 3. ADDRESS DETAILS
-                        const Text("Delivery Details", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
-                        const SizedBox(height: 16),
+                        // 3. ADDRESS DETAILS (UPGRADED TO COLLAPSIBLE)
+                        InkWell(
+                          onTap: () => setState(() => _isDeliveryExpanded = !_isDeliveryExpanded),
+                          child: Row(
+                            children: [
+                              const Text("Delivery Details", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                              const Spacer(),
+                              Icon(
+                                _isDeliveryExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                color: Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ),
                         
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // LEFT: BILLING
-                            Expanded(
-                              flex: 4,
-                              child: _buildAddressNode(
-                                context: context,
-                                icon: Icons.receipt_long, 
-                                title: "Billing Address",
-                                address: orderDetailModel?.billingAddress,
-                                alignLeft: true
+                        if (_isDeliveryExpanded) ...[
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildAddressToggleButton(
+                                  icon: Icons.receipt_long,
+                                  title: "Billing",
+                                  isSelected: _isBillingExpanded,
+                                  onTap: () => setState(() {
+                                    _isBillingExpanded = !_isBillingExpanded;
+                                    if (_isBillingExpanded) _isShippingExpanded = false;
+                                  }),
+                                ),
                               ),
-                            ),
-                            
-                            // CENTER: LINE
-                            Expanded(
-                              flex: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 14),
-                                child: _buildDottedLine(),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildAddressToggleButton(
+                                  icon: Icons.local_shipping_outlined,
+                                  title: "Shipping",
+                                  isSelected: _isShippingExpanded,
+                                  onTap: () => setState(() {
+                                    _isShippingExpanded = !_isShippingExpanded;
+                                    if (_isShippingExpanded) _isBillingExpanded = false;
+                                  }),
+                                ),
                               ),
-                            ),
-
-                            // RIGHT: SHIPPING
-                            Expanded(
-                              flex: 4,
-                              child: _buildAddressNode(
-                                context: context,
-                                icon: Icons.local_shipping_outlined, 
-                                title: "Shipping Address",
-                                address: orderDetailModel?.shippingAddress,
-                                alignLeft: false 
-                              ),
+                            ],
+                          ),
+                          
+                          if (_isBillingExpanded) ...[
+                            const SizedBox(height: 16),
+                            _buildAddressNode(
+                              context: context,
+                              icon: Icons.receipt_long, 
+                              title: "Billing Address",
+                              address: widget.orderDetailModel?.billingAddress,
+                              alignLeft: true
                             ),
                           ],
-                        ),
+                          
+                          if (_isShippingExpanded) ...[
+                            const SizedBox(height: 16),
+                            _buildAddressNode(
+                              context: context,
+                              icon: Icons.local_shipping_outlined, 
+                              title: "Shipping Address",
+                              address: widget.orderDetailModel?.shippingAddress,
+                              alignLeft: true 
+                            ),
+                          ],
+                        ],
 
                         const SizedBox(height: 24),
                         const Divider(thickness: 1, height: 1),
@@ -237,7 +274,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                                 children: [
                                   Text("Total Amount", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).textTheme.titleMedium?.color)),
                                   Text(
-                                    orderDetailModel?.formattedPrice?.grandTotal ?? "0.00",
+                                    widget.orderDetailModel?.formattedPrice?.grandTotal ?? "0.00",
                                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Colors.green),
                                   ),
                                 ],
@@ -248,7 +285,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                                 children: [
                                   Text("Payment Method", style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6))),
                                   Text(
-                                    orderDetailModel?.payment?.methodTitle ?? 'N/A', 
+                                    widget.orderDetailModel?.payment?.methodTitle ?? 'N/A', 
                                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodySmall?.color)
                                   ),
                                 ],
@@ -273,7 +310,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                                   side: const BorderSide(color: Colors.red, width: 1.5)
                                 ),
                               ),
-                              onPressed: onCancelOrder,
+                              onPressed: widget.onCancelOrder,
                               child: const Text("CANCEL ORDER", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)),
                             ),
                           ),
@@ -299,7 +336,7 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => LiveTrackingMapScreen(
-                                      orderId: (orderDetailModel?.id ?? 0).toString(),
+                                      orderId: (widget.orderDetailModel?.id ?? 0).toString(),
                                     ),
                                   ),
                                 );
@@ -316,13 +353,20 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                     ),
                   ),
                   
+                  // 🟢 NEW: RATE DELIVERY PARTNER SECTION
+                  if ((widget.orderDetailModel?.status?.toLowerCase() ?? "") == "delivered" || 
+                      (widget.orderDetailModel?.status?.toLowerCase() ?? "") == "completed") ...[
+                    const SizedBox(height: 24),
+                    _RateDeliveryWidget(orderId: int.tryParse(widget.orderDetailModel?.id?.toString() ?? "") ?? 0),
+                  ],
+
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
 
-          if (isLoading ?? false)
+          if (widget.isLoading ?? false)
             Container(
               color: Colors.black.withOpacity(0.3),
               child: const Center(child: CircularProgressIndicator(color: Colors.white)),
@@ -686,11 +730,11 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                     ],
                   ),
                   // 🟢 NEW ROW FOR REVIEW (Eliminates horizontal overflow)
-                  if ((orderDetailModel?.status?.toLowerCase() ?? "") == "completed" || 
-                      (orderDetailModel?.status?.toLowerCase() ?? "") == "delivered" ||
-                      (orderDetailModel?.status?.toLowerCase() ?? "") == "picked up" ||
-                      (orderDetailModel?.status?.toLowerCase() ?? "") == "picked_up" ||
-                      (orderDetailModel?.status?.toLowerCase() ?? "") == "received") ...[
+                  if ((widget.orderDetailModel?.status?.toLowerCase() ?? "") == "completed" || 
+                      (widget.orderDetailModel?.status?.toLowerCase() ?? "") == "delivered" ||
+                      (widget.orderDetailModel?.status?.toLowerCase() ?? "") == "picked up" ||
+                      (widget.orderDetailModel?.status?.toLowerCase() ?? "") == "picked_up" ||
+                      (widget.orderDetailModel?.status?.toLowerCase() ?? "") == "received") ...[
                       const SizedBox(height: 4),
                       _buildReviewSection(item, buildContext),
                   ],
@@ -708,16 +752,16 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     // 1. Find if a review exists for this product
     ReviewData? existingReview;
     
-    if (reviews != null) {
+    if (widget.reviews != null) {
       try {
         final itemPid = item.productId?.toString();
         final itemObjPid = item.product?.id?.toString();
         final itemSku = item.sku?.toString().toLowerCase();
 
         print("🔍 MATCHING START - Item: pid=$itemPid, objPid=$itemObjPid, sku=$itemSku");
-        print("🔍 Total reviews to check: ${reviews!.length}");
+        print("🔍 Total reviews to check: ${widget.reviews!.length}");
 
-        existingReview = reviews!.where((r) {
+        existingReview = widget.reviews!.where((r) {
           final rPid = r.productId?.toString();
           final rObjPid = r.product?.id?.toString();
           final rSku = r.product?.sku?.toString().toLowerCase();
@@ -778,8 +822,8 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                         title: existingReview.title,
                         comment: existingReview.comment,
                     )).then((_) {
-                      if (orderId != null) {
-                        orderDetailBloc?.add(OrderDetailFetchDataEvent(orderId));
+                      if (widget.orderId != null) {
+                        widget.orderDetailBloc?.add(OrderDetailFetchDataEvent(widget.orderId!));
                       }
                     });
               },
@@ -800,13 +844,13 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
       return GestureDetector(
         onTap: () {
           ReviewData? myReview;
-          if (reviews != null && reviews!.isNotEmpty) {
+          if (widget.reviews != null && widget.reviews!.isNotEmpty) {
             try {
               final itemPid = item.productId?.toString();
               final itemObjPid = item.product?.id?.toString();
               final itemSku = item.sku?.toString().toLowerCase();
 
-              myReview = reviews!.where((r) {
+              myReview = widget.reviews!.where((r) {
                 final rPid = r.productId?.toString();
                 final rObjPid = r.product?.id?.toString();
                 final rSku = r.product?.sku?.toString().toLowerCase();
@@ -835,8 +879,8 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
                   title: myReview?.title,
                   comment: myReview?.comment,
               )).then((_) {
-                if (orderId != null) {
-                  orderDetailBloc?.add(OrderDetailFetchDataEvent(orderId));
+                if (widget.orderId != null) {
+                  widget.orderDetailBloc?.add(OrderDetailFetchDataEvent(widget.orderId!));
                 }
               });
         },
@@ -913,6 +957,204 @@ class OrderDetailTile extends StatelessWidget with OrderStatusBGColorHelper {
     if (postcode.isNotEmpty) parts.add(postcode);
 
     return parts.join(", ");
+  }
+
+  Widget _buildAddressToggleButton({
+    required IconData icon,
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.green : Colors.grey.withAlpha(75),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.green : Colors.grey,
+              size: 24,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.green : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// 🟢 NEW: RATE DELIVERY WIDGET
+class _RateDeliveryWidget extends StatefulWidget {
+  final int orderId;
+  const _RateDeliveryWidget({Key? key, required this.orderId}) : super(key: key);
+
+  @override
+  State<_RateDeliveryWidget> createState() => _RateDeliveryWidgetState();
+}
+
+class _RateDeliveryWidgetState extends State<_RateDeliveryWidget> {
+  double _rating = 5.0;
+  final TextEditingController _commentController = TextEditingController();
+  bool _isSubmitted = false;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  void _checkStatus() async {
+    final isRated = await DeliveryRatingService().checkRatingStatus(widget.orderId);
+    if (isRated && mounted) {
+      setState(() {
+        _isSubmitted = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isSubmitted) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.withOpacity(0.2)),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 40),
+            SizedBox(height: 12),
+            Text(
+              "Thank you for rating your delivery!",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Rate Delivery Experience",
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "How was your delivery partner today?",
+            style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6)),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: RatingBar.builder(
+              initialRating: 5,
+              minRating: 1,
+              direction: Axis.horizontal,
+              allowHalfRating: true,
+              itemCount: 5,
+              itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+              itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
+              onRatingUpdate: (rating) {
+                setState(() => _rating = rating);
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _commentController,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: "Add a comment (Optional)",
+              hintStyle: const TextStyle(fontSize: 12),
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Theme.of(context).dividerColor.withOpacity(0.02),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitRating,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text("Submit Rating", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _submitRating() async {
+    setState(() => _isSubmitting = true);
+    final success = await DeliveryRatingService().submitRating(
+      orderId: widget.orderId,
+      rating: _rating,
+      comment: _commentController.text,
+    );
+
+    if (success) {
+      setState(() {
+        _isSubmitted = true;
+        _isSubmitting = false;
+      });
+    } else {
+      setState(() => _isSubmitting = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to submit rating. Please try again.")),
+        );
+      }
+    }
   }
 }
 

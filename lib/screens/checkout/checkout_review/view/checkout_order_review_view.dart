@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 import 'package:bagisto_app_demo/screens/checkout/data_model/save_payment_model.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_extensions.dart'; // 🟢 FIXED: Package import
+
 
 //ignore: must_be_immutable
 class CheckoutOrderReviewView extends StatefulWidget {
@@ -15,7 +17,8 @@ class CheckoutOrderReviewView extends StatefulWidget {
   final Function(String)? callBack;
   final CartScreenBloc? cartScreenBloc;
   CartModel? cartDetailsModel;
-  final String? displayAddress; // 🟢 Address from parent
+  final String? displayAddress; 
+  final VoidCallback? onAddressChange; // 🟢 NEW
 
   CheckoutOrderReviewView({
     Key? key,
@@ -24,6 +27,7 @@ class CheckoutOrderReviewView extends StatefulWidget {
     this.cartDetailsModel,
     this.cartScreenBloc,
     this.displayAddress, 
+    this.onAddressChange,
   }) : super(key: key);
 
   @override
@@ -48,9 +52,21 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
         if (state is CheckOutReviewSavePaymentState) {
           if (state.status == CheckOutReviewStatus.success) {
             if (widget.callBack != null) {
-              widget.cartDetailsModel = state.savePaymentModel?.cart;
+              var cart = state.savePaymentModel?.cart;
+              
+              // 🟢 RE-SIMULATE FIRST25 (Backend doesn't know about it)
+              if (GlobalData.appliedCouponCode == "FIRST25" && cart != null) {
+                 double discountRes = cart.subTotalValue * 0.25;
+                 double adjusted = cart.subTotalValue + cart.taxValue + cart.deliveryFeeValue - discountRes;
+                 
+                 cart.couponCode = "FIRST25";
+                 cart.formattedPrice?.discountAmount = "-${GlobalData.currencyCode ?? "₹"} ${discountRes.toStringAsFixed(2)}";
+                 cart.formattedPrice?.grandTotal = "${GlobalData.currencyCode ?? "₹"} ${adjusted.toStringAsFixed(2)}";
+              }
+              
+              widget.cartDetailsModel = cart;
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.callBack!(state.savePaymentModel?.cart?.formattedPrice?.grandTotal.toString() ?? "");
+                widget.callBack!(cart?.formattedPrice?.grandTotal.toString() ?? "");
               });
             }
             return _reviewOrder(state.savePaymentModel!);
@@ -66,15 +82,26 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
 
   Widget _reviewOrder(SavePayment savePaymentModel) {
     var cart = savePaymentModel.cart;
+    if (cart == null) return const SizedBox();
+
+    // 🟢 UNIFIED CALCULATIONS (Via Extension)
+    double sub = cart.subTotalValue;
+    double tax = cart.taxValue;
+    double discount = cart.discountValue;
+    double deliveryFee = cart.deliveryFeeValue;
+    double adjustedGrand = cart.adjustedGrandTotal;
+
+
+    String currency = GlobalData.currencyCode ?? "₹";
     
     // 🟢 FIX: Prioritize passed address.
     String finalAddress = widget.displayAddress ?? "";
     
     // Fallback to extraction if empty
     if (finalAddress.isEmpty || finalAddress.trim() == ",") {
-        String safeAddress = cart?.shippingAddress?.address1?.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '') ?? "";
-        String safeCity = cart?.shippingAddress?.city ?? "";
-        String safeZip = cart?.shippingAddress?.postcode ?? "";
+        String safeAddress = cart.shippingAddress?.address1?.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '') ?? "";
+        String safeCity = cart.shippingAddress?.city ?? "";
+        String safeZip = cart.shippingAddress?.postcode ?? "";
         if (safeAddress.isNotEmpty) {
            finalAddress = "$safeAddress, $safeCity - $safeZip";
         } else {
@@ -93,10 +120,10 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: cart?.items?.length ?? 0,
+            itemCount: cart.items?.length ?? 0,
             separatorBuilder: (ctx, i) => const Divider(),
             itemBuilder: (ctx, i) {
-              var item = cart!.items![i];
+              var item = cart.items![i];
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -142,6 +169,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
             title: "Delivering to",
             icon: Icons.location_on,
             content: finalAddress, 
+            showEdit: true, 
           ),
 
           const SizedBox(height: 16),
@@ -150,7 +178,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
           _buildInfoCard(
             title: "Payment Method",
             icon: Icons.payment,
-            content: cart?.payment?.methodTitle ?? cart?.payment?.method ?? "N/A",
+            content: cart.payment?.methodTitle ?? cart.payment?.method ?? "N/A",
           ),
 
           const SizedBox(height: 24),
@@ -168,59 +196,37 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
               children: [
                 const Text("Bill Details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 const Divider(height: 24),
-                _buildRow("Item Total", cart?.formattedPrice?.subTotal ?? ""),
-                if ((cart?.formattedPrice?.taxAmount ?? "0") != "₹0.00")
-                   _buildRow("Taxes", cart?.formattedPrice?.taxAmount ?? ""),
-                if ((cart?.formattedPrice?.discountAmount ?? "0") != "₹0.00")
-                   _buildRow("Discount", "- ${cart?.formattedPrice?.discountAmount}", isGreen: true),
+                _buildRow("Item Total", "$currency ${sub.toStringAsFixed(2)}"),
                 
-                // 🟢 FIX: Delivery Charges (Robust Calculation with Fixed ₹30 / FREE Threshold)
-                Builder(builder: (context) {
-                   double parsePrice(dynamic p) {
-                      if (p == null) return 0.0;
-                      String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
-                      return double.tryParse(s) ?? 0.0;
-                   }
+                // Taxes
+                if (tax > 0) _buildRow("Taxes", "$currency ${tax.toStringAsFixed(2)}"),
 
-                   double sub = parsePrice(cart?.formattedPrice?.subTotal);
-                   bool isFreeDelivery = sub > 500;
-
-                   if (isFreeDelivery) {
-                      return _buildRow("Delivery Fees", "FREE", isGreen: true);
-                   } else {
-                      return _buildRow("Delivery Fees", "₹30.00");
-                   }
-                }),
+                // Discount
+                if (discount > 0)
+                   _buildRow("Discount", "- $currency ${discount.toStringAsFixed(2)}", isGreen: true),
+                
+                // Delivery Charges
+                _buildRow(
+                  "Delivery Fees", 
+                  deliveryFee == 0 ? "FREE" : "$currency ${deliveryFee.toStringAsFixed(2)}", 
+                  isGreen: deliveryFee == 0
+                ),
                 
                 const Divider(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("To Pay", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                    Builder(builder: (context) {
-                       double parsePrice(dynamic p) {
-                          if (p == null) return 0.0;
-                          String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
-                          return double.tryParse(s) ?? 0.0;
-                       }
-
-                       double sub = parsePrice(cart?.formattedPrice?.subTotal);
-                       double tax = parsePrice(cart?.formattedPrice?.taxAmount);
-                       double discount = parsePrice(cart?.formattedPrice?.discountAmount);
-                       
-                       double deliveryFee = sub > 500 ? 0 : 30;
-                       double adjustedGrand = sub + tax + deliveryFee - discount;
-                       
-                       return Text(
-                          "₹${adjustedGrand.toStringAsFixed(2)}",
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                        );
-                    }),
+                    Text(
+                      "$currency ${adjustedGrand.toStringAsFixed(2)}",
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    ),
                   ],
                 )
               ],
             ),
           ),
+
           
           const SizedBox(height: 100), // Bottom padding
         ],
@@ -228,7 +234,7 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
     );
   }
 
-  Widget _buildInfoCard({required String title, required IconData icon, required String content}) {
+  Widget _buildInfoCard({required String title, required IconData icon, required String content, bool showEdit = false}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -240,10 +246,27 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: 18, color: Colors.grey[700]),
-              const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey[800])),
+              Row(
+                children: [
+                  Icon(icon, size: 18, color: Colors.grey[700]),
+                  const SizedBox(width: 8),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey[800])),
+                ],
+              ),
+              if (showEdit && widget.onAddressChange != null)
+                GestureDetector(
+                  onTap: widget.onAddressChange,
+                  child: Text(
+                    "EDIT",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -297,3 +320,4 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
     return null;
   }
 }
+

@@ -1,4 +1,8 @@
-import '../utils/cart_index.dart';
+import 'package:flutter/material.dart';
+import 'package:bagisto_app_demo/utils/index.dart'; // 🟢 ADDED: Unified GlobalData & StringConstants
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart'; // 🟢 FIXED: Package import
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_extensions.dart'; // 🟢 FIXED: Package import
+
 
 class PriceDetailView extends StatelessWidget {
   final CartModel cartDetailsModel;
@@ -8,15 +12,19 @@ class PriceDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double parsePrice(dynamic p) {
-      if (p == null) return 0.0;
-      String s = p.toString().replaceAll(RegExp(r'[^\d.]'), ''); 
-      return double.tryParse(s) ?? 0.0;
-    }
+    // 🟢 UNIFIED CALCULATIONS (Via Extension)
+    double sub = cartDetailsModel.subTotalValue;
+    double tax = cartDetailsModel.taxValue;
+    double discount = cartDetailsModel.discountValue;
+    double deliveryFee = cartDetailsModel.deliveryFeeValue;
+    double adjustedGrand = cartDetailsModel.adjustedGrandTotal;
 
-    double sub = parsePrice(cartDetailsModel.formattedPrice?.subTotal);
+    
+    // Delivery Threshold Info
     bool isFreeDelivery = sub > 500;
     double diffToFree = 500 - sub;
+
+    String currency = GlobalData.currencyCode ?? "₹";
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -34,7 +42,7 @@ class PriceDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🟢 FREE DELIVERY BANNER
+          // 🟢 FREE DELIVERY BANNER (Synced with Extension)
           if (!isFreeDelivery && sub > 0)
             Container(
               width: double.infinity,
@@ -51,7 +59,7 @@ class PriceDetailView extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "Add ₹${diffToFree.toStringAsFixed(0)} more for FREE Delivery!",
+                      "Add $currency${diffToFree.toStringAsFixed(0)} more for FREE Delivery!",
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.orange),
                     ),
                   ),
@@ -93,24 +101,23 @@ class PriceDetailView extends StatelessWidget {
           const SizedBox(height: 16),
           
           // Subtotal
-          _buildRow(context, StringConstants.subTotal.localized(), cartDetailsModel.formattedPrice?.subTotal ?? ""),
+          _buildRow(context, StringConstants.subTotal.localized(), "$currency ${sub.toStringAsFixed(2)}"),
           
           // Discount
-          if (cartDetailsModel.formattedPrice?.discountAmount != null)
-             _buildRow(context, StringConstants.discount.localized(), cartDetailsModel.formattedPrice?.discountAmount ?? "", isGreen: true),
+          if (discount > 0)
+             _buildRow(context, StringConstants.discount.localized(), "-$currency ${discount.toStringAsFixed(2)}", isGreen: true),
 
           // Tax
-          if (cartDetailsModel.taxTotal > 0)
-             _buildRow(context, StringConstants.tax.localized(), cartDetailsModel.formattedPrice?.taxTotal.toString() ?? ""),
+          if (tax > 0)
+             _buildRow(context, StringConstants.tax.localized(), "$currency ${tax.toStringAsFixed(2)}"),
 
-          // 🟢 FIX: Delivery Charges (Robust Calculation with Fixed ₹30 / FREE Threshold)
-          Builder(builder: (context) {
-             if (isFreeDelivery) {
-                return _buildRow(context, "Delivery Charges", "FREE", isGreen: true);
-             } else {
-                return _buildRow(context, "Delivery Charges", "₹30.00");
-             }
-          }),
+          // Delivery Charges
+          _buildRow(
+            context, 
+            "Delivery Charges", 
+            deliveryFee == 0 ? "FREE" : "$currency ${deliveryFee.toStringAsFixed(2)}", 
+            isGreen: deliveryFee == 0
+          ),
 
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -129,22 +136,14 @@ class PriceDetailView extends StatelessWidget {
                   color: Theme.of(context).textTheme.titleLarge?.color
                 ),
               ),
-              Builder(builder: (context) {
-                 double tax = parsePrice(cartDetailsModel.formattedPrice?.taxAmount ?? cartDetailsModel.taxTotal);
-                 double discount = parsePrice(cartDetailsModel.formattedPrice?.discountAmount);
-                 
-                 double deliveryFee = isFreeDelivery ? 0 : 30;
-                 double adjustedGrand = sub + tax + deliveryFee - discount;
-                 
-                 return Text(
-                    "₹${adjustedGrand.toStringAsFixed(2)}",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800, 
-                      fontSize: 16,
-                      color: Theme.of(context).textTheme.titleLarge?.color
-                    ),
-                  );
-              }),
+              Text(
+                "$currency ${adjustedGrand.toStringAsFixed(2)}",
+                style: TextStyle(
+                  fontWeight: FontWeight.w800, 
+                  fontSize: 16,
+                  color: const Color(0xFF27C16B)
+                ),
+              ),
             ],
           ),
         ],
@@ -174,4 +173,4 @@ class PriceDetailView extends StatelessWidget {
       ),
     );
   }
-}
+}

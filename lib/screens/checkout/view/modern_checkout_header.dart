@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 class ModernCheckoutHeader extends StatelessWidget {
   final int currentStep; // 1 to 4
   final String total;
+  final bool isSimplified; // 🟢 NEW
 
   const ModernCheckoutHeader({
     Key? key,
     required this.currentStep,
     required this.total,
+    this.isSimplified = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Calculate progress (0.25 to 1.0)
-    double progress = currentStep / 4;
+    int totalSteps = isSimplified ? 2 : 4;
+    int displayStep = isSimplified ? (currentStep - 2) : currentStep;
+    if (displayStep < 1) displayStep = 1;
+
+    // Calculate progress
+    double progress = displayStep / totalSteps;
 
     return Container(
       color: Colors.white,
@@ -33,7 +39,7 @@ class ModernCheckoutHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                "Step $currentStep/4",
+                "Step $displayStep/$totalSteps",
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
