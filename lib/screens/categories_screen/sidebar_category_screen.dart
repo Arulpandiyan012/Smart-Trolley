@@ -199,6 +199,24 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
     }); // No catchError needed as the function handles exceptions
   }
 
+  // 🟢 PULL-TO-REFRESH: Clears cache and forces fresh API fetch
+  Future<void> _refreshCategories() async {
+    // 1. Clear in-memory cache so stale data isn't served
+    GlobalData.categoriesDrawerData = null;
+    // 2. Clear on-disk cache
+    appStoragePref.setDrawerCategories(null);
+    // 3. Reset state so the screen shows the loader while fetching
+    if (mounted) {
+      setState(() {
+        _categories = [];
+        _directModeTarget = null;
+        _directModeSelectedIndex = 0;
+      });
+    }
+    // 4. Load fresh data from API
+    _loadCategories();
+  }
+
   // 🟢 NEW: Deep Search Helper
   dynamic _findCategoryRecursively(List<dynamic> nodes, String slug) {
      final searchSlug = slug.trim().toLowerCase();
@@ -459,6 +477,13 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           title: Text("Categories", style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.bold)),
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           elevation: 0.5,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refresh categories',
+              onPressed: _refreshCategories,
+            ),
+          ],
         ),
         body: _buildEmptyState(),
       );
@@ -477,17 +502,27 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
             backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
             elevation: 0.5,
             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Refresh categories',
+                onPressed: _refreshCategories,
+              ),
+            ],
           ),
           body: Stack(
             children: [
-              ListView.separated(
-                padding: const EdgeInsets.only(bottom: 80), // 🟢 Increased to avoid Bar
-                itemCount: _categories.length,
-                separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)), // Thick separator
-
-                itemBuilder: (context, index) {
-                   return _buildVerticalCategorySection(index);
-                },
+              RefreshIndicator(
+                color: const Color(0xFF27C16B),
+                onRefresh: _refreshCategories,
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  itemCount: _categories.length,
+                  separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)),
+                  itemBuilder: (context, index) {
+                     return _buildVerticalCategorySection(index);
+                  },
+                ),
               ),
               
               // 🟢 FLOATING VIEW CART BAR
