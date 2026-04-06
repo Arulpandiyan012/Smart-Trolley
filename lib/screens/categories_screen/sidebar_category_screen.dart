@@ -525,12 +525,54 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
         );
     }
 
-    // 2. DIRECT MODE (Keep existing logic)
-    // 🟢 DEEP LINK HANDLER
+    // 2. DIRECT MODE — Category found by slug
     if (_directModeTarget != null) {
        final cat = _directModeTarget;
+       final children = ((cat as dynamic).children as List?) ?? [];
+       final theme = Theme.of(context);
+       final isDark = theme.brightness == Brightness.dark;
+
+       // 🟢 If the category has sub-categories → show them as a GRID
+       // (User can then pick the specific sub-section before seeing products)
+       if (children.isNotEmpty) {
+         return Scaffold(
+           backgroundColor: theme.scaffoldBackgroundColor,
+           appBar: AppBar(
+             title: Text(
+               _getName(cat),
+               style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold),
+             ),
+             backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+             elevation: 0.5,
+             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+           ),
+           body: Stack(
+             children: [
+               RefreshIndicator(
+                 color: const Color(0xFF27C16B),
+                 onRefresh: _refreshCategories,
+                 child: GridView.builder(
+                   padding: const EdgeInsets.fromLTRB(12, 16, 12, 96),
+                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                     crossAxisCount: 3,
+                     childAspectRatio: 0.75,
+                     crossAxisSpacing: 12,
+                     mainAxisSpacing: 16,
+                   ),
+                   itemCount: children.length,
+                   itemBuilder: (ctx, idx) {
+                     return _buildVerticalSubCategoryItem(children[idx]);
+                   },
+                 ),
+               ),
+               const FloatingCartBar(bottomMargin: 16),
+             ],
+           ),
+         );
+       }
+
+       // 🟡 Leaf category (no children) → go straight to product sidebar
        final cartBloc = context.read<CartScreenBloc>();
-       
        return MultiBlocProvider(
           providers: [
             BlocProvider.value(value: _categoryBloc!),
@@ -539,9 +581,8 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
           child: SubCategorySidebarScreen(
              title: _getName(cat),
              parentId: _getId(cat),
-             parentSlug: _getSlug(cat), 
-             subCategories: ((cat as dynamic).children as List?) ?? [],
-             initialSelectedIndex: _directModeSelectedIndex >= 0 ? _directModeSelectedIndex : 0,
+             parentSlug: _getSlug(cat),
+             subCategories: const [],
           ),
        );
     }
