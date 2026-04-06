@@ -30,6 +30,9 @@ class GlobalData {
   static int rootCategoryId = 1;
   static CmsData? cmsData;
   static GetDrawerCategoriesData? categoriesDrawerData;
+  
+  // 🟢 NEW: Simulated Coupon Persistence
+  static String? appliedCouponCode;
 
   // 🟢 2. CHANGE TO BehaviorSubject (Remembers the last value)
   // This ensures the Bottom Bar gets the count immediately when navigating back.

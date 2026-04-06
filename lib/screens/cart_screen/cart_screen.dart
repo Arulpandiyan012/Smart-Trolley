@@ -12,7 +12,7 @@ import 'package:bagisto_app_demo/screens/home_page/widget/address_details_sheet.
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/widget/saved_address_sheet.dart';
 import 'package:bagisto_app_demo/screens/sign_in/view/sign_in_screen.dart';
-import 'package:dio/dio.dart'; 
+import 'package:bagisto_app_demo/services/api_client.dart'; 
 
 class CartScreen extends StatefulWidget {
   final bool isFromBottomNav; 
@@ -32,6 +32,7 @@ class _CartScreenState extends State<CartScreen> {
   
   String? _deliveryAddress;
   String? _userName;
+  AddressData? _selectedAddressObj;
   StreamSubscription? _cartSubscription;
 
   @override
@@ -40,6 +41,7 @@ class _CartScreenState extends State<CartScreen> {
     fetchCartData();
     _deliveryAddress = CurrentLocationManager.address;
     _fetchUserName();
+    _fetchDefaultAddress(); 
     
     _cartSubscription = GlobalData.cartUpdateStream.stream.listen((_) async {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -54,6 +56,31 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
   }
 
+  void _fetchDefaultAddress() async {
+    if (!appStoragePref.getCustomerLoggedIn()) return;
+    try {
+      final addressModel = await ApiClient().getAddressData();
+      if (addressModel != null && addressModel.addressData != null && addressModel.addressData!.isNotEmpty) {
+        // Find default address
+        AddressData? def = addressModel.addressData!.firstWhereOrNull((a) => a.isDefault == true);
+        if (def == null && addressModel.addressData!.isNotEmpty) {
+           def = addressModel.addressData!.first;
+        }
+
+        if (def != null && mounted) {
+          setState(() {
+            _selectedAddressObj = def;
+            _deliveryAddress = "${def?.address1}, ${def?.city}";
+            _userName = def?.firstName;
+            CurrentLocationManager.address = _deliveryAddress;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching default address: $e");
+    }
+  }
+
   @override
   void dispose() {
     _cartSubscription?.cancel();
@@ -62,6 +89,36 @@ class _CartScreenState extends State<CartScreen> {
 
   fetchCartData() {
     cartScreenBloc?.add(FetchCartDataEvent());
+  }
+
+  // 🟢 NEW: Simulated Discount Calculation for FIRST25
+  void _simulateDiscountCalculation(double percent, String code) {
+    if (_cartDetailsModel == null) return;
+
+    try {
+      double subTotalVal = 0.0;
+      String rawSubTotal = _cartDetailsModel?.formattedPrice?.subTotal?.toString() ?? "0";
+      subTotalVal = double.tryParse(rawSubTotal.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+
+      double discount = subTotalVal * percent;
+      double newGrandTotalVal = 0.0;
+      
+      // Calculate new grand total (Subtotal - Discount + Shipping)
+      String rawShipping = _cartDetailsModel?.formattedPrice?.shippingAmount?.toString() ?? "0";
+      double shippingVal = double.tryParse(rawShipping.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+      newGrandTotalVal = subTotalVal - discount + shippingVal;
+
+      setState(() {
+        _cartDetailsModel?.couponCode = code;
+        GlobalData.appliedCouponCode = code; // 🟢 Persist globally
+        _cartDetailsModel?.formattedPrice?.discountAmount = "-${GlobalData.currencyCode ?? "₹"} ${discount.toStringAsFixed(2)}";
+        _cartDetailsModel?.formattedPrice?.grandTotal = "${GlobalData.currencyCode ?? "₹"} ${newGrandTotalVal.toStringAsFixed(2)}";
+      });
+      
+      _updateGlobalCartData(_cartDetailsModel);
+    } catch (e) {
+      debugPrint("Simulation Error: $e");
+    }
   }
 
   void _fetchUserName() {
@@ -141,6 +198,7 @@ class _CartScreenState extends State<CartScreen> {
       ).then((selectedAddress) {
         if (selectedAddress != null && selectedAddress is AddressData) {
            setState(() {
+             _selectedAddressObj = selectedAddress;
              _deliveryAddress = "${selectedAddress.address1}, ${selectedAddress.city}";
              CurrentLocationManager.address = _deliveryAddress;
              _userName = selectedAddress.firstName; 
@@ -189,6 +247,7 @@ class _CartScreenState extends State<CartScreen> {
         total: _cartDetailsModel?.formattedPrice?.grandTotal.toString() ?? "0",
         cartDetailsModel: _cartDetailsModel!,
         cartScreenBloc: cartScreenBloc,
+        selectedAddress: _selectedAddressObj,
     ));
   }
 
@@ -229,6 +288,35 @@ class _CartScreenState extends State<CartScreen> {
             ShowMessage.successNotification(state.limitMsg ?? "Cart cleared", context); 
           } else if (state.status == CartStatus.fail) {
             ShowMessage.errorNotification(state.error ?? "", context);
+          }
+        }
+
+        // 🟢 NEW: Handle Coupon Application
+        if (state is AddCouponState) {
+          if (state.status == CartStatus.success) {
+             String code = _discountController.text.toUpperCase().trim();
+             if (code == "FIRST25") {
+                // 🔥 LOCAL SIMULATION: Recalculate prices locally so they persist for demonstration
+                _simulateDiscountCalculation(0.25, code);
+                ShowMessage.successNotification(state.successMsg ?? "25% First Order discount applied!", context);
+                // DO NOT call fetchCartData() - server doesn't know about FIRST25 simulation
+             } else {
+                ShowMessage.successNotification(state.successMsg ?? "Coupon applied!", context);
+                fetchCartData(); // Normal refresh for real coupons
+             }
+          } else if (state.status == CartStatus.fail) {
+             ShowMessage.errorNotification(state.error ?? "Invalid coupon", context);
+          }
+        }
+
+        // 🟢 NEW: Handle Coupon Removal
+        if (state is RemoveCouponCartState) {
+          if (state.status == CartStatus.success) {
+             GlobalData.appliedCouponCode = null; // 🟢 Clear simulation
+             ShowMessage.successNotification(state.successMsg ?? "Coupon removed", context);
+             fetchCartData(); // 🔥 REFRESH TO REVERT TOTALS
+          } else if (state.status == CartStatus.fail) {
+             ShowMessage.errorNotification(state.error ?? "", context);
           }
         }
       },
@@ -273,6 +361,8 @@ class _CartScreenState extends State<CartScreen> {
                 cartDetailsModel: _cartDetailsModel!,
               ),
               const SizedBox(height: 16),
+              _buildAddressSection(context),
+              const SizedBox(height: 16),
               PriceDetailView(cartDetailsModel: _cartDetailsModel!),
               const SizedBox(height: 20),
               CartActionsView(cartScreenBloc: cartScreenBloc),
@@ -280,6 +370,87 @@ class _CartScreenState extends State<CartScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // 🟢 NEW: Integrated Address Section in the Cart body
+  Widget _buildAddressSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04), 
+            blurRadius: 4, 
+            offset: const Offset(0, -2)
+          )
+        ],
+        border: Border.all(color: Colors.grey.withAlpha(50)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_on, size: 18, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Delivery Address",
+                    style: TextStyle(
+                      fontSize: 14, 
+                      fontWeight: FontWeight.w800, 
+                      color: Theme.of(context).textTheme.titleMedium?.color
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: _handleAddressChange,
+                child: Text(
+                  "CHANGE",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_userName != null)
+                      Text(
+                        _userName!,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _deliveryAddress ?? "Select an address to proceed",
+                      style: TextStyle(
+                        fontSize: 12, 
+                        color: Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            ],
+          ),
+        ],
       ),
     );
   }

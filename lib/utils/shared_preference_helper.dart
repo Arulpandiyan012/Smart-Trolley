@@ -283,7 +283,17 @@ class SharedPreferenceHelper {
     return configurationStorage.read("cartId") ?? "";
   }
 
+  // 🟢 One-Time Coupon Usage Persistence
+  void setIsCouponUsed(String code, bool used) {
+    configurationStorage.write("coupon_used_$code", used);
+  }
+
+  bool getIsCouponUsed(String code) {
+    return configurationStorage.read("coupon_used_$code") ?? false;
+  }
+
   // 🟢 Vendor Persistence
+
   setVendorLoggedIn(bool isLoggedIn) {
     configurationStorage.write("isVendorLoggedIn", isLoggedIn);
   }

@@ -52,12 +52,14 @@ class CartNavigationData {
   CartModel? cartDetailsModel;
   CartScreenBloc? cartScreenBloc;
   bool? isDownloadable;
+  AddressData? selectedAddress;
 
   CartNavigationData(
       {this.total,
       this.cartDetailsModel,
       this.cartScreenBloc,
-      this.isDownloadable});
+      this.isDownloadable,
+      this.selectedAddress});
 }
 
 //add review data

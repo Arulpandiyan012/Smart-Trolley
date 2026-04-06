@@ -11,6 +11,7 @@
 
 
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:bagisto_app_demo/data_model/order_model/orders_list_data_model.dart';
 
 abstract class CartScreenRepository {
   Future<CartModel?> getCartData();
@@ -26,6 +27,8 @@ abstract class CartScreenRepository {
   Future<BaseModel?> removeAllCartItem();
 
   Future<AddToCartModel?> moveToWishlist(String id);
+  
+  Future<OrdersListModel?> getOrderList(String? id, String? startDate, String? endDate, String? status, double? total, int? page, bool? isFilterApply);
 }
 
 class CartScreenRepositoryImp implements CartScreenRepository {
@@ -116,5 +119,10 @@ class CartScreenRepositoryImp implements CartScreenRepository {
       debugPrint("StackTrace --> $stacktrace");
     }
     return removeAllCartProductModel;
+  }
+
+  @override
+  Future<OrdersListModel?> getOrderList(String? id, String? startDate, String? endDate, String? status, double? total, int? page, bool? isFilterApply) async {
+    return await ApiClient().getOrderList(id, startDate, endDate, status, total, page, isFilterApply);
   }
 }

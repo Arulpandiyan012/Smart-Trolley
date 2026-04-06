@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:bagisto_app_demo/utils/index.dart';
 import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_index.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_extensions.dart'; // 🟢 FIXED: Missing extension import
+
 
 class BlinkitBottomCartBar extends StatelessWidget {
   final String? currentAddress;
@@ -143,7 +145,7 @@ class BlinkitBottomCartBar extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        cartDetailsModel.formattedPrice?.grandTotal.toString() ?? "",
+                        "${GlobalData.currencyCode ?? "₹"} ${cartDetailsModel.adjustedGrandTotal.toStringAsFixed(2)}",
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 18,

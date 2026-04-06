@@ -131,13 +131,14 @@ class _ApplyCouponViewState extends State<ApplyCouponView> {
         ),
         
         // 🟢 SUGGESTED COUPON (First Purchase Bonus)
-        if (!isCouponApplied)
+        if (!isCouponApplied && !appStoragePref.getIsCouponUsed("FIRST25"))
+
           Padding(
             padding: const EdgeInsets.only(top: 10, left: 4),
             child: GestureDetector(
               onTap: () {
-                widget.discountController.text = "FIRST50";
-                widget.cartScreenBloc?.add(AddCouponCartEvent("FIRST50"));
+                widget.discountController.text = "FIRST25";
+                widget.cartScreenBloc?.add(AddCouponCartEvent("FIRST25"));
                 setState(() {});
               },
               child: Row(
@@ -146,7 +147,7 @@ class _ApplyCouponViewState extends State<ApplyCouponView> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "Tap to apply 'FIRST50' & save on 1st order!",
+                      "Tap to apply 'FIRST25' & get a one-time 25% discount!",
                       style: TextStyle(
                         color: Colors.amber[900],
                         fontWeight: FontWeight.w700,

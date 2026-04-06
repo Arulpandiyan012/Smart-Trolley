@@ -19,8 +19,7 @@ import 'package:bagisto_app_demo/screens/checkout/checkout_shipping/bloc/checkou
 import 'package:bagisto_app_demo/screens/checkout/checkout_shipping/bloc/checkout_shipping_event.dart';
 import 'package:bagisto_app_demo/screens/checkout/checkout_shipping/bloc/checkout_shipping_state.dart';
 
-import 'package:bagisto_app_demo/services/api_client.dart'; 
-import 'package:bagisto_app_demo/screens/checkout/data_model/save_order_model.dart';
+import 'package:bagisto_app_demo/screens/cart_screen/widget/saved_address_sheet.dart'; 
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; 
 
@@ -29,12 +28,15 @@ class CheckoutScreenFinal extends StatefulWidget {
   final String? total;
   final bool? isDownloadable;
   final CartModel? cartDetailsModel;
+  final AddressData? selectedAddress; // 🟢 Pass from Cart
+
   const CheckoutScreenFinal(
       {Key? key,
       this.total,
       this.cartScreenBloc,
       this.cartDetailsModel,
-      this.isDownloadable = false})
+      this.isDownloadable = false,
+      this.selectedAddress})
       : super(key: key);
 
   @override
@@ -73,10 +75,79 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
     email = appStoragePref.getCustomerEmail();
     _shippingBloc = CheckOutShippingBloc(CheckOutShippingRepositoryImp());
     
+    // 🟢 ROBUST CART ID RESOLUTION
     _latestCartId = widget.cartDetailsModel?.id?.toString();
+    if (_latestCartId == null || _latestCartId == "0") {
+       _latestCartId = appStoragePref.getCartId();
+    }
+    
+    debugPrint("🛒 CHECKOUT INITIALIZED - CartID: $_latestCartId (ModelID: ${widget.cartDetailsModel?.id})");
+    
     _fetchFreshCartId();
+
+    // 🟢 NEW: Automatic Skip to Payment if address is pre-filled
+    if (widget.selectedAddress != null) {
+       _preFillAddress(widget.selectedAddress!);
+       currentIndex = 3; 
+       shippingRateCode = 'flatrate_flatrate';
+       
+       WidgetsBinding.instance.addPostFrameCallback((_) async {
+          setState(() => isLoading = true);
+          
+          String syncCartId = _latestCartId ?? "0";
+          if (syncCartId == "0") {
+             debugPrint("⚠️ WARNING: Checkout starting with Cart ID '0'. This may cause 'Something went wrong'.");
+          }
+
+          await _callBackendFixer(targetAddressId: shippingAddressId);
+          await _syncShippingMethod();
+          if (mounted) setState(() => isLoading = false);
+       });
+    }
     
     super.initState();
+  }
+
+
+  void _preFillAddress(AddressData address) {
+    billingAddressId = int.tryParse(address.id?.toString() ?? "0");
+    shippingAddressId = billingAddressId;
+    
+    billingFirstName = address.firstName;
+    billingLastName = address.lastName;
+    billingAddress = address.address1;
+    billingCity = address.city;
+    billingPostCode = address.postcode;
+    billingPhone = address.phone;
+    billingEmail = address.email;
+    billingCountry = address.country;
+    billingState = address.state;
+
+    shippingFirstName = billingFirstName;
+    shippingLastName = billingLastName;
+    shippingAddress = billingAddress;
+    shippingAddress2 = billingAddress2;
+    shippingCity = billingCity;
+    shippingPostCode = billingPostCode;
+    shippingPhone = billingPhone;
+    shippingEmail = billingEmail;
+    shippingCountry = billingCountry;
+    shippingState = billingState;
+
+    _cachedDisplayAddress = "${address.address1}, ${address.city}";
+  }
+
+  Future<void> _syncShippingMethod() async {
+    String cartIdToSend = _latestCartId ?? widget.cartDetailsModel?.id?.toString() ?? "0";
+    _shippingBloc?.add(CheckOutFetchShippingEvent(
+      billingCompanyName: billingCompanyName, billingFirstName: billingFirstName, billingLastName: billingLastName,
+      billingAddress: billingAddress, billingEmail: billingEmail, billingAddress2: billingAddress2,
+      billingCountry: billingCountry, billingState: billingState, billingCity: billingCity, billingPostCode: billingPostCode, billingPhone: billingPhone,
+      shippingCompanyName: shippingCompanyName, shippingFirstName: shippingFirstName, shippingLastName: shippingLastName,
+      shippingAddress: shippingAddress, shippingEmail: shippingEmail, shippingAddress2: shippingAddress2,
+      shippingCountry: shippingCountry, shippingState: shippingState, shippingCity: shippingCity, shippingPostCode: shippingPostCode, shippingPhone: shippingPhone,
+      billingId: billingAddressId, shippingId: shippingAddressId, cartId: cartIdToSend, useForShipping: useForShipping
+    ));
   }
 
   Future<void> _fetchFreshCartId() async {
@@ -87,18 +158,20 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
         setState(() => _latestCartId = newId);
         appStoragePref.setCartId(newId); 
       }
-    } catch (e) {
-      debugPrint("⚠️ Failed to fetch fresh cart ID: $e");
+    } catch (error) {
+      debugPrint("⚠️ Failed to fetch fresh cart ID: $error");
     }
   }
+
 
   Future<void> _callBackendFixer({int? targetAddressId}) async {
     try {
       String customerId = "0";
       try { 
-        var data = appStoragePref.getCustomerId(); 
-        if (data != null) customerId = data.toString(); 
+        int data = appStoragePref.getCustomerId(); 
+        customerId = data.toString(); 
       } catch (_) {}
+
 
       var dio = Dio();
       var formData = FormData.fromMap({
@@ -121,7 +194,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
      debugPrint("🚀 V14: SENDING CUSTOMER ID FOR MOBILE USER...");
      
      try {
-       String customerId = appStoragePref.getCustomerId()?.toString() ?? "0";
+       String customerId = appStoragePref.getCustomerId().toString();
        
        var dio = Dio();
        
@@ -129,21 +202,21 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
        String phoneToSend = billingPhone ?? shippingPhone ?? "";
        debugPrint("📞 Sending Phone to Backend: $phoneToSend");
 
-       // 🟢 FETCH FCM TOKEN FOR PUSH NOTIFICATION
-       String? fcmToken;
-       try {
-         fcmToken = await FirebaseMessaging.instance.getToken();
-         debugPrint("🔥 FCM Token: $fcmToken");
-       } catch (e) {
-         debugPrint("⚠️ Failed to get FCM token: $e");
-       }
+        // 🟢 FETCH FCM TOKEN FOR PUSH NOTIFICATION
+        String? fcmToken;
+        try {
+          fcmToken = await FirebaseMessaging.instance.getToken();
+          debugPrint("🔥 FCM Token: $fcmToken");
+        } catch (error) {
+          debugPrint("⚠️ Failed to fetch FCM token: $error");
+        }
 
-       var formData = FormData.fromMap({
-         'cart_id': _latestCartId ?? "0",
-         'customer_id': customerId,
-         'telephone': phoneToSend,
-         'fcm_token': fcmToken ?? "" // 🟢 SEND TO BACKEND
-       });
+        var formData = FormData.fromMap({
+          'cart_id': _latestCartId ?? "0",
+          'customer_id': customerId,
+          'telephone': phoneToSend,
+          'fcm_token': fcmToken ?? "" // 🟢 SEND TO BACKEND
+        });
 
        // 🟢 EXPLICITLY SAVE FCM TOKEN VIA DELIVERY API (Bypass broken Final Order script)
        try {
@@ -187,6 +260,12 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
            // 🟢 FIX: Clear Local Cart State
            GlobalData.updateCartState(null);
            
+           // 🟢 NEW: Mark FIRST25 used persistently
+           if (GlobalData.appliedCouponCode == "FIRST25") {
+               appStoragePref.setIsCouponUsed("FIRST25", true);
+               GlobalData.appliedCouponCode = null; 
+           }
+
            // 🟢 FIX: Notify CartScreen to refresh (it will see empty cart)
            GlobalData.cartUpdateStream.sink.add(true); 
 
@@ -285,6 +364,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
                   ModernCheckoutHeader(
                     currentStep: currentIndex,
                     total: widget.total ?? "",
+                    isSimplified: widget.selectedAddress != null,
                   ),
                   Expanded(child: _getBody()),
                   // 🟢 This is the Fixed Bottom Bar
@@ -293,7 +373,7 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
               ),
               if (isLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   child: const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B))),
                 )
             ],
@@ -418,11 +498,36 @@ class _CheckoutScreenState extends State<CheckoutScreenFinal> {
             cartScreenBloc: widget.cartScreenBloc,
             callBack: (price) { _myStreamCtrl.sink.add(price); },
             displayAddress: displayAddress, 
+            onAddressChange: _onAddressChangeFromReview,
           ),
         );
       default:
         return const SizedBox();
     }
+  }
+
+  // 🟢 NEW: Handle address change directly from Review Step
+  void _onAddressChangeFromReview() async {
+     showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => BlocProvider(
+          create: (context) => CheckOutBloc(CheckOutRepositoryImp()),
+          child: const SavedAddressSheet(),
+        ),
+      ).then((selectedAddress) async {
+        if (selectedAddress != null && selectedAddress is AddressData) {
+            setState(() => isLoading = true);
+            _preFillAddress(selectedAddress);
+            
+            // Re-sync backend
+            await _callBackendFixer(targetAddressId: shippingAddressId);
+            await _syncShippingMethod();
+            
+            if (mounted) setState(() => isLoading = false);
+        }
+      });
   }
 
  // 🟢 REPLACEMENT FOR _buildBottomBar in checkout_screen.dart

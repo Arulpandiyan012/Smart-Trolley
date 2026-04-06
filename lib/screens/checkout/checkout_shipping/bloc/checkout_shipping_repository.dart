@@ -106,8 +106,9 @@ class CheckOutShippingRepositoryImp implements CheckOutShippingRepository {
     } catch (error, stacktrace) {
       debugPrint("Error --> $error");
     }
-    return checkOutSaveAddressModel!;
+    return checkOutSaveAddressModel ?? SaveCheckoutAddresses();
   }
+
 
   @override
   Future<PaymentMethods?> saveShippingMethod(String shippingMethod) async {

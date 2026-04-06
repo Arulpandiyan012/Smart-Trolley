@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart';
+import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' hide LatLng;
 
 class DeliveryLocationPage extends StatefulWidget {
   const DeliveryLocationPage({Key? key}) : super(key: key);

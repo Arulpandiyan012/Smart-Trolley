@@ -289,10 +289,11 @@ case checkoutScreen:
         }
 
         return MaterialPageRoute(
-            builder: (_) => CheckoutScreenFinal( // USE FINAL CLASS NAME
+            builder: (_) => CheckoutScreenFinal(
                   cartScreenBloc: args?.cartScreenBloc,
                   total: args?.total,
                   cartDetailsModel: args?.cartDetailsModel,
+                  selectedAddress: args?.selectedAddress,
                 ));
     case orderListScreen:
       return MaterialPageRoute(
