@@ -44,7 +44,9 @@ class PaginatorInfo {
   Map<String, dynamic> toJson() => _$PaginatorInfoToJson(this);
 }
 
-@JsonSerializable()
+// 🟢 Data class uses manual fromJson/toJson to handle:
+//    1. snake_case / camelCase field aliases
+//    2. The prefixed type `order_detail.Items` (unsupported by code-gen with prefix imports)
 class Data {
   int? id;
   String? status;
@@ -61,31 +63,29 @@ class Data {
       this.formattedPrice,
       this.items});
 
-  // 🟢 FIXED: Manual mapping to ensure keys match API (snake_case -> camelCase)
   factory Data.fromJson(Map<String, dynamic> json) {
     return Data(
       id: json['id'] as int?,
       status: json['status'] as String?,
-      
-      // Fix: Look for 'total_qty_ordered' OR 'totalQtyOrdered'
       totalQtyOrdered: (json['total_qty_ordered'] ?? json['totalQtyOrdered']) as int?,
-      
-      // Fix: Look for 'created_at' OR 'createdAt'
       createdAt: (json['created_at'] ?? json['createdAt']) as String?,
-      
-      // Fix: Look for 'formatted_price' OR 'formattedPrice'
       formattedPrice: (json['formatted_price'] ?? json['formattedPrice']) == null
           ? null
           : FormattedPrice.fromJson(json['formatted_price'] ?? json['formattedPrice']),
-
-      // 🟢 Added items parsing
       items: (json['items'] as List?)
           ?.map((i) => order_detail.Items.fromJson(i as Map<String, dynamic>))
           .toList(),
     );
   }
 
-  Map<String, dynamic> toJson() => _$DataToJson(this);
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'status': status,
+    'total_qty_ordered': totalQtyOrdered,
+    'created_at': createdAt,
+    'formatted_price': formattedPrice?.toJson(),
+    'items': items?.map((e) => e.toJson()).toList(),
+  };
 }
 
 @JsonSerializable()

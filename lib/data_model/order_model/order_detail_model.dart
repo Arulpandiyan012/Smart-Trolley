@@ -185,6 +185,21 @@ class Items {
     
     return item;
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'sku': sku,
+    'type': type,
+    'name': name,
+    'qty_ordered': qtyOrdered,
+    'qty_shipped': qtyShipped,
+    'qty_invoiced': qtyInvoiced,
+    'qty_canceled': qtyCanceled,
+    'qty_refunded': qtyRefunded,
+    'product_id': productId,
+    'formatted_price': formattedPrice?.toJson(),
+    'product': product?.toJson(),
+  };
 }
 
 class OrderProduct {
