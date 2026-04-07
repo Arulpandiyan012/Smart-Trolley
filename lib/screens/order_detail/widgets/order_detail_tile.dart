@@ -439,8 +439,11 @@ class _OrderDetailTileState extends State<OrderDetailTile> with OrderStatusBGCol
   IconData _getStatusIcon(String? status) {
     if (status == null) return Icons.hourglass_empty;
     String s = status.toLowerCase();
-    if (s == "completed" || s == "delivered" || s == "picked up" || s == "picked_up" || s == "received") {
+    if (s == "completed" || s == "delivered" || s == "received") {
       return Icons.check_circle;
+    }
+    if (s == "picked up" || s == "picked_up") {
+      return Icons.local_shipping;
     }
     if (s == "canceled" || s == "closed") return Icons.cancel;
     if (s == "processing") return Icons.sync;
@@ -451,11 +454,12 @@ class _OrderDetailTileState extends State<OrderDetailTile> with OrderStatusBGCol
     String s = currentStatus.toLowerCase();
     bool isCanceled = s == "canceled" || s == "closed";
     
-    // Normal Flow: Pending -> Processing -> Delivered
+    // Normal Flow: Pending -> Processing -> Out for Delivery -> Delivered
     List<Map<String, dynamic>> stages = [
       {"label": "Pending", "icon": Icons.assignment_outlined, "active": true},
       {"label": "Processing", "icon": Icons.sync, "active": s == "processing" || s == "completed" || s == "delivered" || s == "picked_up" || s == "picked up"},
-      {"label": "Delivered", "icon": Icons.done_all, "active": s == "completed" || s == "delivered" || s == "picked_up" || s == "picked up"},
+      {"label": "Picked Up", "icon": Icons.local_shipping, "active": s == "picked_up" || s == "picked up" || s == "completed" || s == "delivered"},
+      {"label": "Delivered", "icon": Icons.done_all, "active": s == "completed" || s == "delivered"},
     ];
 
     if (isCanceled) {
@@ -523,8 +527,11 @@ class _OrderDetailTileState extends State<OrderDetailTile> with OrderStatusBGCol
   String _getStatusLabel(String? status) {
     if (status == null) return "PENDING";
     String s = status.toLowerCase();
-    if (s == "completed" || s == "delivered" || s == "picked up" || s == "picked_up" || s == "received") {
+    if (s == "completed" || s == "delivered" || s == "received") {
       return "DELIVERED";
+    }
+    if (s == "picked up" || s == "picked_up") {
+      return "OUT FOR DELIVERY";
     }
     if (s == "canceled" || s == "closed") {
       return "CANCELLED";
