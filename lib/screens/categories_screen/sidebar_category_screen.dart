@@ -25,7 +25,10 @@ import 'package:bagisto_app_demo/screens/categories_screen/sub_category_sidebar_
 
 class SidebarCategoryScreen extends StatefulWidget {
   final String? initialSlug;
-  const SidebarCategoryScreen({Key? key, this.initialSlug}) : super(key: key);
+  /// When true, Direct Mode shows a 3-column icon grid (used by "Shop by Category").
+  /// When false (default), Direct Mode shows the sidebar + products layout.
+  final bool openAsGrid;
+  const SidebarCategoryScreen({Key? key, this.initialSlug, this.openAsGrid = false}) : super(key: key);
 
   @override
   State<SidebarCategoryScreen> createState() => _SidebarCategoryScreenState();
@@ -532,46 +535,67 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
        final theme = Theme.of(context);
        final isDark = theme.brightness == Brightness.dark;
 
-       // 🟢 If the category has sub-categories → show them as a GRID
-       // (User can then pick the specific sub-section before seeing products)
+       // 🟢 If the category has sub-categories:
+       // - openAsGrid=true  → 3-column icon grid (Shop by Category tap)
+       // - openAsGrid=false → Sidebar screen (per-category sub-section tap)
        if (children.isNotEmpty) {
-         return Scaffold(
-           backgroundColor: theme.scaffoldBackgroundColor,
-           appBar: AppBar(
-             title: Text(
-               _getName(cat),
-               style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold),
-             ),
-             backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
-             elevation: 0.5,
-             iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
-           ),
-           body: Stack(
-             children: [
-               RefreshIndicator(
-                 color: const Color(0xFF27C16B),
-                 onRefresh: _refreshCategories,
-                 child: GridView.builder(
-                   padding: const EdgeInsets.fromLTRB(12, 16, 12, 96),
-                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                     crossAxisCount: 3,
-                     childAspectRatio: 0.75,
-                     crossAxisSpacing: 12,
-                     mainAxisSpacing: 16,
-                   ),
-                   itemCount: children.length,
-                   itemBuilder: (ctx, idx) {
-                     return _buildVerticalSubCategoryItem(children[idx]);
-                   },
-                 ),
+         if (widget.openAsGrid) {
+           // Old behavior: show sub-categories as a 3-column icon grid
+           return Scaffold(
+             backgroundColor: theme.scaffoldBackgroundColor,
+             appBar: AppBar(
+               title: Text(
+                 _getName(cat),
+                 style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.bold),
                ),
-               const FloatingCartBar(bottomMargin: 16),
+               backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+               elevation: 0.5,
+               iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+             ),
+             body: Stack(
+               children: [
+                 RefreshIndicator(
+                   color: const Color(0xFF27C16B),
+                   onRefresh: _refreshCategories,
+                   child: GridView.builder(
+                     padding: const EdgeInsets.fromLTRB(12, 16, 12, 96),
+                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                       crossAxisCount: 3,
+                       childAspectRatio: 0.75,
+                       crossAxisSpacing: 12,
+                       mainAxisSpacing: 16,
+                     ),
+                     itemCount: children.length,
+                     itemBuilder: (ctx, idx) {
+                       return _buildVerticalSubCategoryItem(children[idx]);
+                     },
+                   ),
+                 ),
+                 const FloatingCartBar(bottomMargin: 16),
+               ],
+             ),
+           );
+         } else {
+           // New behavior: open directly as sidebar screen
+           final cartBloc = context.read<CartScreenBloc>();
+           return MultiBlocProvider(
+             providers: [
+               BlocProvider.value(value: _categoryBloc!),
+               BlocProvider.value(value: cartBloc),
              ],
-           ),
-         );
+             child: SubCategorySidebarScreen(
+               title: _getName(cat),
+               parentId: _getId(cat),
+               parentSlug: _getSlug(cat),
+               subCategories: children,
+               initialSelectedIndex: _directModeSelectedIndex,
+             ),
+           );
+         }
        }
 
        // 🟡 Leaf category (no children) → go straight to product sidebar
+
        final cartBloc = context.read<CartScreenBloc>();
        return MultiBlocProvider(
           providers: [

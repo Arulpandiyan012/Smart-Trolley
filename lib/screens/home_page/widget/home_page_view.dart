@@ -493,7 +493,16 @@ class _HomePageViewState extends State<HomePageView> {
                                 'cat': cat
                               }).toList(),
                               onTap: (link, title) {
-                                _handleSeeAll(title, slug: link);
+                                // "Shop by Category" → opens sub-category icon grid
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => BlocProvider(
+                                    create: (context) => CategoryBloc(CategoriesRepo()),
+                                    child: SidebarCategoryScreen(
+                                      initialSlug: link,
+                                      openAsGrid: true, // Shows 3-col icon grid for root categories
+                                    ),
+                                  ),
+                                ));
                               },
                             ),
                           ],
