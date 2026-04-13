@@ -404,21 +404,24 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
     // 2. Consume matches straight from the un-chopped string
     for (var entry in sortedEntries) {
         if (entry.key.length > 2 && lowerItemsStr.contains(entry.key)) {
-            // Found a match!
+            // Use RegExp to find ALL matching instances (handles customer ordering 2+ of identical items)
             RegExp regExp = RegExp(RegExp.escape(entry.key), caseSensitive: false);
-            var match = regExp.firstMatch(rawItemsStr);
-            String displayName = match != null ? match.group(0) ?? entry.key : entry.key;
+            var matches = regExp.allMatches(rawItemsStr);
+            
+            if (matches.isNotEmpty) {
+                String displayName = matches.first.group(0) ?? entry.key;
 
-            mockProductDetails.add({
-               "name": displayName,
-               "qty": 1, 
-               "price": "₹${120 + (mockProductDetails.length * 35)}.00", 
-               "image": entry.value, 
-            });
+                mockProductDetails.add({
+                   "name": displayName,
+                   "qty": matches.length, // Collapse duplicates into quantity!
+                   "price": "₹${120 + (mockProductDetails.length * 35)}.00", 
+                   "image": entry.value, 
+                });
 
-            // Erase the consumed portion to prevent duplicate overlapping overlaps
-            rawItemsStr = rawItemsStr.replaceFirst(regExp, "___");
-            lowerItemsStr = lowerItemsStr.replaceFirst(entry.key, "___");
+                // Erase ALL the consumed portions to prevent leftovers generating headless fallback duplicates
+                rawItemsStr = rawItemsStr.replaceAll(regExp, "___");
+                lowerItemsStr = lowerItemsStr.replaceAll(entry.key, "___");
+            }
         }
     }
 
