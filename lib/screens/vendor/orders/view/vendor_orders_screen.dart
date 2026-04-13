@@ -494,13 +494,19 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
               
               Divider(color: Theme.of(context).dividerColor),
               
-              // Order Items List
+              // Order Content (Scrollable Area)
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(24),
-                  itemCount: mockProductDetails.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 20),
-                  itemBuilder: (context, index) {
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Order Items List
+                      ListView.separated(
+                        padding: const EdgeInsets.all(24),
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: mockProductDetails.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 20),
+                        itemBuilder: (context, index) {
                     final p = mockProductDetails[index];
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,7 +556,7 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
                     );
                   },
                 ),
-              ),
+              
               // Delivery Details & Footer Overview
               Container(
                 padding: const EdgeInsets.all(24),
@@ -599,14 +605,18 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
                            Text("Total Amount", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold)),
                            Text("${order['total']}", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Theme.of(context).primaryColor)),
                          ],
-                       ),
-                    ],
-                  ),
-                ),
-              )
-            ],
-          ),
-        );
+                       ), // end Row
+                    ], // end children of inner Column
+                  ), // end inner Column
+                ), // end SafeArea
+              ), // end footer Container
+            ], // end children of Scrollable Column
+          ), // end Scrollable Column
+        ), // end SingleChildScrollView
+      ), // end Expanded
+    ], // end outer Column children
+  ), // end outer Column
+); // end return Container
       }
     );
   }
