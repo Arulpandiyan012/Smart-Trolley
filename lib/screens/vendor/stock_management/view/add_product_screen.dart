@@ -221,9 +221,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add New Product"),
+        title: const Text("Add New Product", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: appBarColor,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
