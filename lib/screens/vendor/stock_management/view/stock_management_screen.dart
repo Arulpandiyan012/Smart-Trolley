@@ -161,10 +161,15 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.categoryName != null ? '${widget.categoryName} Stock' : 'Stock Management'),
+        title: Text(
+          widget.categoryName != null ? '${widget.categoryName} Stock' : 'Stock Management',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+        ),
         backgroundColor: appBarColor,
         foregroundColor: Colors.white,
-        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchProducts)],
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        actions: [IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _fetchProducts)],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

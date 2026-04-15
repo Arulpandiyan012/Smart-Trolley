@@ -43,9 +43,11 @@ class _VendorRootCategoryScreenState extends State<VendorRootCategoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Category'),
+        title: const Text('Select Category', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF27C16B),
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
