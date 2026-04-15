@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../dashboard/view/vendor_dashboard_screen.dart';
+import '../../dashboard/view/vendor_main_screen.dart';
 import 'package:bagisto_app_demo/utils/index.dart'; // For appStoragePref
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dio/dio.dart';
@@ -338,7 +338,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       if (mounted) {
          Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const VendorDashboardScreen()),
+          MaterialPageRoute(builder: (context) => const VendorMainScreen()),
         );
       }
     } else {

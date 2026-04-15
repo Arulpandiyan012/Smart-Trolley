@@ -12,7 +12,7 @@
 
 import 'package:bagisto_app_demo/screens/splash_screen/utils/index.dart';
 import 'package:get_storage/get_storage.dart';
-import '../../vendor/dashboard/view/vendor_dashboard_screen.dart'; // 🟢 Vendor Import
+import '../../vendor/dashboard/view/vendor_main_screen.dart'; // 🟢 Vendor Import
 import 'package:bagisto_app_demo/utils/route_constants.dart';
 import 'package:bagisto_app_demo/screens/review/bloc/review_repo.dart';
 
@@ -62,7 +62,7 @@ Widget build(BuildContext context) {
       if (appStoragePref.getVendorLoggedIn()) {
          Navigator.pushReplacement(
            context, 
-           MaterialPageRoute(builder: (context) => const VendorDashboardScreen())
+           MaterialPageRoute(builder: (context) => const VendorMainScreen())
          );
          return;
       }

@@ -99,18 +99,27 @@ class _VendorOrdersScreenState extends State<VendorOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pending Deliveries'),
-        backgroundColor: appBarColor,
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Orders Portal',
+          style: TextStyle(
+            color: Color(0xFF27C16B), 
+            fontWeight: FontWeight.w800, 
+            fontSize: 20,
+            letterSpacing: -0.5,
+          ),
+        ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: Color(0xFF27C16B)),
         actions: [
-           IconButton(
-             icon: const Icon(Icons.refresh),
-             onPressed: _fetchOrders,
-           )
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Color(0xFF27C16B)),
+            onPressed: _fetchOrders,
+          ),
         ],
       ),
       body: _isLoading 
