@@ -221,11 +221,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add New Product", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: appBarColor,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Add New Product',
+          style: TextStyle(
+            color: Color(0xFF27C16B), 
+            fontWeight: FontWeight.w800, 
+            fontSize: 20,
+            letterSpacing: -0.5,
+          ),
+        ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: Color(0xFF27C16B)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -290,7 +298,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.add_circle, color: appBarColor, size: 32),
+                        icon: const Icon(Icons.add_circle, color: Color(0xFF27C16B), size: 32),
                         tooltip: "Add New Category",
                         onPressed: _showAddCategoryDialog,
                       )
@@ -461,7 +469,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitProduct,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: appBarColor,
+                    backgroundColor: const Color(0xFF27C16B),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   child: _isLoading 

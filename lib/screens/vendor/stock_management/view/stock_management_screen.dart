@@ -7,11 +7,13 @@ import '../../dashboard/view/vendor_root_category_screen.dart';
 class StockManagementScreen extends StatefulWidget {
   final String? categoryId;
   final String? categoryName;
+  final bool showLowStockInitial;
 
   const StockManagementScreen({
     Key? key, 
     this.categoryId,
     this.categoryName,
+    this.showLowStockInitial = false,
   }) : super(key: key);
 
   @override
@@ -22,24 +24,25 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
   bool _isLoading = true;
   List<dynamic> _products = [];
   Map<String, List<dynamic>> _groupedProducts = {}; 
-  // Removed _selectedCategory
-  String _selectedCategory = "All Categories"; // 🟢 Filter State
-  String _searchQuery = ""; // 🟢 Search State
+  String _selectedCategory = "All Categories"; 
+  String _searchQuery = ""; 
+  bool _showLowStockOnly = false; 
   final TextEditingController _searchCtrl = TextEditingController();
 
+  List<dynamic> _masterCategories = []; // Categories for the vertical sidebar with images
   final String _apiUrl = "https://ecom.thesmartedgetech.com/mobikul-vendor-api.php"; 
-
 
   @override
   void initState() {
     super.initState();
+    _showLowStockOnly = widget.showLowStockInitial;
     _fetchProducts();
+    _fetchCategories();
   }
 
   Future<void> _fetchProducts() async {
     setState(() => _isLoading = true);
     try {
-      // 🟢 Dio Request
       final response = await Dio().post(
         _apiUrl,
         data: {
@@ -54,124 +57,149 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data; // 🟢 Dio decodes automatically
-        if (data is String) {
-           // Fallback if Dio didn't decode (rare but possible with some server headers)
-           try {
-             final decoded = jsonDecode(data);
-             if(decoded is Map) _processData(decoded);
-           } catch (_) {}
-        } else {
-           _processData(data);
-        }
-      } else {
-         if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("HTTP Error: ${response.statusCode}")));
+        final data = response.data;
+        _processData(data is String ? jsonDecode(data) : data);
       }
     } catch (e) {
       debugPrint("Error Fetching Products: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Connection Error: $e")));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
   
   void _processData(dynamic data) {
-        if (data['success'] == true) {
-          final rawList = data['data'] as List;
-          
-          // 🟢 Client-Side Fallback Filter
-          // If the live backend hasn't been updated yet, it might return ALL products.
-          // This ensures the UI properly filters them anyway safely.
-          final list = widget.categoryName != null 
-              ? rawList.where((p) {
-                  final apiName = (p['category_name']?.toString() ?? '').trim().toLowerCase();
-                  final targetName = widget.categoryName!.trim().toLowerCase();
-                  return apiName == targetName;
-                }).toList()
-              : rawList;
-          
-          final Map<String, List<dynamic>> groups = {};
-          for (var p in list) {
-            final cat = p['category_name'] ?? 'Other';
-            if (!groups.containsKey(cat)) groups[cat] = [];
-            groups[cat]!.add(p);
-          }
-          
-          // Sort keys
-          final sortedKeys = groups.keys.toList()..sort();
-          final Map<String, List<dynamic>> sortedGroups = { for (var k in sortedKeys) k : groups[k]! };
+    if (data['success'] == true) {
+      final rawList = data['data'] as List;
+      final list = widget.categoryName != null 
+          ? rawList.where((p) => (p['category_name']?.toString() ?? '').trim().toLowerCase() == widget.categoryName!.trim().toLowerCase()).toList()
+          : rawList;
+      
+      final Map<String, List<dynamic>> groups = {};
+      for (var p in list) {
+        final cat = (p['category_name']?.toString() ?? 'Other').trim();
+        if (!groups.containsKey(cat)) groups[cat] = [];
+        groups[cat]!.add(p);
+      }
+      
+      final sortedKeys = groups.keys.toList()..sort();
+      final Map<String, List<dynamic>> sortedGroups = { for (var k in sortedKeys) k : groups[k]! };
 
-          if (mounted) {
-            setState(() {
-              _products = list;
-              _groupedProducts = sortedGroups;
-            });
-          }
-        } else {
-           if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${data['message']}")));
-        }
+      if (mounted) {
+        setState(() {
+          _products = list;
+          _groupedProducts = sortedGroups;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final resp = await Dio().post(_apiUrl, data: {"action": "get_categories"});
+      if (resp.data['success'] == true) {
+        setState(() {
+          _masterCategories = resp.data['data'] as List<dynamic>;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching categories: $e");
+    }
   }
 
   Future<void> _updateStock(String productId, int newQty) async {
-       for(var key in _groupedProducts.keys) {
-          final idx = _groupedProducts[key]!.indexWhere((p) => p['id'].toString() == productId);
-          if (idx != -1) {
-              setState(() { _groupedProducts[key]![idx]['stock'] = newQty; }); 
-              break;
-          }
+    for(var key in _groupedProducts.keys) {
+      final idx = _groupedProducts[key]!.indexWhere((p) => p['id'].toString() == productId);
+      if (idx != -1) {
+        setState(() { _groupedProducts[key]![idx]['stock'] = newQty; }); 
+        break;
       }
-      try {
-        await Dio().post(
-           _apiUrl, 
-           data: {"action": "update_stock", "product_id": productId, "qty": newQty},
-           options: Options(headers: {"Content-Type": "application/json"})
-        );
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Stock Updated ✅"), backgroundColor: Colors.green, duration: Duration(milliseconds: 500)));
-      } catch (_) { _fetchProducts(); }
+    }
+    try {
+      await Dio().post(_apiUrl, data: {"action": "update_stock", "product_id": productId, "qty": newQty});
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Stock Updated ✅"), backgroundColor: Colors.green, duration: Duration(milliseconds: 500)));
+    } catch (_) { _fetchProducts(); }
+  }
+
+  String _getCategoryImage(String catName) {
+     String _findImg(List<dynamic> list, String name) {
+       for (var item in list) {
+         if ((item['name']?.toString() ?? '').trim().toLowerCase() == name.trim().toLowerCase()) {
+           return item['imageUrl'] ?? item['bannerUrl'] ?? "";
+         }
+         final sub = item['children'] as List<dynamic>?;
+         if (sub != null && sub.isNotEmpty) {
+           final img = _findImg(sub, name);
+           if (img.isNotEmpty) return img;
+         }
+       }
+       return "";
+     }
+     return _findImg(_masterCategories, catName);
+  }
+
+  int get _totalLowStockCount {
+    return _products.where((p) {
+      final s = int.tryParse(p['stock'].toString()) ?? 0;
+      return s < 10;
+    }).length;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFF27C16B);
+
     // 🟢 Filter Logic
-    final categories = ["All Categories", ..._groupedProducts.keys];
-    
-    // First apply category filter
     Map<String, List<dynamic>> filteredByCat = (_selectedCategory == "All Categories") 
         ? _groupedProducts 
         : {_selectedCategory: _groupedProducts[_selectedCategory] ?? []};
 
-    // Then apply search filter
     Map<String, List<dynamic>> displayGroups = {};
-    if (_searchQuery.isEmpty) {
-      displayGroups = filteredByCat;
-    } else {
-      final query = _searchQuery.toLowerCase();
-      filteredByCat.forEach((cat, products) {
-        final matches = products.where((p) => 
-          (p['name'] ?? "").toString().toLowerCase().contains(query)
-        ).toList();
-        if (matches.isNotEmpty) {
-          displayGroups[cat] = matches;
-        }
-      });
-    }
+    final query = _searchQuery.toLowerCase();
+    
+    filteredByCat.forEach((cat, products) {
+      final matches = products.where((p) {
+        final matchesSearch = query.isEmpty || (p['name'] ?? "").toString().toLowerCase().contains(query);
+        final stock = int.tryParse(p['stock'].toString()) ?? 0;
+        final isLowStock = stock < 10;
+        return matchesSearch && (!_showLowStockOnly || isLowStock);
+      }).toList();
+      if (matches.isNotEmpty) displayGroups[cat] = matches;
+    });
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final appBarColor = isDark ? Theme.of(context).appBarTheme.backgroundColor ?? Colors.grey[900] : const Color(0xFF27C16B);
+    // 🟢 Sidebar Dynamic List
+    List<String> sidebarItems = ["All Items"];
+    _groupedProducts.forEach((cat, products) {
+       final hasLowStock = products.any((p) => (int.tryParse(p['stock'].toString()) ?? 0) < 10);
+       if (!_showLowStockOnly || hasLowStock) {
+         sidebarItems.add(cat);
+       }
+    });
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.categoryName != null ? '${widget.categoryName} Stock' : 'Stock Management',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+          widget.categoryName ?? "Stock Management",
+          style: const TextStyle(color: Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 20, letterSpacing: -0.5),
         ),
-        backgroundColor: appBarColor,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
-        actions: [IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _fetchProducts)],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: Color(0xFF27C16B)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: Color(0xFF27C16B)),
+            onPressed: () {
+              if (widget.categoryId != null) {
+                Navigator.push(context, MaterialPageRoute(builder: (c) => AddProductScreen(initialCategoryId: widget.categoryId, initialCategoryName: widget.categoryName))).then((_) => _fetchProducts());
+              } else {
+                Navigator.push(context, MaterialPageRoute(builder: (c) => const VendorRootCategoryScreen())).then((_) => _fetchProducts());
+              }
+            },
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           if (widget.categoryId != null) {
             Navigator.push(context, MaterialPageRoute(builder: (c) => AddProductScreen(initialCategoryId: widget.categoryId, initialCategoryName: widget.categoryName))).then((_) => _fetchProducts());
@@ -179,132 +207,262 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
             Navigator.push(context, MaterialPageRoute(builder: (c) => const VendorRootCategoryScreen())).then((_) => _fetchProducts());
           }
         },
-        label: const Text("Add Product"),
-        icon: const Icon(Icons.add),
-        backgroundColor: appBarColor,
+        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF27C16B),
       ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
-               // 🟢 SEARCH BAR
-               Container(
-                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                 color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
-                 child: TextField(
-                   controller: _searchCtrl,
-                   onChanged: (v) => setState(() => _searchQuery = v),
-                   decoration: InputDecoration(
-                     hintText: "Search products...",
-                     prefixIcon: Icon(Icons.search, color: isDark ? Colors.grey[400] : Colors.grey),
-                     suffixIcon: _searchQuery.isNotEmpty 
-                        ? IconButton(
-                            icon: const Icon(Icons.clear), 
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() => _searchQuery = "");
-                            },
-                          )
-                        : null,
-                     filled: true,
-                     fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-                     border: OutlineInputBorder(
-                       borderRadius: BorderRadius.circular(12),
-                       borderSide: BorderSide.none,
-                     ),
-                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                   ),
-                 ),
-               ),
+              _buildTopBar(isDark),
 
-               // 🟢 DROPDOWN FILTER (Only show if not locked to a specific category)
-               if (widget.categoryId == null)
-                 Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                   color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
-                   child: Container(
-                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                     decoration: BoxDecoration(
-                       border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade300),
-                       borderRadius: BorderRadius.circular(8)
-                     ),
-                     child: DropdownButton<String>(
-                       value: categories.contains(_selectedCategory) ? _selectedCategory : "All Categories",
-                       isExpanded: true, // Prevent Overflow
-                       underline: const SizedBox(),
-                       items: categories.map((c) => DropdownMenuItem(
-                          value: c, 
-                          child: Text(
-                               c, 
-                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                               overflow: TextOverflow.ellipsis,
-                               maxLines: 1,
-                          )
-                       )).toList(),
-                       onChanged: (v) => setState(() => _selectedCategory = v!),
-                     ),
-                   ),
-                 ),
-
-               // 🟢 LIST
-               Expanded(
-                 child: displayGroups.isEmpty 
-                    ? const Center(child: Text("No Products")) 
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                        children: displayGroups.entries.map((entry) {
-                           if (entry.value.isEmpty) return const SizedBox.shrink();
-                           return Column(
-                             crossAxisAlignment: CrossAxisAlignment.start,
-                             children: [
-                               // Only show headers if we are looking at all categories
-                               if (widget.categoryId == null)
-                                 Padding(
-                                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                                   child: Text(entry.key, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                                 ),
-                               ...entry.value.map((product) {
-                                  final stock = int.tryParse(product['stock'].toString()) ?? 0;
-                                  final imageUrl = product['image'] ?? "";
-                                  
-                                  return Card(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 50, height: 50,
-                                            decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[100], borderRadius: BorderRadius.circular(8)),
-                                            child: (imageUrl.isNotEmpty) 
-                                                ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.broken_image))
-                                                : const Icon(Icons.image, color: Colors.grey),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                                Text(product['name'] ?? "Unknown", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
-                                                const SizedBox(height: 4),
-                                                Text('Stock: $stock', style: TextStyle(color: stock < 10 ? Colors.red : Colors.grey[700], fontWeight: FontWeight.bold, fontSize: 12)),
-                                            ]),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                                            onPressed: () => _showEditDialog(product['id'].toString(), product['name'], stock),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                               }).toList()
-                             ],
-                           );
-                        }).toList(),
-                      ),
-               ),
+              Expanded(
+                child: Row(
+                  children: [
+                    // 🟢 LEFT SIDEBAR (Smart Filtering)
+                    _buildSmartVerticalSidebar(isDark, sidebarItems),
+                    
+                    // 🟢 RIGHT CONTENT (Product Grid)
+                    Expanded(
+                      child: displayGroups.isEmpty 
+                        ? const Center(child: Text("No Products found."))
+                        : CustomScrollView(
+                          slivers: [
+                            ...displayGroups.entries.expand((entry) => [
+                              if (_selectedCategory == "All Categories")
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                                    child: Text(entry.key, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                                  ),
+                                ),
+                              SliverPadding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                sliver: SliverGrid(
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 8,
+                                    childAspectRatio: 0.6,
+                                  ),
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) => _buildProductGridItem(entry.value[index], isDark),
+                                    childCount: entry.value.length,
+                                  ),
+                                ),
+                              ),
+                            ]).toList(),
+                            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                          ],
+                        ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
+    );
+  }
+
+  Widget _buildTopBar(bool isDark) {
+    return Container(
+      color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        children: [
+          TextField(
+            controller: _searchCtrl,
+            onChanged: (v) => setState(() => _searchQuery = v),
+            decoration: InputDecoration(
+              hintText: "Search products...",
+              prefixIcon: const Icon(Icons.search, size: 20),
+              filled: true,
+              fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              FilterChip(
+                avatar: Icon(Icons.warning_amber_rounded, size: 14, color: _showLowStockOnly ? Colors.white : Colors.red),
+                label: const Text("Low Stock Only", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                selected: _showLowStockOnly,
+                onSelected: (v) => setState(() => _showLowStockOnly = v),
+                selectedColor: Colors.redAccent,
+                checkmarkColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              ),
+              const Spacer(),
+              if (_selectedCategory != "All Categories")
+                 TextButton.icon(
+                   icon: const Icon(Icons.clear, size: 14, color: Colors.red),
+                   label: const Text("Clear Filter", style: TextStyle(fontSize: 11, color: Colors.red)),
+                   onPressed: () => setState(() => _selectedCategory = "All Categories"),
+                 )
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _getLowStockCountForCategory(String name) {
+    if (name == "All Items") return _totalLowStockCount;
+    final products = _groupedProducts[name] ?? [];
+    return products.where((p) => (int.tryParse(p['stock'].toString()) ?? 0) < 10).length;
+  }
+
+  Widget _buildSmartVerticalSidebar(bool isDark, List<String> sidebarItems) {
+    return Container(
+      width: 75, // 🟢 Reduced width
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[900] : Colors.grey[50],
+        border: Border(right: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey.shade200)),
+      ),
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: sidebarItems.length,
+        itemBuilder: (context, index) {
+          final name = sidebarItems[index];
+          final isSelected = (name == "All Items" && _selectedCategory == "All Categories") || _selectedCategory == name;
+          final imageUrl = name == "All Items" ? "" : _getCategoryImage(name);
+          final alertCount = _getLowStockCountForCategory(name);
+
+          return _buildSidebarItem(
+            name: name,
+            image: imageUrl,
+            isSelected: isSelected,
+            alertCount: alertCount,
+            onTap: () => setState(() => _selectedCategory = name == "All Items" ? "All Categories" : name),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem({required String name, required String image, required bool isSelected, required int alertCount, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          border: Border(left: BorderSide(color: isSelected ? const Color(0xFF27C16B) : Colors.transparent, width: 3)),
+          color: isSelected ? const Color(0xFF27C16B).withOpacity(0.05) : Colors.transparent,
+        ),
+        child: Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 38, // 🟢 Reduced size
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [if(isSelected) BoxShadow(color: const Color(0xFF27C16B).withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                    border: Border.all(color: isSelected ? const Color(0xFF27C16B) : Colors.grey.withOpacity(0.15)),
+                  ),
+                  child: image.isNotEmpty
+                      ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(image, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.category, color: Colors.grey, size: 20)))
+                      : Icon(name == "All Items" ? Icons.inventory : Icons.category, size: 20, color: isSelected ? const Color(0xFF27C16B) : Colors.grey),
+                ),
+                // 🟢 Smart Badge Overlay
+                if (alertCount > 0)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Center(
+                        child: Text(
+                          "$alertCount",
+                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 8, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, color: isSelected ? const Color(0xFF27C16B) : Colors.grey[600]),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductGridItem(dynamic product, bool isDark) {
+    final stock = int.tryParse(product['stock'].toString()) ?? 0;
+    final isLow = stock < 10;
+    final imageUrl = product['image'] ?? "";
+
+    return InkWell(
+      onTap: () => _showEditDialog(product['id'].toString(), product['name'], stock),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[900] : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isLow ? Colors.red.withOpacity(0.3) : Colors.grey.withOpacity(0.1), width: 1),
+          boxShadow: [BoxShadow(color: isLow ? Colors.red.withOpacity(0.05) : Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 1))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 4,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                child: Container(
+                  width: double.infinity,
+                  color: isDark ? Colors.grey[800] : Colors.grey[50],
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 20, color: Colors.grey))
+                      : const Icon(Icons.image, size: 20, color: Colors.grey),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(product['name'] ?? "Unknown", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Stock", style: TextStyle(fontSize: 8, color: Colors.grey)),
+                          Text("$stock", style: TextStyle(color: isLow ? Colors.red : const Color(0xFF27C16B), fontWeight: FontWeight.w800, fontSize: 12)),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(color: const Color(0xFF27C16B).withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                        child: const Icon(Icons.edit, size: 12, color: Color(0xFF27C16B)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -313,19 +471,23 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Update Stock'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Update Stock', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                Text(name, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 10),
+                Text(name, style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 20),
                 TextField(
                   controller: _controller,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  autofocus: true,
+                  decoration: InputDecoration(
                       labelText: 'New Quantity',
-                      border: OutlineInputBorder()
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)
                   ),
                 ),
             ],
@@ -340,8 +502,8 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                 _updateStock(id, newStock);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B), foregroundColor: Colors.white),
-            child: const Text('Update'),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF27C16B), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            child: const Text('Save Changes'),
           ),
         ],
       ),
