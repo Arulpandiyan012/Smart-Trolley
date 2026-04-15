@@ -477,9 +477,12 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           if (reviewCount > 0)
-                            Text(
-                              "($reviewCount)",
-                              style: TextStyle(fontSize: 8, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w500),
+                            Flexible(
+                              child: Text(
+                                "($reviewCount)",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 8, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.w500),
+                              ),
                             ),
                         ],
                       );
@@ -493,10 +496,15 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (stock > 0 && stock <= 5)
-                          Text("Only $stock left", style: const TextStyle(color: Colors.red, fontSize: 8, fontWeight: FontWeight.bold))
-                        else
-                          const SizedBox(),
+                        Flexible(
+                          child: (stock > 0 && stock <= 5)
+                            ? Text(
+                                "Only $stock left",
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.red, fontSize: 8, fontWeight: FontWeight.bold),
+                              )
+                            : const SizedBox.shrink(),
+                        ),
                         
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
