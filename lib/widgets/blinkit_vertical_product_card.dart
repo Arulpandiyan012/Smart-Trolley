@@ -71,7 +71,39 @@ class BlinkitVerticalProductCard extends StatelessWidget {
      try {
        priceText = (ph as dynamic)?.formattedFinalPrice?.toString() ?? "";
        if (priceText.isNotEmpty) {
-         // API sometimes returns 4 decimals even in formatted strings, so enforce 2
+         priceText = priceText.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
+       }
+     } catch (_) {}
+     
+     if (priceText.isNotEmpty) return priceText;
+
+     // 🟢 FALLBACK: Check direct finalPrice or specialPrice fields
+     final sym = "₹";
+     try {
+       final fp = (p as dynamic).finalPrice ?? (p as dynamic).specialPrice;
+       if (fp != null) {
+          double parsed = double.tryParse(fp.toString()) ?? 0;
+          if (parsed > 0) return "$sym${parsed.toStringAsFixed(2)}";
+       }
+       
+       final val = (p as dynamic).price;
+       if (val != null) {
+          double parsed = double.tryParse(val.toString()) ?? 0;
+          return "$sym${parsed.toStringAsFixed(2)}";
+       }
+     } catch (_) {}
+     
+     return "";
+  }
+
+  String _productRegularPrice(dynamic p) {
+     dynamic ph;
+     try { ph = (p as dynamic).priceHtml; } catch (_) {}
+     
+     String priceText = "";
+     try {
+       priceText = (ph as dynamic)?.formattedRegularPrice?.toString() ?? "";
+       if (priceText.isNotEmpty) {
          priceText = priceText.replaceAllMapped(RegExp(r'(\.\d{2})\d+'), (match) => match.group(1)!);
        }
      } catch (_) {}
@@ -242,6 +274,43 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                           }
                         )
                       : const Icon(Icons.image, size: 40, color: Colors.grey),
+                ),
+                // 🏷️ SALE / OFFER BADGE
+                Builder(
+                  builder: (context) {
+                    bool onSale = false;
+                    try { onSale = (data as dynamic).isInSale ?? false; } catch (_) {}
+                    
+                    if (!onSale) {
+                      final regular = _productRegularPrice(data).replaceAll(RegExp(r'[^\d.]'), '');
+                      final finalP = _productPrice(data).replaceAll(RegExp(r'[^\d.]'), '');
+                      final rVal = double.tryParse(regular) ?? 0.0;
+                      final fVal = double.tryParse(finalP) ?? 0.0;
+                      if (rVal > fVal && fVal > 0) onSale = true;
+                    }
+                    
+                    if (onSale) {
+                      return Positioned(
+                        top: 0,
+                        left: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE53935), // Professional Red
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              bottomRight: Radius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            "OFFER",
+                            style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }
                 ),
                 Positioned(
                   top: 4,
@@ -526,20 +595,45 @@ class BlinkitVerticalProductCard extends StatelessWidget {
                   }),
 
                   const SizedBox(height: 4),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: "₹",
-                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).textTheme.titleSmall?.color),
-                        ),
-                        TextSpan(
-                          text: priceText.replaceAll("₹", "").trim(),
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.titleSmall?.color),
-                        ),
-                      ],
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  Builder(
+                    builder: (context) {
+                      final regular = _productRegularPrice(data);
+                      final finalP = _productPrice(data);
+                      final rVal = double.tryParse(regular.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+                      final fVal = double.tryParse(finalP.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+                      final onSale = rVal > fVal && fVal > 0;
+
+                      return Row(
+                        children: [
+                          if (onSale) ...[
+                            Text(
+                              regular,
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Theme.of(context).hintColor,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: "₹",
+                                  style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).textTheme.titleSmall?.color),
+                                ),
+                                TextSpan(
+                                  text: finalP.replaceAll("₹", "").trim(),
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.titleSmall?.color),
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      );
+                    }
                   ),
                 ],
               ),

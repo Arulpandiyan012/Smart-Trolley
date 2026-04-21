@@ -53,26 +53,53 @@ class CartListItem extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. IMAGE (Left Side)
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  child: ((item?.product?.images ?? []).isNotEmpty)
-                      ? ImageView(
-                          url: item?.product?.images?[0].url ?? "",
-                          height: 60,
-                          width: 60,
-                          fit: BoxFit.contain,
-                        )
-                      : ImageView(
-                          url: AssetConstants.placeHolder,
-                          height: 60,
-                          width: 60,
-                        ),
-                ),
+                 // 1. IMAGE (Left Side)
+                 Stack(
+                   children: [
+                     Container(
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.circular(8),
+                         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                       ),
+                       padding: const EdgeInsets.all(4),
+                       child: ((item?.product?.images ?? []).isNotEmpty)
+                           ? ImageView(
+                               url: item?.product?.images?[0].url ?? "",
+                               height: 60,
+                               width: 60,
+                               fit: BoxFit.contain,
+                             )
+                           : ImageView(
+                               url: AssetConstants.placeHolder,
+                               height: 60,
+                               width: 60,
+                             ),
+                     ),
+                     
+                     // 🏷️ OFFER BADGE
+                     if ((double.tryParse(item?.product?.priceHtml?.regularPrice ?? "0") ?? 0) > 
+                         (double.tryParse(item?.product?.priceHtml?.finalPrice ?? "0") ?? 0) &&
+                         (double.tryParse(item?.product?.priceHtml?.finalPrice ?? "0") ?? 0) > 0)
+                       Positioned(
+                         top: 0,
+                         left: 0,
+                         child: Container(
+                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                           decoration: const BoxDecoration(
+                             color: Color(0xFFE53935), // Red
+                             borderRadius: BorderRadius.only(
+                               topLeft: Radius.circular(8),
+                               bottomRight: Radius.circular(8),
+                             ),
+                           ),
+                           child: const Text(
+                             "OFFER",
+                             style: TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold),
+                           ),
+                         ),
+                       ),
+                   ],
+                 ),
                 
                 const SizedBox(width: 12),
                 
@@ -198,15 +225,37 @@ class CartListItem extends StatelessWidget {
                      
                      const SizedBox(height: 8),
                      
-                     // Price (Bottom Right) — shows line total (qty × unit price)
-                     Text(
-                        _formatPrice(item?.formattedPrice?.total ?? item?.formattedPrice?.price),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.titleLarge?.color
-                        ),
-                      ),
+                     // Price (Bottom Right)
+                     Column(
+                       crossAxisAlignment: CrossAxisAlignment.end,
+                       children: [
+                         // 1. Regular Price (Strike-through) if on sale
+                         if ((double.tryParse(item?.product?.priceHtml?.regularPrice ?? "0") ?? 0) > 
+                             (double.tryParse(item?.product?.priceHtml?.finalPrice ?? "0") ?? 0) &&
+                             (double.tryParse(item?.product?.priceHtml?.finalPrice ?? "0") ?? 0) > 0)
+                           Padding(
+                             padding: const EdgeInsets.only(bottom: 2),
+                             child: Text(
+                               _formatPrice((double.tryParse(item?.product?.priceHtml?.regularPrice ?? "0") ?? 0) * (item?.quantity ?? 1)),
+                               style: TextStyle(
+                                 fontSize: 12,
+                                 color: Theme.of(context).hintColor,
+                                 decoration: TextDecoration.lineThrough,
+                               ),
+                             ),
+                           ),
+                         
+                         // 2. Offer/Final Price
+                         Text(
+                            _formatPrice(item?.formattedPrice?.total ?? item?.formattedPrice?.price),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 15,
+                              color: Theme.of(context).textTheme.titleLarge?.color
+                            ),
+                          ),
+                       ],
+                     ),
                   ],
                 )
               ],

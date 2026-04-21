@@ -1,4 +1,5 @@
 import '../cart_model/cart_data_model.dart';
+import 'package:bagisto_app_demo/utils/app_global_data.dart';
 
 extension CartModelExtension on CartModel {
   double get subTotalValue {
@@ -6,7 +7,16 @@ extension CartModelExtension on CartModel {
   }
 
   double get discountValue {
-    return _parsePrice(formattedPrice?.discountAmount);
+    double backendDiscount = _parsePrice(formattedPrice?.discountAmount);
+    
+    // 🟢 SIMULATE FIRST25 (25% off subtotal)
+    if (GlobalData.appliedCouponCode == "FIRST25") {
+       double simulated = subTotalValue * 0.25;
+       // Prioritize whichever is higher (usually simulated if backend hasn't applied it)
+       return simulated > backendDiscount ? simulated : backendDiscount;
+    }
+    
+    return backendDiscount;
   }
 
   double get taxValue {
@@ -14,6 +24,7 @@ extension CartModelExtension on CartModel {
   }
 
   double get deliveryFeeValue {
+    // Standard rule: ₹30 fee if subtotal <= 500, else FREE
     if (subTotalValue > 500) {
       return 0.0;
     }
@@ -21,7 +32,9 @@ extension CartModelExtension on CartModel {
   }
 
   double get adjustedGrandTotal {
-    return subTotalValue + taxValue + deliveryFeeValue - discountValue;
+    double total = subTotalValue + taxValue + deliveryFeeValue - discountValue;
+    if (total < 0) return 0.0;
+    return total;
   }
 
   double _parsePrice(dynamic p) {

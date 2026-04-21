@@ -245,14 +245,14 @@ class BlinkitProductCard extends StatelessWidget {
                           left: 8,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF5365E3), 
-                              borderRadius: BorderRadius.circular(4)
-                            ),
-                            child: const Text(
-                              "SALE", 
-                              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)
-                            ),
+                             decoration: BoxDecoration(
+                               color: const Color(0xFFE53935), 
+                               borderRadius: BorderRadius.circular(4)
+                             ),
+                             child: const Text(
+                               "OFFER", 
+                               style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)
+                             ),
                           ),
                         ),
 

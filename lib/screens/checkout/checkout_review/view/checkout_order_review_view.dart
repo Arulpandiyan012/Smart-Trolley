@@ -54,20 +54,14 @@ class _CheckoutOrderReviewViewState extends State<CheckoutOrderReviewView> {
             if (widget.callBack != null) {
               var cart = state.savePaymentModel?.cart;
               
-              // 🟢 RE-SIMULATE FIRST25 (Backend doesn't know about it)
-              if (GlobalData.appliedCouponCode == "FIRST25" && cart != null) {
-                 double discountRes = cart.subTotalValue * 0.25;
-                 double adjusted = cart.subTotalValue + cart.taxValue + cart.deliveryFeeValue - discountRes;
-                 
-                 cart.couponCode = "FIRST25";
-                 cart.formattedPrice?.discountAmount = "-${GlobalData.currencyCode ?? "₹"} ${discountRes.toStringAsFixed(2)}";
-                 cart.formattedPrice?.grandTotal = "${GlobalData.currencyCode ?? "₹"} ${adjusted.toStringAsFixed(2)}";
-              }
-              
               widget.cartDetailsModel = cart;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.callBack!(cart?.formattedPrice?.grandTotal.toString() ?? "");
-              });
+              
+              if (cart != null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  String currency = GlobalData.currencyCode ?? "₹";
+                  widget.callBack!("$currency ${cart.adjustedGrandTotal.toStringAsFixed(2)}");
+                });
+              }
             }
             return _reviewOrder(state.savePaymentModel!);
           }

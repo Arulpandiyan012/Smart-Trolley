@@ -150,6 +150,12 @@ class MutationsData {
                     images {
                         url
                     }
+                    priceHtml {
+                        regularPrice
+                        finalPrice
+                        formattedRegularPrice
+                        formattedFinalPrice
+                    }
                 }
             }
         }
@@ -350,6 +356,12 @@ String cartDetails() {
                         url
                         productId
                     }
+                    priceHtml {
+                        regularPrice
+                        finalPrice
+                        formattedRegularPrice
+                        formattedFinalPrice
+                    }
                 }
                 formattedPrice {
                     price
@@ -432,6 +444,12 @@ String cartDetails() {
                     images {
                         url
                     }
+                    priceHtml {
+                        regularPrice
+                        finalPrice
+                        formattedRegularPrice
+                        formattedFinalPrice
+                    }
                 }
                 formattedPrice {
                     price
@@ -502,6 +520,12 @@ String cartDetails() {
                     id
                     images {
                         url
+                    }
+                    priceHtml {
+                        regularPrice
+                        finalPrice
+                        formattedRegularPrice
+                        formattedFinalPrice
                     }
                 }
                 formattedPrice {
@@ -1930,8 +1954,11 @@ String cartDetails() {
             itemsCount
             itemsQty
             formattedPrice {
-            grandTotal
-          }
+                subTotal
+                taxAmount
+                discountAmount
+                grandTotal
+            }
         }
       }
     }""";
@@ -1975,12 +2002,18 @@ String cartDetails() {
                     images {
                     url
                     }
+                    priceHtml {
+                        regularPrice
+                        finalPrice
+                        formattedRegularPrice
+                        formattedFinalPrice
+                    }
                 }
             }
             formattedPrice {
                 grandTotal
                 subTotal
-                taxTotal
+                taxAmount
                 discountAmount
             }
             shippingAddress {
@@ -2132,7 +2165,10 @@ String cartDetails() {
             itemsCount
             itemsQty
             formattedPrice {
-            grandTotal
+                subTotal
+                taxAmount
+                discountAmount
+                grandTotal
             }
         }
         jumpToSection

@@ -55,11 +55,15 @@ class PriceHtml {
   String? id;
   String? priceHtml;
   String? finalPrice;
+  String? regularPrice;
+  String? formattedRegularPrice;
 
   PriceHtml({
     this.id,
     this.priceHtml,
     this.finalPrice,
+    this.regularPrice,
+    this.formattedRegularPrice,
   });
 
   factory PriceHtml.fromJson(Map<String, dynamic> json) =>

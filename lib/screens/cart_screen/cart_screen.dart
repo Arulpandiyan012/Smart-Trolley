@@ -94,31 +94,10 @@ class _CartScreenState extends State<CartScreen> {
   // 🟢 NEW: Simulated Discount Calculation for FIRST25
   void _simulateDiscountCalculation(double percent, String code) {
     if (_cartDetailsModel == null) return;
-
-    try {
-      double subTotalVal = 0.0;
-      String rawSubTotal = _cartDetailsModel?.formattedPrice?.subTotal?.toString() ?? "0";
-      subTotalVal = double.tryParse(rawSubTotal.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
-
-      double discount = subTotalVal * percent;
-      double newGrandTotalVal = 0.0;
-      
-      // Calculate new grand total (Subtotal - Discount + Shipping)
-      String rawShipping = _cartDetailsModel?.formattedPrice?.shippingAmount?.toString() ?? "0";
-      double shippingVal = double.tryParse(rawShipping.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
-      newGrandTotalVal = subTotalVal - discount + shippingVal;
-
-      setState(() {
-        _cartDetailsModel?.couponCode = code;
-        GlobalData.appliedCouponCode = code; // 🟢 Persist globally
-        _cartDetailsModel?.formattedPrice?.discountAmount = "-${GlobalData.currencyCode ?? "₹"} ${discount.toStringAsFixed(2)}";
-        _cartDetailsModel?.formattedPrice?.grandTotal = "${GlobalData.currencyCode ?? "₹"} ${newGrandTotalVal.toStringAsFixed(2)}";
-      });
-      
-      _updateGlobalCartData(_cartDetailsModel);
-    } catch (e) {
-      debugPrint("Simulation Error: $e");
-    }
+    setState(() {
+      GlobalData.appliedCouponCode = code; 
+    });
+    _updateGlobalCartData(_cartDetailsModel);
   }
 
   void _fetchUserName() {
@@ -243,8 +222,9 @@ class _CartScreenState extends State<CartScreen> {
       ShowMessage.errorNotification("Please select a delivery address", context);
       return;
     }
+    String currency = GlobalData.currencyCode ?? "₹";
     Navigator.pushNamed(context, checkoutScreen, arguments: CartNavigationData(
-        total: _cartDetailsModel?.formattedPrice?.grandTotal.toString() ?? "0",
+        total: "$currency ${_cartDetailsModel?.adjustedGrandTotal.toStringAsFixed(2)}",
         cartDetailsModel: _cartDetailsModel!,
         cartScreenBloc: cartScreenBloc,
         selectedAddress: _selectedAddressObj,
