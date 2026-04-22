@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart'; // 🟢 Use Dio
 import 'add_product_screen.dart'; 
+import 'qr_scanner_screen.dart';
 import '../../dashboard/view/vendor_root_category_screen.dart';
 
 class StockManagementScreen extends StatefulWidget {
@@ -187,6 +188,12 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
         centerTitle: false,
         iconTheme: const IconThemeData(color: Color(0xFF27C16B)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF27C16B)),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (c) => const VendorQRScannerScreen())).then((_) => _fetchProducts());
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add, color: Color(0xFF27C16B)),
             onPressed: () {

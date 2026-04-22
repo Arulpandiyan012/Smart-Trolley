@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bagisto_app_demo/screens/vendor/stock_management/view/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart'; // 🟢 Use Dio
@@ -25,6 +26,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _priceCtrl = TextEditingController();
   final TextEditingController _qtyCtrl = TextEditingController();
   final TextEditingController _descCtrl = TextEditingController();
+  final TextEditingController _skuCtrl = TextEditingController();
   
   String? _selectedCategoryId; // Store ID
   String? _selectedCategoryName; // Store Name for display if locked
@@ -88,6 +90,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         "name": _nameCtrl.text,
         "price": _priceCtrl.text,
         "qty": _qtyCtrl.text,
+        "sku": _skuCtrl.text,
         "description": _descCtrl.text,
         "category_id": _selectedCategoryId ?? "1", // Default to Root if null
         "featured_section": _selectedFeaturedSection ?? "None", // 🟢 Passing Tag for Featured Section
@@ -338,6 +341,34 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 controller: _nameCtrl,
                 decoration: const InputDecoration(labelText: "Product Name", border: OutlineInputBorder(), hintText: "e.g. Fresh Red Apples"),
                 validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // 2.B. SKU / Barcode (Scan enabled)
+              TextFormField(
+                controller: _skuCtrl,
+                decoration: InputDecoration(
+                  labelText: "SKU / Barcode (Optional)", 
+                  border: const OutlineInputBorder(),
+                  hintText: "Scan or enter barcode",
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF27C16B)),
+                    onPressed: () {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(
+                          builder: (_) => VendorQRScannerScreen(
+                            onScan: (code) {
+                              setState(() {
+                                _skuCtrl.text = code;
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               

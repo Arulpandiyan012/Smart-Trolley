@@ -6,6 +6,7 @@ import '../../stock_management/view/stock_management_screen.dart';
 import '../../vendor_login/view/vendor_login_screen.dart'; 
 import 'package:bagisto_app_demo/utils/index.dart'; 
 import 'slow_moving_products_screen.dart'; 
+import '../../stock_management/view/qr_scanner_screen.dart';
 
 class VendorDashboardScreen extends StatefulWidget {
   final Function(int)? onTabChange; // 🟢 Added callback for tab switching
@@ -123,70 +124,91 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
         children: [
           _isLoadingMetrics 
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)))
-          : GridView.count(
-            crossAxisCount: 2,
-            padding: const EdgeInsets.all(16),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
+          : ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
             children: [
-              _buildDashboardCard(
-                context,
-                icon: Icons.inventory,
-                title: 'Stock Management',
-                onTap: () {
-                  if (widget.onTabChange != null) {
-                    widget.onTabChange!(0);
-                  } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorRootCategoryScreen())).then((_) => _fetchDashboardMetrics());
-                  }
-                },
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                children: [
+                  _buildDashboardCard(
+                    context,
+                    icon: Icons.inventory,
+                    title: 'Stock Management',
+                    onTap: () {
+                      if (widget.onTabChange != null) {
+                        widget.onTabChange!(0);
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorRootCategoryScreen())).then((_) => _fetchDashboardMetrics());
+                      }
+                    },
+                  ),
+                  _buildDashboardCard(
+                    context,
+                    icon: Icons.local_shipping,
+                    title: 'Pending Deliveries',
+                    onTap: () {
+                      if (widget.onTabChange != null) {
+                        widget.onTabChange!(1);
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorOrdersScreen()));
+                      }
+                    },
+                  ),
+                  _buildDashboardCard(
+                    context,
+                    icon: Icons.warning_amber_rounded,
+                    title: 'Low Stock Alerts',
+                    color: Colors.redAccent,
+                    badgeCount: _lowStockCount,
+                    onTap: () {
+                      if (widget.onTabChange != null) {
+                        widget.onTabChange!(3);
+                      } else {
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (context) => const StockManagementScreen(showLowStockInitial: true)
+                          )
+                        ).then((_) => _fetchDashboardMetrics());
+                      }
+                    },
+                  ),
+                  _buildDashboardCard(
+                    context,
+                    icon: Icons.trending_down,
+                    title: 'Slow-Moving Items',
+                    color: Colors.orange,
+                    badgeCount: _slowMovingCount,
+                    onTap: () {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(
+                          builder: (context) => const SlowMovingProductsScreen()
+                        )
+                      ).then((_) => _fetchDashboardMetrics());
+                    },
+                  ),
+                ],
               ),
-              _buildDashboardCard(
-                context,
-                icon: Icons.local_shipping,
-                title: 'Pending Deliveries',
-                onTap: () {
-                  if (widget.onTabChange != null) {
-                    widget.onTabChange!(1);
-                  } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorOrdersScreen()));
-                  }
-                },
-              ),
-              _buildDashboardCard(
-                context,
-                icon: Icons.warning_amber_rounded,
-                title: 'Low Stock Alerts',
-                color: Colors.redAccent,
-                badgeCount: _lowStockCount,
-                onTap: () {
-                  if (widget.onTabChange != null) {
-                    widget.onTabChange!(3);
-                  } else {
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 150,
+                child: _buildDashboardCard(
+                  context,
+                  icon: Icons.qr_code_scanner,
+                  title: 'Scan & Manage Stock',
+                  color: const Color(0xFF27C16B),
+                  onTap: () {
                     Navigator.push(
-                      context, 
-                      MaterialPageRoute(
-                        builder: (context) => const StockManagementScreen(showLowStockInitial: true)
-                      )
+                      context,
+                      MaterialPageRoute(builder: (context) => const VendorQRScannerScreen())
                     ).then((_) => _fetchDashboardMetrics());
-                  }
-                },
-              ),
-              // 🟢 NEW: Slow-Moving Products Card
-              _buildDashboardCard(
-                context,
-                icon: Icons.trending_down,
-                title: 'Slow-Moving Items',
-                color: Colors.orange,
-                badgeCount: _slowMovingCount,
-                onTap: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(
-                      builder: (context) => const SlowMovingProductsScreen()
-                    )
-                  ).then((_) => _fetchDashboardMetrics());
-                },
+                  },
+                ),
               ),
             ],
           ),
@@ -201,7 +223,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
   // 🟢 Fixed Floating Alert Card to be more dynamic if needed, but keeping it focused on Low Stock for priority
   Widget _buildFloatingAlertCard(BuildContext context) {
     return Positioned(
-      bottom: 100,
+      bottom: 20,
       left: 16,
       right: 16,
       child: Container(
