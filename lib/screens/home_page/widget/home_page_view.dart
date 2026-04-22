@@ -483,7 +483,7 @@ class _HomePageViewState extends State<HomePageView> {
                             ),
                             BlinkitCategoryGrid(
                               categories: cats
-                                .where((c) => !_catLabel(c).toLowerCase().contains("event")) // 🟢 HIDE EVENTS
+                                .where((c) => !_catLabel(c).toLowerCase().contains("event") && !_catLabel(c).toLowerCase().contains("flash sale") && !_catLabel(c).toLowerCase().contains("offer")) // 🟢 HIDE EVENTS/OFFERS
                                 .take(8)
                                 .map((cat) => {
                                 'title': _catLabel(cat),
@@ -529,7 +529,11 @@ class _HomePageViewState extends State<HomePageView> {
 
                     // 🟢 NEW: Per-Category Section (Root Name -> L2 Grid)
                     // This matches the user's requested "Screenshot Style"
-                    for (final rootCat in cats.where((c) => !_catLabel(c).toLowerCase().contains("event"))) ...[
+                    for (final rootCat in cats.where((c) => 
+                        !_catLabel(c).toLowerCase().contains("event") && 
+                        !_catLabel(c).toLowerCase().contains("flash sale") && 
+                        !_catLabel(c).toLowerCase().contains("offer")
+                      )) ...[
                       // 🟢 Filter out the redundant ones (Grocery, Veg, Fruit) to avoid duplication
                       // BUT allow others like "Beauty & Personal Care", "Health", "Snacks" etc.
                       // 🟢 SHOW ALL ROOT CATEGORIES

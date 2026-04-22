@@ -34,4 +34,4 @@ export '../../home_page/utils/route_argument_helper.dart';
 export '../../product_screen/view/quantity_view.dart';
 export 'package:collection/collection.dart';
 export '../../../data_model/app_route_arguments.dart';
-export '../utils/check_downlodable.dart';
+export '../utils/check_downlodable.dart';export 'package:bagisto_app_demo/screens/cart_screen/utils/cart_extensions.dart';

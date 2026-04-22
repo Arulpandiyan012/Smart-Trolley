@@ -63,30 +63,64 @@ class OrderSummary extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: AppSizes.spacingSmall, horizontal: AppSizes.spacingNormal),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Stack(
                           children: [
-                            (savePaymentModel.cart?.items?[itemIndex].product
-                                            ?.images ??
-                                        [])
-                                    .isNotEmpty
-                                ? ImageView(
-                                    url: (savePaymentModel
-                                            .cart
-                                            ?.items?[itemIndex]
-                                            .product
-                                            ?.images?[0]
-                                            .url ??
-                                        ""),
-                                    height:
-                                        MediaQuery.of(context).size.width / 3,
-                                  )
-                                : ImageView(
-                                    url: "",
-                                    height:
-                                        MediaQuery.of(context).size.width / 3,
-                                  ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                (savePaymentModel.cart?.items?[itemIndex].product
+                                                ?.images ??
+                                            [])
+                                        .isNotEmpty
+                                    ? ImageView(
+                                        url: (savePaymentModel
+                                                .cart
+                                                ?.items?[itemIndex]
+                                                .product
+                                                ?.images?[0]
+                                                .url ??
+                                            ""),
+                                        height:
+                                            MediaQuery.of(context).size.width / 4,
+                                      )
+                                    : ImageView(
+                                        url: "",
+                                        height:
+                                            MediaQuery.of(context).size.width / 4,
+                                      ),
+                              ],
+                            ),
+                            // 🏷️ OFFER BADGE
+                            Builder(
+                              builder: (context) {
+                                final item = savePaymentModel.cart?.items?[itemIndex];
+                                final regPrice = double.tryParse(item?.product?.priceHtml?.regularPrice ?? "0") ?? 0;
+                                final finPrice = double.tryParse(item?.product?.priceHtml?.finalPrice ?? "0") ?? 0;
+                                
+                                if (regPrice > finPrice && finPrice > 0) {
+                                  return Positioned(
+                                    top: 4,
+                                    left: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFE53935), // Red
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(4),
+                                          bottomRight: Radius.circular(4),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "OFFER",
+                                        style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }
+                            ),
                           ],
                         ),
                       ),
@@ -130,39 +164,54 @@ class OrderSummary extends StatelessWidget {
                             const SizedBox(
                               height: AppSizes.spacingNormal,
                             ),
-                            Wrap(
+                            // Price Section
+                            Row(
                               children: [
                                 Text(
                                   "${StringConstants.price.localized()} - ",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
-                                Text(
-                                  "${savePaymentModel.cart?.items?[itemIndex].formattedPrice?.price ?? ""}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Builder(
+                                  builder: (context) {
+                                    final item = savePaymentModel.cart?.items?[itemIndex];
+                                    final regPrice = double.tryParse(item?.product?.priceHtml?.regularPrice ?? "0") ?? 0;
+                                    final finPrice = double.tryParse(item?.product?.priceHtml?.finalPrice ?? "0") ?? 0;
+                                    final isOnSale = regPrice > finPrice && finPrice > 0;
+
+                                    return Row(
+                                      children: [
+                                        if (isOnSale) ...[
+                                          Text(
+                                            _formatPrice(regPrice),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Theme.of(context).hintColor,
+                                              decoration: TextDecoration.lineThrough,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                        ],
+                                        Text(
+                                          item?.formattedPrice?.price ?? _formatPrice(finPrice),
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                      ],
+                                    );
+                                  }
                                 ),
                               ],
                             ),
-                            const SizedBox(
-                              height: AppSizes.spacingNormal,
-                            ),
-                            Wrap(
+                            const SizedBox(height: 6),
+                            // Subtotal Section
+                            Row(
                               children: [
                                 Text(
-                                  StringConstants.cartPageSubtotalLabel
-                                      .localized(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  "${StringConstants.cartPageSubtotalLabel.localized()} - ",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                                 Text(
-                                  "${savePaymentModel.cart?.items?[itemIndex].formattedPrice?.total ?? "\$10"}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  savePaymentModel.cart?.items?[itemIndex].formattedPrice?.total ?? "",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ],
                             )
@@ -180,5 +229,13 @@ class OrderSummary extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Helper to format price
+  String _formatPrice(dynamic price) {
+    if (price == null) return "";
+    double? val = double.tryParse(price.toString().replaceAll(RegExp(r'[^\d.]'), ''));
+    if (val == null) return price.toString();
+    return "₹${val.toStringAsFixed(2)}";
   }
 }

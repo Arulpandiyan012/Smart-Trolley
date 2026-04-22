@@ -98,6 +98,8 @@ class BlinkitFeaturedSectionsState extends State<BlinkitFeaturedSections> {
     const Map<String, String> _staticSlugMap = {
       // ── Sweet Tooth / Chocolates ──────────────────────────────────────────
       // Backend: "Sweets & Chocolates" → slug: sweets-chocolates (under Snacks & Drinks)
+      'flash sale 🔥': 'flash-sales',
+      'flash sale': 'flash-sales',
       'sweet tooth': 'sweets-chocolates',
       'sweets': 'sweets-chocolates',
       'sweets & chocolates': 'sweets-chocolates',

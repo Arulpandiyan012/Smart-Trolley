@@ -5,6 +5,7 @@ import '../../orders/view/vendor_orders_screen.dart';
 import '../../stock_management/view/stock_management_screen.dart';
 import '../../vendor_login/view/vendor_login_screen.dart'; 
 import 'package:bagisto_app_demo/utils/index.dart'; 
+import 'slow_moving_products_screen.dart'; 
 
 class VendorDashboardScreen extends StatefulWidget {
   final Function(int)? onTabChange; // 🟢 Added callback for tab switching
@@ -16,45 +17,78 @@ class VendorDashboardScreen extends StatefulWidget {
 
 class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
   int _lowStockCount = 0;
-  bool _isLoadingCount = true;
+  int _slowMovingCount = 0;
+  bool _isLoadingMetrics = true;
   final String _apiUrl = "https://ecom.thesmartedgetech.com/mobikul-vendor-api.php";
 
   @override
   void initState() {
     super.initState();
-    _fetchLowStockCount();
+    _fetchDashboardMetrics();
   }
 
-  Future<void> _fetchLowStockCount() async {
+  Future<void> _fetchDashboardMetrics() async {
     if (!mounted) return;
-    setState(() => _isLoadingCount = true);
+    setState(() => _isLoadingMetrics = true);
     
     try {
-      final response = await Dio().post(
-        _apiUrl,
-        data: {"action": "get_vendor_products"},
-        options: Options(headers: {"Content-Type": "application/json"})
-      );
+      // 🟢 Parallel Fetch for efficiency
+      final responses = await Future.wait([
+        Dio().post(_apiUrl, data: {"action": "get_vendor_products"}),
+        Dio().post(_apiUrl, data: {"action": "get_deliveries"}),
+      ]);
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final products = response.data['data'] as List;
-        int count = 0;
+      final productsResponse = responses[0];
+      final ordersResponse = responses[1];
+
+      if (productsResponse.data['success'] == true) {
+        final products = productsResponse.data['data'] as List;
+        
+        // 1. Calculate Low Stock
+        int lowCount = 0;
         for (var p in products) {
           final stock = int.tryParse(p['stock'].toString()) ?? 0;
-          if (stock < 10) {
-            count++;
-          }
+          if (stock < 10) lowCount++;
         }
+
+        // 2. Calculate Slow Moving (Cross-Reference with Orders)
+        int slowCount = 0;
+        if (ordersResponse.data['success'] == true) {
+           final orders = ordersResponse.data['data'] as List;
+           final Map<String, int> salesVelocity = {};
+           
+           for (var order in orders) {
+              String items = (order['items'] ?? "").toString().toLowerCase();
+              for (var p in products) {
+                 String pName = (p['name'] ?? "").toString().toLowerCase();
+                 if (pName.isNotEmpty && items.contains(pName)) {
+                    salesVelocity[pName] = (salesVelocity[pName] ?? 0) + 1;
+                 }
+              }
+           }
+
+           for (var p in products) {
+              String name = (p['name'] ?? "").toString().toLowerCase();
+              final stock = int.tryParse(p['stock'].toString()) ?? 0;
+              final sales = salesVelocity[name] ?? 0;
+              // Threshold: High stock (>15) but low sales (<2) in recent order history
+              if (stock > 15 && sales < 2) {
+                 slowCount++;
+              }
+           }
+        }
+
         if (mounted) {
           setState(() {
-            _lowStockCount = count;
-            _isLoadingCount = false;
+            _lowStockCount = lowCount;
+            _slowMovingCount = slowCount;
+            _isLoadingMetrics = false;
           });
         }
       }
     } catch (e) {
-      debugPrint("Error fetching low stock count: $e");
-      if (mounted) setState(() => _isLoadingCount = false);
+      debugPrint("Error fetching dashboard metrics: $e");
+      if (mounted) setState(() => _isLoadingMetrics = false);
     }
   }
 
@@ -76,19 +110,20 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        centerTitle: false, // 🟢 Modern apps favor left-alignment
+        centerTitle: false,
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: primaryColor),
             tooltip: "Refresh Data",
-            onPressed: _fetchLowStockCount,
+            onPressed: _fetchDashboardMetrics,
           ),
         ],
       ),
       body: Stack(
         children: [
-          // 🟢 DASHBOARD CONTENT
-          GridView.count(
+          _isLoadingMetrics 
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF27C16B)))
+          : GridView.count(
             crossAxisCount: 2,
             padding: const EdgeInsets.all(16),
             mainAxisSpacing: 16,
@@ -100,9 +135,9 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                 title: 'Stock Management',
                 onTap: () {
                   if (widget.onTabChange != null) {
-                    widget.onTabChange!(0); // 🟢 Switch to Stock Tab
+                    widget.onTabChange!(0);
                   } else {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorRootCategoryScreen())).then((_) => _fetchLowStockCount());
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorRootCategoryScreen())).then((_) => _fetchDashboardMetrics());
                   }
                 },
               ),
@@ -112,7 +147,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                 title: 'Pending Deliveries',
                 onTap: () {
                   if (widget.onTabChange != null) {
-                    widget.onTabChange!(1); // 🟢 Switch to Orders Tab
+                    widget.onTabChange!(1);
                   } else {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => const VendorOrdersScreen()));
                   }
@@ -126,135 +161,111 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                 badgeCount: _lowStockCount,
                 onTap: () {
                   if (widget.onTabChange != null) {
-                    widget.onTabChange!(3); // 🟢 Switch to Alerts Tab
+                    widget.onTabChange!(3);
                   } else {
                     Navigator.push(
                       context, 
                       MaterialPageRoute(
                         builder: (context) => const StockManagementScreen(showLowStockInitial: true)
                       )
-                    ).then((_) => _fetchLowStockCount());
+                    ).then((_) => _fetchDashboardMetrics());
                   }
+                },
+              ),
+              // 🟢 NEW: Slow-Moving Products Card
+              _buildDashboardCard(
+                context,
+                icon: Icons.trending_down,
+                title: 'Slow-Moving Items',
+                color: Colors.orange,
+                badgeCount: _slowMovingCount,
+                onTap: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (context) => const SlowMovingProductsScreen()
+                    )
+                  ).then((_) => _fetchDashboardMetrics());
                 },
               ),
             ],
           ),
 
-          // 🟢 MODERN FLOATING ALERT CARD (BOTTOM)
-          if (!_isLoadingCount && _lowStockCount > 0)
+          if (!_isLoadingMetrics && _lowStockCount > 0)
             _buildFloatingAlertCard(context),
         ],
       ),
     );
   }
 
+  // 🟢 Fixed Floating Alert Card to be more dynamic if needed, but keeping it focused on Low Stock for priority
   Widget _buildFloatingAlertCard(BuildContext context) {
     return Positioned(
-      bottom: 100, // 🟢 Increased to avoid overlap with Bottom Nav Bar
+      bottom: 100,
       left: 16,
       right: 16,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 500),
-        opacity: 1.0,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFF5252), Color(0xFFFF8A65)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.red.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF5252), Color(0xFFFF8A65)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  if (widget.onTabChange != null) {
-                    widget.onTabChange!(3); // 🟢 Switch to Alerts Tab
-                  } else {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(
-                        builder: (context) => const StockManagementScreen(showLowStockInitial: true)
-                      )
-                    ).then((_) => _fetchLowStockCount());
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.red.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (widget.onTabChange != null) {
+                  widget.onTabChange!(3);
+                } else {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => const StockManagementScreen(showLowStockInitial: true))
+                  ).then((_) => _fetchDashboardMetrics());
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Low Stock Alert!",
-                              style: TextStyle(
-                                color: Colors.white, 
-                                fontWeight: FontWeight.bold, 
-                                fontSize: 18,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            Text(
-                              "$_lowStockCount items are running low.",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9), 
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (widget.onTabChange != null) {
-                            widget.onTabChange!(3); // 🟢 Switch to Alerts Tab
-                          } else {
-                            Navigator.push(
-                              context, 
-                              MaterialPageRoute(
-                                builder: (context) => const StockManagementScreen(showLowStockInitial: true)
-                              )
-                            ).then((_) => _fetchLowStockCount());
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFFFF5252),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Critical Actions Required",
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        ),
-                        child: const Text(
-                          "Restock",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                          Text(
+                            "$_lowStockCount items low & $_slowMovingCount moving slow.",
+                            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.white),
+                  ],
                 ),
               ),
             ),

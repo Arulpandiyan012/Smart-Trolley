@@ -513,10 +513,19 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
                 onRefresh: _refreshCategories,
                 child: ListView.separated(
                   padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: _categories.length,
+                  itemCount: _categories.where((c) => 
+                    !_getName(c).toLowerCase().contains("event") && 
+                    !_getName(c).toLowerCase().contains("flash sale") && 
+                    !_getName(c).toLowerCase().contains("offer")
+                  ).length,
                   separatorBuilder: (ctx, i) => Divider(height: 1, thickness: 8, color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5)),
                   itemBuilder: (context, index) {
-                     return _buildVerticalCategorySection(index);
+                      final filteredList = _categories.where((c) => 
+                        !_getName(c).toLowerCase().contains("event") && 
+                        !_getName(c).toLowerCase().contains("flash sale") && 
+                        !_getName(c).toLowerCase().contains("offer")
+                      ).toList();
+                      return _buildVerticalCategorySection(filteredList, index);
                   },
                 ),
               ),
@@ -654,10 +663,10 @@ class _SidebarCategoryScreenState extends State<SidebarCategoryScreen> {
   }
 
   // 🟢 NEW: Vertical Section Builder (Header + Grid)
-  Widget _buildVerticalCategorySection(int index) {
+  Widget _buildVerticalCategorySection(List<dynamic> list, int index) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cat = _categories[index]; // This is a Root Category
+    final cat = list[index]; // This is a Root Category
     final String name = _getName(cat);
     
     // Get its children (Level 2 Sub-categories)

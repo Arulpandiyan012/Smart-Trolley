@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bagisto_app_demo/screens/checkout/utils/index.dart';
 import '../../data_model/checkout_save_shipping_model.dart';
-// Ensure url_launcher is in your pubspec.yaml
 import 'package:url_launcher/url_launcher.dart'; 
+import 'package:bagisto_app_demo/screens/cart_screen/utils/cart_extensions.dart';
 
 class CheckoutPaymentView extends StatefulWidget {
   final String? shippingId;
@@ -73,7 +73,12 @@ class _CheckoutPaymentViewState extends State<CheckoutPaymentView> {
   Widget _buildPaymentList(PaymentMethods checkOutShipping) {
     if (widget.priceCallback != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-         widget.priceCallback!(checkOutShipping.cart?.formattedPrice?.grandTotal ?? "");
+         String currency = GlobalData.currencyCode ?? "₹";
+         if (checkOutShipping.cart != null) {
+            widget.priceCallback!("$currency ${checkOutShipping.cart!.adjustedGrandTotal.toStringAsFixed(2)}");
+         } else {
+            widget.priceCallback!(checkOutShipping.cart?.formattedPrice?.grandTotal ?? "");
+         }
       });
     }
 
